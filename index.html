@@ -1891,7 +1891,7 @@ document.head.appendChild(manifestLink);
         <div class="brand-icon"><img src="https://svgs.scryfall.io/sets/fin.svg" alt="FIN"></div>
         <div class="brand-text">
           <div class="brand-title"><span class="ff">Final Fantasy</span> <span class="tcg">MTG Tracker</span> <span class="ver">v1.0</span></div>
-          <div class="brand-set">Main Set &mdash; 300 Cards via Play Boosters</div>
+          <div class="brand-set">Main Set &mdash; 309 Cards via Play Boosters</div>
         </div>
       </div>
       <p class="subtitle">
@@ -2159,14 +2159,14 @@ document.head.appendChild(manifestLink);
   }
 
   function calcPageCount(slotsPerPage) {
-    const total = allCards.length || 300;
+    const total = allCards.length || 309;
     return Math.ceil(total / slotsPerPage);
   }
 
   function getActiveCardCount() {
     var cv = document.getElementById('wiz-cv');
     var cvEnabled = cv ? cv.checked : binderConfig.scope.collectorVariants;
-    var base = allCards.length || 300;
+    var base = allCards.length || 309;
     var variants = (cvEnabled && variantCards.length > 0) ? variantCards.length : 0;
     return base + variants;
   }
@@ -2270,13 +2270,13 @@ document.head.appendChild(manifestLink);
     return '<div class="wizard-step" id="wiz-step">' +
       '<h2>What will you collect?</h2>' +
       '<p class="step-sub">Choose the card pools you want to track.</p>' +
-      '<div class="toggle-wrap"><div class="toggle-label"><strong>Main Set</strong><span>~300 booster-pack cards (always included)</span></div>' +
+      '<div class="toggle-wrap"><div class="toggle-label"><strong>Main Set</strong><span>~309 booster-pack cards (always included)</span></div>' +
       '<label class="toggle-switch locked"><input type="checkbox" checked disabled><span class="toggle-track"></span><span class="toggle-thumb"></span></label></div>' +
       '<div class="toggle-wrap"><div class="toggle-label"><strong>Collector Variants</strong><span>Borderless, showcase, surge foil, neon ink &amp; more</span></div>' +
       '<label class="toggle-switch"><input type="checkbox" id="wiz-cv"' + (cv ? ' checked' : '') + '><span class="toggle-track"></span><span class="toggle-thumb"></span></label></div>' +
       '<div class="toggle-wrap"><div class="toggle-label"><strong>Foil Binder</strong><span>Adds a separate tab to track foil ownership</span></div>' +
       '<label class="toggle-switch"><input type="checkbox" id="wiz-fb"' + (fb ? ' checked' : '') + '><span class="toggle-track"></span><span class="toggle-thumb"></span></label></div>' +
-      '<p class="settings-live-summary" id="wiz-step2-summary">Tracking <span class="pop">' + (allCards.length || 300) + '</span> cards across <span class="pop">' + pages + '</span> pages</p>' +
+      '<p class="settings-live-summary" id="wiz-step2-summary">Tracking <span class="pop">' + (allCards.length || 309) + '</span> cards across <span class="pop">' + pages + '</span> pages</p>' +
       '<div class="wizard-nav"><button class="btn btn-secondary" id="wiz-back">← Back</button><button class="btn btn-primary wizard-cta" id="wiz-next">Next →</button></div>' +
       '</div>';
   }
@@ -2430,7 +2430,7 @@ document.head.appendChild(manifestLink);
       '</div>' +
       '<div class="settings-section">' +
       '<div class="settings-section-title">Collection Scope</div>' +
-      '<div class="toggle-wrap"><div class="toggle-label"><strong>Main Set</strong><span>~300 booster-pack cards</span></div>' +
+      '<div class="toggle-wrap"><div class="toggle-label"><strong>Main Set</strong><span>~309 booster-pack cards</span></div>' +
       '<label class="toggle-switch locked"><input type="checkbox" checked disabled><span class="toggle-track"></span><span class="toggle-thumb"></span></label></div>' +
       '<div class="toggle-wrap"><div class="toggle-label"><strong>Collector Variants</strong><span>Borderless, showcase, surge foil, neon ink &amp; more</span></div>' +
       '<label class="toggle-switch"><input type="checkbox" id="sf-cv"' + (cfg.scope.collectorVariants ? ' checked' : '') + '><span class="toggle-track"></span><span class="toggle-thumb"></span></label></div>' +
@@ -2486,7 +2486,7 @@ document.head.appendChild(manifestLink);
           if (preset) {
             document.getElementById('sf-rows').value = preset.rows;
             document.getElementById('sf-cols').value = preset.cols;
-            var autoPages = Math.ceil((allCards.length || 300) / (preset.rows * preset.cols));
+            var autoPages = Math.ceil((allCards.length || 309) / (preset.rows * preset.cols));
             document.getElementById('sf-pages').value = autoPages;
             updateSfSummary();
           }
