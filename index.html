@@ -2158,6 +2158,188 @@ document.head.appendChild(manifestLink);
     document.body.style.overflow = '';
   }
 
+  function renderSettings() {
+    var el = document.getElementById('tab-settings');
+    if (!el) return;
+    if (binderConfig.configured) {
+      renderSettingsForm(el);
+    } else {
+      wizardStep = 1;
+      renderWizard(el);
+    }
+  }
+
+  function renderWizard(el) {
+    var pct = ((wizardStep - 1) / 2) * 100;
+    el.innerHTML = '<div class="settings-wrap"><div class="wizard-card">' +
+      '<div class="wizard-progress"><div class="wizard-progress-fill" id="wiz-progress" style="width:' + pct + '%"></div></div>' +
+      '<div class="wizard-step-container" id="wiz-step-container">' + renderWizardStep(wizardStep) + '</div>' +
+      '</div></div>';
+    bindWizardEvents();
+  }
+
+  function renderWizardStep(step) {
+    if (step === 1) return wizardStep1();
+    if (step === 2) return wizardStep2();
+    return wizardStep3();
+  }
+
+  function wizardStep1() {
+    var presetOptions = BINDER_PRESETS.map(function(p) {
+      return '<option value="' + p.label + '"' + (binderConfig.presetName === p.label ? ' selected' : '') + '>' + p.label + '</option>';
+    }).join('');
+    var isCustom = binderConfig.presetName === 'Custom\u2026';
+    var spp = binderConfig.slotsPerPage || 9;
+    var pages = calcPageCount(spp);
+    return '<div class="wizard-step" id="wiz-step">' +
+      '<h2>Choose your binder</h2>' +
+      '<p class="step-sub">Select the pocket size that matches your physical binder.</p>' +
+      '<div class="settings-row"><label>Binder type</label>' +
+      '<select id="wiz-preset" class="btn btn-secondary" style="padding:8px 12px">' + presetOptions + '</select></div>' +
+      '<div class="custom-inputs' + (isCustom ? ' visible' : '') + '" id="wiz-custom">' +
+      '<input id="wiz-rows" type="number" inputmode="numeric" min="1" max="10" value="' + binderConfig.gridRows + '" placeholder="Rows">' +
+      '<span style="color:var(--text-muted)">×</span>' +
+      '<input id="wiz-cols" type="number" inputmode="numeric" min="1" max="10" value="' + binderConfig.gridCols + '" placeholder="Cols">' +
+      '</div>' +
+      '<p class="settings-live-summary" id="wiz-step1-summary"><span class="pop">' + spp + '</span> slots per page · approx <span class="pop">' + pages + '</span> pages</p>' +
+      '<div class="wizard-nav"><button class="btn btn-primary wizard-cta" id="wiz-next">Next →</button></div>' +
+      '</div>';
+  }
+
+  function wizardStep2() {
+    var cv = binderConfig.scope.collectorVariants;
+    var fb = binderConfig.scope.foilBinder;
+    var pages = calcPageCount(binderConfig.slotsPerPage || 9);
+    return '<div class="wizard-step" id="wiz-step">' +
+      '<h2>What will you collect?</h2>' +
+      '<p class="step-sub">Choose the card pools you want to track.</p>' +
+      '<div class="toggle-wrap"><div class="toggle-label"><strong>Main Set</strong><span>~300 booster-pack cards (always included)</span></div>' +
+      '<label class="toggle-switch locked"><input type="checkbox" checked disabled><span class="toggle-track"></span><span class="toggle-thumb"></span></label></div>' +
+      '<div class="toggle-wrap"><div class="toggle-label"><strong>Collector Variants</strong><span>Borderless, showcase, surge foil, neon ink &amp; more</span></div>' +
+      '<label class="toggle-switch"><input type="checkbox" id="wiz-cv"' + (cv ? ' checked' : '') + '><span class="toggle-track"></span><span class="toggle-thumb"></span></label></div>' +
+      '<div class="toggle-wrap"><div class="toggle-label"><strong>Foil Binder</strong><span>Adds a separate tab to track foil ownership</span></div>' +
+      '<label class="toggle-switch"><input type="checkbox" id="wiz-fb"' + (fb ? ' checked' : '') + '><span class="toggle-track"></span><span class="toggle-thumb"></span></label></div>' +
+      '<p class="settings-live-summary" id="wiz-step2-summary">Tracking <span class="pop">300</span> cards across <span class="pop">' + pages + '</span> pages</p>' +
+      '<div class="wizard-nav"><button class="btn btn-secondary" id="wiz-back">← Back</button><button class="btn btn-primary wizard-cta" id="wiz-next">Next →</button></div>' +
+      '</div>';
+  }
+
+  function wizardStep3() {
+    var cv = binderConfig.scope.collectorVariants;
+    var fb = binderConfig.scope.foilBinder;
+    var spp = binderConfig.slotsPerPage || 9;
+    var pages = calcPageCount(spp);
+    return '<div class="wizard-step" id="wiz-step">' +
+      '<h2>Ready to go</h2>' +
+      '<p class="step-sub">Your binder is configured. You can change this later in Settings.</p>' +
+      '<div class="settings-section" style="margin-top:0"><div class="settings-section-title">Summary</div>' +
+      '<p style="font-size:0.88rem;margin-bottom:6px"><strong>' + binderConfig.presetName + '</strong> · ' + spp + ' slots/page · ' + pages + ' pages</p>' +
+      '<p style="font-size:0.85rem;color:var(--text-muted)">Main Set ' + (cv ? '· Collector Variants ' : '') + (fb ? '· Foil Binder' : '') + '</p>' +
+      '</div>' +
+      '<div class="wizard-nav"><button class="btn btn-secondary" id="wiz-back">← Back</button><button class="btn btn-primary wizard-cta" id="wiz-finish">Set Up My Binder</button></div>' +
+      '</div>';
+  }
+
+  function bindWizardEvents() {
+    var presetEl = document.getElementById('wiz-preset');
+    if (presetEl) {
+      presetEl.addEventListener('change', function() {
+        var preset = BINDER_PRESETS.find(function(p) { return p.label === presetEl.value; });
+        var customWrap = document.getElementById('wiz-custom');
+        if (preset && preset.rows === 0) {
+          customWrap.classList.add('visible');
+        } else {
+          customWrap.classList.remove('visible');
+          if (preset) {
+            binderConfig.gridRows = preset.rows;
+            binderConfig.gridCols = preset.cols;
+            binderConfig.slotsPerPage = preset.rows * preset.cols;
+            binderConfig.presetName = preset.label;
+            updateWizardStep1Summary();
+          }
+        }
+      });
+      ['wiz-rows','wiz-cols'].forEach(function(id) {
+        var inp = document.getElementById(id);
+        if (inp) inp.addEventListener('input', function() {
+          var r = parseInt(document.getElementById('wiz-rows').value) || 3;
+          var c = parseInt(document.getElementById('wiz-cols').value) || 3;
+          binderConfig.gridRows = r; binderConfig.gridCols = c;
+          binderConfig.slotsPerPage = r * c;
+          binderConfig.presetName = 'Custom\u2026';
+          updateWizardStep1Summary();
+        });
+      });
+    }
+    var cvEl = document.getElementById('wiz-cv');
+    var fbEl = document.getElementById('wiz-fb');
+    if (cvEl) cvEl.addEventListener('change', function() { binderConfig.scope.collectorVariants = cvEl.checked; updateWizardStep2Summary(); });
+    if (fbEl) fbEl.addEventListener('change', function() { binderConfig.scope.foilBinder = fbEl.checked; updateWizardStep2Summary(); });
+
+    var nextBtn = document.getElementById('wiz-next');
+    var backBtn = document.getElementById('wiz-back');
+    var finishBtn = document.getElementById('wiz-finish');
+    if (nextBtn) nextBtn.addEventListener('click', function() { advanceWizard(1); });
+    if (backBtn) backBtn.addEventListener('click', function() { advanceWizard(-1); });
+    if (finishBtn) finishBtn.addEventListener('click', finishWizard);
+  }
+
+  function updateWizardStep1Summary() {
+    var el = document.getElementById('wiz-step1-summary');
+    if (!el) return;
+    var spp = binderConfig.slotsPerPage;
+    var pages = calcPageCount(spp);
+    el.innerHTML = '<span class="pop">' + spp + '</span> slots per page · approx <span class="pop">' + pages + '</span> pages';
+  }
+
+  function updateWizardStep2Summary() {
+    var el = document.getElementById('wiz-step2-summary');
+    if (!el) return;
+    var pages = calcPageCount(binderConfig.slotsPerPage);
+    el.innerHTML = 'Tracking <span class="pop">300</span> cards across <span class="pop">' + pages + '</span> pages';
+  }
+
+  function advanceWizard(dir) {
+    wizardStep = Math.max(1, Math.min(3, wizardStep + dir));
+    var pct = ((wizardStep - 1) / 2) * 100;
+    var progressEl = document.getElementById('wiz-progress');
+    if (progressEl) progressEl.style.width = pct + '%';
+    var container = document.getElementById('wiz-step-container');
+    if (container) {
+      var stepEl = document.getElementById('wiz-step');
+      // Apply exit animation on previous step
+      if (stepEl) {
+        stepEl.style.animationName = dir > 0 ? 'wizard-exit' : 'wizard-enter-back';
+        stepEl.style.animationDuration = '0.15s';
+      }
+      setTimeout(function() {
+        if (container) {
+          container.innerHTML = renderWizardStep(wizardStep);
+          bindWizardEvents();
+        }
+      }, 120);
+    }
+  }
+
+  function finishWizard() {
+    binderConfig.configured = true;
+    binderConfig.pageCount = calcPageCount(binderConfig.slotsPerPage);
+    saveConfig(binderConfig);
+    applyConfigToTabs();
+    document.querySelector('[data-tab="binder"]').click();
+    showToast('Binder configured! Welcome.');
+  }
+
+  function applyConfigToTabs() {
+    var foilBtn = document.getElementById('tab-btn-foil');
+    if (foilBtn) foilBtn.style.display = binderConfig.scope.foilBinder ? '' : 'none';
+    var pcEl = document.getElementById('binder-page-count-display');
+    if (pcEl) pcEl.textContent = binderConfig.pageCount + ' Pages';
+    var preEl = document.getElementById('binder-preset-display');
+    if (preEl) preEl.textContent = binderConfig.presetName || (binderConfig.slotsPerPage + '-Pocket Binder');
+    totalPages = binderConfig.pageCount;
+  }
+
   function hasFoil(cn) {
     return !!(foilOwned[cn] && foilOwned[cn].includes('foil'));
   }
