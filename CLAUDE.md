@@ -14,16 +14,18 @@ Open `index.html` in a browser. No build step, no dependencies — plain HTML/CS
 
 Everything lives in `index.html` — no build step, no external JS files. The script is structured into named sections marked with `// ──` comments:
 
-- **State / localStorage keys**: `fin-card-data-v4` (Scryfall cache), `fin-collection` (owned collector numbers), `fin-booster-packs`, `fin-timeline`, `fin-theme`, `fin-fx-rate`, `fin-gist-config`.
-- **Data layer**: Fetches FIN set from Scryfall API (`/cards/search?q=set:fin+is:booster+game:paper`), caches for 7 days. Collection state (owned card collector numbers) stored separately.
+- **State / localStorage keys**: `fin-card-data-v5` (Scryfall cache), `fin-collection` (owned collector numbers), `fin-booster-packs`, `fin-timeline`, `fin-theme`, `fin-fx-rate`, `fin-gist-config`, `fin-binder-config` (binder setup), `fin-foil-collection` (foil ownership), `fin-variant-data-v1` (collector booster variants cache).
+- **Data layer**: Fetches FIN set from Scryfall API (`/cards/search?q=set:fin+is:booster+game:paper`), caches for 7 days. Collection state (owned card collector numbers) stored separately. Optional second fetch for collector variants (`-is:booster`).
 - **Collector number sorting**: Handles non-numeric suffixes (e.g. `99b`) via `collectorKey()` parser. Binder slot placement is derived from array index after sorting.
-- **Binder math**: 300 cards / 9 per page = 34 pages. Spread view shows 2 pages side-by-side.
-- **Tabs**: Binder, Dashboard, Portfolio, Timeline, Pack Simulator.
+- **Binder math**: Config-driven via `fin-binder-config` (gridRows, gridCols, slotsPerPage, pageCount). Default: 300 cards / 9 per page = 34 pages. Spread view shows 2 pages side-by-side.
+- **Tabs**: Binder, Dashboard, Portfolio, Foil (optional), Timeline, Pack Simulator, Settings.
 - **Booster Pack Mode**: Simulates opening packs, logs pulls to `fin-booster-packs` and `fin-timeline`.
 - **PWA**: Manifest and icons generated at runtime via canvas; supports iOS/Android home-screen install.
 - **Celebration**: Rarity-tiered fanfare animations on card adds.
 
 ## Scryfall API
+
+**IMPORTANT: Always reference https://scryfall.com/docs/api when working with any Scryfall API code.**
 
 - Rate limit: 100ms between requests. Only 2 paginated requests needed for the full set.
 - Card images: `image_uris.small` for grid thumbnails, `image_uris.normal` for modal detail view.
