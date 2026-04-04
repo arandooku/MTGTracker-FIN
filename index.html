@@ -3348,7 +3348,8 @@ document.head.appendChild(manifestLink);
     const q = searchInput.value.trim().toLowerCase();
     if (q.length < 1) { acList.classList.remove('show'); return; }
 
-    const matches = allCards.filter(c =>
+    const allSearchable = [...allCards, ...variantCards];
+    const matches = allSearchable.filter(c =>
       c.name.toLowerCase().includes(q) || c.collector_number === q
     ).slice(0, 15);
 
@@ -3357,12 +3358,18 @@ document.head.appendChild(manifestLink);
 
     acList.innerHTML = matches.map((c, i) => {
       const isOwned = ownedSet.has(c.collector_number);
-      return `<div class="ac-item" data-cn="${c.collector_number}" data-index="${i}">
-        <span>
-          <span class="card-name">${c.name}</span>
-          <span class="card-num"> #${c.collector_number}</span>
+      const isFoilOwned = hasFoil(c.collector_number);
+      const canBeFoil = (c.finishes || []).includes('foil');
+      return `<div class="ac-item" data-cn="${c.collector_number}" data-index="${i}" style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span style="display:flex;align-items:center;gap:6px;min-width:0;flex:1">
+          <span class="card-name" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.name}</span>
+          <span class="card-num" style="flex-shrink:0"> #${c.collector_number}</span>
         </span>
-        ${isOwned ? '<span class="owned-tag">owned</span>' : ''}
+        <span style="display:flex;align-items:center;gap:5px;flex-shrink:0">
+          ${isOwned ? '<span class="owned-tag">owned</span>' : ''}
+          ${isFoilOwned ? '<span style="color:#ffd93d;font-size:0.8rem;font-weight:700">✦</span>' : ''}
+          ${canBeFoil ? `<button class="ac-foil-btn" data-cn="${c.collector_number}" style="background:none;border:1px solid ${isFoilOwned ? 'var(--accent)' : 'var(--surface2)'};border-radius:12px;padding:1px 7px;font-size:0.72rem;cursor:pointer;color:${isFoilOwned ? '#ffd93d' : 'var(--text-muted)'};line-height:1.5;transition:all 0.15s" title="${isFoilOwned ? 'Remove foil' : 'Add foil'}">${isFoilOwned ? '✦ foil' : '✦'}</button>` : ''}
+        </span>
       </div>`;
     }).join('');
     acList.classList.add('show');
@@ -3392,6 +3399,19 @@ document.head.appendChild(manifestLink);
   }
 
   acList.addEventListener('click', (e) => {
+    // Handle foil button click
+    const foilBtn = e.target.closest('.ac-foil-btn');
+    if (foilBtn) {
+      e.stopPropagation();
+      const cn = foilBtn.dataset.cn;
+      if (hasFoil(cn)) removeFoil(cn);
+      else addFoil(cn);
+      // Re-render the autocomplete to update the foil indicator
+      searchInput.dispatchEvent(new Event('input'));
+      return;
+    }
+
+    // Handle regular card item click (existing logic)
     const item = e.target.closest('.ac-item');
     if (!item) return;
     const cn = item.dataset.cn;
