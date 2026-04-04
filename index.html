@@ -2331,9 +2331,11 @@ document.head.appendChild(manifestLink);
   }
 
   function finishWizard() {
-    binderConfig.configured = true;
-    binderConfig.pageCount = calcPageCount(binderConfig.slotsPerPage);
-    saveConfig(binderConfig);
+    const newCfg = Object.assign({}, binderConfig, {
+      configured: true,
+      pageCount: calcPageCount(binderConfig.slotsPerPage),
+    });
+    saveConfig(newCfg);
     applyConfigToTabs();
     document.querySelector('[data-tab="binder"]').click();
     showToast('Binder configured! Welcome.');
@@ -4713,15 +4715,8 @@ document.head.appendChild(manifestLink);
       renderDashboard();
       // Auto-navigate to Settings on first run
       if (!binderConfig.configured) {
-        document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
-        document.querySelectorAll('.tab-content').forEach(function(t) { t.classList.remove('active'); });
-        var settingsBtn = document.querySelector('[data-tab="settings"]');
-        var settingsTab = document.getElementById('tab-settings');
-        if (settingsBtn && settingsTab) {
-          settingsBtn.classList.add('active');
-          settingsTab.classList.add('active');
-          renderSettings();
-        }
+        const settingsBtn = document.querySelector('[data-tab="settings"]');
+        if (settingsBtn) settingsBtn.click();
       } else {
         applyConfigToTabs();
       }
