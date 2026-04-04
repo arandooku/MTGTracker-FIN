@@ -646,6 +646,7 @@
     from { opacity: 1; transform: translateX(0); }
     to   { opacity: 0; transform: translateX(-32px); }
   }
+  /* Applied by JS on wizard back-navigation: el.style.animationName = 'wizard-enter-back' */
   @keyframes wizard-enter-back {
     from { opacity: 0; transform: translateX(-32px); }
     to   { opacity: 1; transform: translateX(0); }
@@ -678,8 +679,7 @@
     background: var(--surface); border-radius: 12px;
     border-left: 3px solid var(--accent);
   }
-  .settings-section.danger { border-left-color: #f38ba8; }
-  [data-theme="light"] .settings-section.danger { border-left-color: #d20f39; }
+  .settings-section.danger { border-left-color: var(--accent); }
   .settings-section-title {
     font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em;
     text-transform: uppercase; color: var(--text-muted); margin-bottom: 14px;
@@ -740,12 +740,12 @@
   /* ── Bottom Sheet (mobile confirmation) ── */
   .sheet-backdrop {
     display: none; position: fixed; inset: 0;
-    background: rgba(0,0,0,0); z-index: 1100;
+    background: rgba(0,0,0,0); z-index: 1150;
     transition: background 0.25s ease;
   }
   .sheet-backdrop.visible { display: block; background: rgba(0,0,0,0.55); }
   .bottom-sheet {
-    position: fixed; bottom: 0; left: 0; right: 0; z-index: 1200;
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 1160;
     background: var(--surface); border-radius: 20px 20px 0 0;
     padding: 12px 24px calc(env(safe-area-inset-bottom, 16px) + 16px);
     box-shadow: 0 -4px 32px var(--shadow);
@@ -809,6 +809,7 @@
     background-size: 300% 300%;
     animation: foil-shimmer 3s ease infinite;
     color: #fff; font-weight: 700; border: none; cursor: pointer;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.5);
   }
   .btn-foil:hover { filter: brightness(1.1); }
 
