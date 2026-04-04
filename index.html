@@ -1332,6 +1332,22 @@
       rgba(255,255,255,0.12) 45%, rgba(255,255,255,0.06) 50%, transparent 55%, transparent 100%);
     pointer-events: none; backface-visibility: hidden; transition: opacity 0.2s;
   }
+  .foil-overlay {
+    position: absolute; inset: 0; border-radius: 12px;
+    pointer-events: none; backface-visibility: hidden;
+    opacity: 0; transition: opacity 0.5s ease;
+    background: linear-gradient(115deg,
+      rgba(255,107,157,0.28) 0%, rgba(255,217,61,0.28) 20%,
+      rgba(107,203,119,0.28) 40%, rgba(77,150,255,0.28) 60%,
+      rgba(199,125,255,0.28) 80%, rgba(255,107,157,0.28) 100%);
+    background-size: 300% 300%;
+    mix-blend-mode: screen;
+    z-index: 2;
+  }
+  #card-3d.foil-owned .foil-overlay {
+    opacity: 1;
+    animation: foil-shimmer 3s ease infinite;
+  }
   .viz-controls { display: flex; gap: 8px; justify-content: center; margin-bottom: 12px; }
   .viz-controls .btn { font-size: 0.78rem; padding: 5px 12px; }
   .modal h3 { margin-bottom: 4px; font-size: 1.1rem; }
@@ -2003,6 +2019,7 @@ document.head.appendChild(manifestLink);
       <div class="card-3d" id="card-3d">
         <img id="modal-img" src="" alt="">
         <div class="card-shine" id="card-shine"></div>
+        <div class="foil-overlay" id="modal-foil-overlay"></div>
         <div class="card-back">
           <img id="modal-back-img" src="" alt="Card back">
         </div>
@@ -4590,6 +4607,11 @@ document.head.appendChild(manifestLink);
         foilToggleBtn.onclick = () => {
           if (isFoilOwned) removeFoil(card.collector_number);
           else addFoil(card.collector_number);
+          // Update shimmer and info panel immediately before close
+          const _c3d = document.getElementById('card-3d');
+          if (_c3d) _c3d.classList.toggle('foil-owned', !isFoilOwned);
+          const _fi = document.getElementById('modal-foil-info');
+          if (_fi) _fi.innerHTML = buildFoilInfoHTML(card);
           closeModal();
           if (document.getElementById('tab-foil').classList.contains('active')) {
             renderFoilBinder();
@@ -4598,6 +4620,12 @@ document.head.appendChild(manifestLink);
       } else {
         foilToggleBtn.style.display = 'none';
       }
+    }
+
+    // Foil shimmer overlay
+    const card3dEl = document.getElementById('card-3d');
+    if (card3dEl) {
+      card3dEl.classList.toggle('foil-owned', hasFoil(card.collector_number));
     }
 
     const overlay = document.getElementById('modal-overlay');
