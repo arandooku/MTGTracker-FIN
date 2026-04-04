@@ -1790,7 +1790,7 @@ document.head.appendChild(manifestLink);
 <script>
 (function() {
   // ── State ──
-  const CACHE_KEY = 'fin-card-data-v4';
+  const CACHE_KEY = 'fin-card-data-v5';
   const COLLECTION_KEY = 'fin-collection';
   const THEME_KEY = 'fin-theme';
   const CACHE_TTL = 7 * 24 * 60 * 60 * 1000;
@@ -2222,6 +2222,9 @@ document.head.appendChild(manifestLink);
           price_usd: parseFloat(c.prices?.usd) || 0,
           price_usd_foil: parseFloat(c.prices?.usd_foil) || 0,
           scryfall_uri: c.scryfall_uri || '',
+          finishes:   c.finishes   || ['nonfoil', 'foil'],
+          oracle_id:  c.oracle_id  || '',
+          foil_only:  Array.isArray(c.finishes) && c.finishes.every(f => f !== 'nonfoil'),
         });
       }
       hasMore = data.has_more;
