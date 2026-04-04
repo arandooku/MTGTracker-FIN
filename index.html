@@ -5659,7 +5659,7 @@ document.head.appendChild(manifestLink);
       return `<div class="card-slot foil-slot ${foilSlotCls} ${variantClass} ${delayClass}" data-cn="${card.collector_number}" style="position:relative;cursor:pointer">
         <img data-src="${imgSrc}" alt="${card.name}" style="${imgStyle}">
         ${isFoilOwned ? '<span class="foil-badge">\u2726</span>' : ''}
-        <span style="position:absolute;bottom:2px;left:2px;right:2px;font-size:0.5rem;color:rgba(255,255,255,0.7);text-align:center;pointer-events:none;line-height:1.2;background:rgba(0,0,0,0.45);border-radius:0 0 4px 4px;padding:1px 2px">${label}</span>
+        ${label ? `<span style="position:absolute;bottom:3px;left:50%;transform:translateX(-50%);font-size:0.58rem;font-weight:700;letter-spacing:0.03em;color:#fff;background:rgba(0,0,0,0.7);border-radius:4px;padding:2px 5px;pointer-events:none;white-space:nowrap;max-width:90%;overflow:hidden;text-overflow:ellipsis">${label}</span>` : ''}
       </div>`;
     }).join('');
 
