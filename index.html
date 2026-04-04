@@ -5627,7 +5627,7 @@ document.head.appendChild(manifestLink);
     }
 
     if (cards.length === 0) {
-      return `<div style="padding:32px;text-align:center;color:var(--text-muted)">No cards match the current filters.</div>`;
+      return { html: `<div style="padding:32px;text-align:center;color:var(--text-muted)">No cards match the current filters.</div>`, totalPages: 1 };
     }
 
     const totalPages = Math.ceil(cards.length / spp);
@@ -5652,18 +5652,20 @@ document.head.appendChild(manifestLink);
       </div>`;
     }).join('');
 
-    const navHTML = `
-      <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-top:14px">
-        <button class="btn btn-secondary variant-prev" style="padding:6px 16px" ${variantPage === 0 ? 'disabled' : ''}>&larr; Prev</button>
-        <span style="font-size:0.85rem;color:var(--text-muted)">Page ${variantPage + 1} of ${totalPages}</span>
-        <button class="btn btn-secondary variant-next" style="padding:6px 16px" ${variantPage >= totalPages - 1 ? 'disabled' : ''}>Next &rarr;</button>
-      </div>`;
-
-    return `<div class="page-grid foil-card-grid" style="grid-template-columns:repeat(${binderConfig.gridCols},1fr);gap:6px">${slotsHTML}</div>${navHTML}`;
+    return { html: `<div class="page-grid foil-card-grid" style="grid-template-columns:repeat(${binderConfig.gridCols},1fr);gap:6px">${slotsHTML}</div>`, totalPages };
   }
 
   // ── Render ──
-  el.innerHTML = statsHTML + filterBarHTML + `<div id="variant-grid-wrap">${buildVariantGrid()}</div>`;
+  const variantGridResult = buildVariantGrid();
+  el.innerHTML = statsHTML + filterBarHTML + `
+    <div class="binder-layout">
+      <button class="binder-nav" id="variant-prev-page" ${variantPage === 0 ? 'disabled' : ''}>&lsaquo;</button>
+      <div style="flex:1;min-width:0">
+        <div id="variant-grid-wrap">${variantGridResult.html}</div>
+        <div style="text-align:center;font-size:0.8rem;color:var(--text-muted);margin-top:6px">Page ${variantPage + 1} of ${variantGridResult.totalPages}</div>
+      </div>
+      <button class="binder-nav" id="variant-next-page" ${variantPage >= variantGridResult.totalPages - 1 ? 'disabled' : ''}>&rsaquo;</button>
+    </div>`;
 
   // ── Lazy load images ──
   const observer = new IntersectionObserver(entries => {
@@ -5676,11 +5678,11 @@ document.head.appendChild(manifestLink);
   // ── Event delegation — pagination ──
   if (el._onVariantPaginate) el.removeEventListener('click', el._onVariantPaginate);
   el._onVariantPaginate = function(e) {
-    if (e.target.classList.contains('variant-prev')) {
+    if (e.target.closest('#variant-prev-page')) {
       variantPage = Math.max(0, variantPage - 1); persist();
       renderVariantBinder(); return;
     }
-    if (e.target.classList.contains('variant-next')) {
+    if (e.target.closest('#variant-next-page')) {
       variantPage++; persist();
       renderVariantBinder(); return;
     }
