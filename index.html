@@ -2902,6 +2902,7 @@ document.head.appendChild(manifestLink);
           finishes:   c.finishes   || ['nonfoil', 'foil'],
           oracle_id:  c.oracle_id  || '',
           foil_only:  Array.isArray(c.finishes) && c.finishes.every(f => f !== 'nonfoil'),
+          frame_effects: c.frame_effects || [],
         });
       }
       hasMore = data.has_more;
