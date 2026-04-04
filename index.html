@@ -2340,6 +2340,200 @@ document.head.appendChild(manifestLink);
     totalPages = binderConfig.pageCount;
   }
 
+  function renderSettingsForm(el) {
+    var cfg = binderConfig;
+    var presetOptions = BINDER_PRESETS.map(function(p) {
+      return '<option value="' + p.label + '"' + (cfg.presetName === p.label ? ' selected' : '') + '>' + p.label + '</option>';
+    }).join('');
+    var isCustom = cfg.presetName === 'Custom\u2026';
+    var spp = cfg.slotsPerPage;
+    var totalSlots = spp * cfg.pageCount;
+
+    el.innerHTML = '<div class="settings-wrap">' +
+      '<div class="settings-section">' +
+      '<div class="settings-section-title">Binder Setup</div>' +
+      '<div class="settings-row"><label>Type</label><select id="sf-preset" class="btn btn-secondary" style="padding:8px 12px">' + presetOptions + '</select></div>' +
+      '<div class="custom-inputs' + (isCustom ? ' visible' : '') + '" id="sf-custom">' +
+      '<input id="sf-rows" type="number" inputmode="numeric" min="1" max="10" value="' + cfg.gridRows + '" placeholder="Rows">' +
+      '<span style="color:var(--text-muted)">×</span>' +
+      '<input id="sf-cols" type="number" inputmode="numeric" min="1" max="10" value="' + cfg.gridCols + '" placeholder="Cols">' +
+      '</div>' +
+      '<div class="settings-row" style="margin-top:10px"><label>Pages</label>' +
+      '<input id="sf-pages" type="number" inputmode="numeric" min="1" max="999" value="' + cfg.pageCount + '" style="width:64px;padding:6px 8px;background:var(--slot-bg);border:1px solid var(--surface2);border-radius:8px;color:var(--text);font-size:0.9rem;transition:box-shadow 0.15s ease">' +
+      '</div>' +
+      '<p class="settings-live-summary"><span id="sf-s1">' + spp + '</span> slots/page · <span id="sf-s2">' + cfg.pageCount + '</span> pages · <span id="sf-s3">' + totalSlots + '</span> total slots</p>' +
+      '</div>' +
+      '<div class="settings-section">' +
+      '<div class="settings-section-title">Collection Scope</div>' +
+      '<div class="toggle-wrap"><div class="toggle-label"><strong>Main Set</strong><span>~300 booster-pack cards</span></div>' +
+      '<label class="toggle-switch locked"><input type="checkbox" checked disabled><span class="toggle-track"></span><span class="toggle-thumb"></span></label></div>' +
+      '<div class="toggle-wrap"><div class="toggle-label"><strong>Collector Variants</strong><span>Borderless, showcase, surge foil, neon ink &amp; more</span></div>' +
+      '<label class="toggle-switch"><input type="checkbox" id="sf-cv"' + (cfg.scope.collectorVariants ? ' checked' : '') + '><span class="toggle-track"></span><span class="toggle-thumb"></span></label></div>' +
+      '<div class="toggle-wrap"><div class="toggle-label"><strong>Foil Binder</strong><span>Separate tab for foil ownership tracking</span></div>' +
+      '<label class="toggle-switch"><input type="checkbox" id="sf-fb"' + (cfg.scope.foilBinder ? ' checked' : '') + '><span class="toggle-track"></span><span class="toggle-thumb"></span></label></div>' +
+      '</div>' +
+      '<div class="save-btn-wrap"><button class="btn btn-primary btn-save" id="sf-save">Save Changes</button></div>' +
+      '<div class="settings-section danger">' +
+      '<div class="settings-section-title">Danger Zone</div>' +
+      '<button class="danger-toggle" id="sf-danger-toggle">▸ Show options</button>' +
+      '<div class="danger-actions" id="sf-danger-actions">' +
+      '<button class="btn btn-secondary" id="sf-reset-collection">Reset Collection</button>' +
+      '<button class="btn btn-secondary" id="sf-reset-foil">Reset Foil Collection</button>' +
+      '<button class="btn btn-danger" id="sf-reset-all">Reset Everything</button>' +
+      '</div></div>' +
+      '</div>';
+
+    bindSettingsFormEvents();
+  }
+
+  function bindSettingsFormEvents() {
+    var presetEl = document.getElementById('sf-preset');
+    var customWrap = document.getElementById('sf-custom');
+
+    function updateSfSummary() {
+      var sfRows = document.getElementById('sf-rows');
+      var sfCols = document.getElementById('sf-cols');
+      var sfPages = document.getElementById('sf-pages');
+      var r = sfRows ? (parseInt(sfRows.value) || binderConfig.gridRows) : binderConfig.gridRows;
+      var c = sfCols ? (parseInt(sfCols.value) || binderConfig.gridCols) : binderConfig.gridCols;
+      var pages = sfPages ? (parseInt(sfPages.value) || binderConfig.pageCount) : binderConfig.pageCount;
+      var spp = r * c;
+      function popEl(id, val) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        el.textContent = val;
+        el.classList.remove('pop');
+        void el.offsetWidth;
+        el.classList.add('pop');
+      }
+      popEl('sf-s1', spp);
+      popEl('sf-s2', pages);
+      popEl('sf-s3', spp * pages);
+    }
+
+    if (presetEl) {
+      presetEl.addEventListener('change', function() {
+        var preset = BINDER_PRESETS.find(function(p) { return p.label === presetEl.value; });
+        if (preset && preset.rows === 0) {
+          customWrap.classList.add('visible');
+        } else {
+          customWrap.classList.remove('visible');
+          if (preset) {
+            document.getElementById('sf-rows').value = preset.rows;
+            document.getElementById('sf-cols').value = preset.cols;
+            var autoPages = Math.ceil((allCards.length || 300) / (preset.rows * preset.cols));
+            document.getElementById('sf-pages').value = autoPages;
+            updateSfSummary();
+          }
+        }
+      });
+    }
+
+    ['sf-rows','sf-cols','sf-pages'].forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) el.addEventListener('input', updateSfSummary);
+    });
+
+    var dangerToggle = document.getElementById('sf-danger-toggle');
+    if (dangerToggle) {
+      dangerToggle.addEventListener('click', function() {
+        var actions = document.getElementById('sf-danger-actions');
+        actions.classList.toggle('visible');
+        dangerToggle.textContent = actions.classList.contains('visible') ? '▾ Hide options' : '▸ Show options';
+      });
+    }
+
+    var resetColBtn = document.getElementById('sf-reset-collection');
+    if (resetColBtn) {
+      resetColBtn.addEventListener('click', function() {
+        showSheet({
+          title: 'Reset Collection?',
+          body: 'This will clear all owned card data. Binder settings and foil collection will be kept.',
+          actions: [
+            { label: 'Cancel', className: 'btn-secondary', onClick: function() {} },
+            { label: 'Reset Collection', className: 'btn-danger', onClick: function() {
+              ownedSet.clear();
+              localStorage.setItem(COLLECTION_KEY, '[]');
+              renderSettings();
+              showToast('Collection reset.');
+            }}
+          ]
+        });
+      });
+    }
+
+    var resetFoilBtn = document.getElementById('sf-reset-foil');
+    if (resetFoilBtn) {
+      resetFoilBtn.addEventListener('click', function() {
+        showSheet({
+          title: 'Reset Foil Collection?',
+          body: 'This will clear all foil ownership data. Your main collection and settings will be kept.',
+          actions: [
+            { label: 'Cancel', className: 'btn-secondary', onClick: function() {} },
+            { label: 'Reset Foil', className: 'btn-danger', onClick: function() {
+              foilOwned = {};
+              saveFoil();
+              renderSettings();
+              showToast('Foil collection reset.');
+            }}
+          ]
+        });
+      });
+    }
+
+    var resetAllBtn = document.getElementById('sf-reset-all');
+    if (resetAllBtn) {
+      resetAllBtn.addEventListener('click', function() {
+        showSheet({
+          title: 'Reset Everything?',
+          body: 'All collection data, foil data, and binder settings will be permanently deleted.',
+          actions: [
+            { label: 'Cancel', className: 'btn-secondary', onClick: function() {} },
+            { label: 'Delete Everything', className: 'btn-danger', onClick: function() {
+              localStorage.clear();
+              location.reload();
+            }}
+          ]
+        });
+      });
+    }
+
+    var saveBtn = document.getElementById('sf-save');
+    if (saveBtn) {
+      saveBtn.addEventListener('click', function() {
+        var sfRows = document.getElementById('sf-rows');
+        var sfCols = document.getElementById('sf-cols');
+        var sfPages = document.getElementById('sf-pages');
+        var r = sfRows ? (parseInt(sfRows.value) || binderConfig.gridRows) : binderConfig.gridRows;
+        var c = sfCols ? (parseInt(sfCols.value) || binderConfig.gridCols) : binderConfig.gridCols;
+        var pages = sfPages ? (parseInt(sfPages.value) || binderConfig.pageCount) : binderConfig.pageCount;
+        var newCfg = {
+          gridRows: r, gridCols: c,
+          slotsPerPage: r * c, pageCount: pages,
+          presetName: presetEl ? presetEl.value : binderConfig.presetName,
+          scope: {
+            mainSet: true,
+            collectorVariants: document.getElementById('sf-cv') ? document.getElementById('sf-cv').checked : binderConfig.scope.collectorVariants,
+            foilBinder: document.getElementById('sf-fb') ? document.getElementById('sf-fb').checked : binderConfig.scope.foilBinder,
+          },
+          configured: true,
+        };
+        saveConfig(newCfg);
+        applyConfigToTabs();
+        if (newCfg.scope.collectorVariants && variantCards.length === 0) {
+          fetchVariants();
+        }
+        saveBtn.textContent = '✓ Saved';
+        saveBtn.classList.add('success');
+        setTimeout(function() {
+          saveBtn.textContent = 'Save Changes';
+          saveBtn.classList.remove('success');
+        }, 1500);
+        showToast('Binder updated.');
+      });
+    }
+  }
+
   function hasFoil(cn) {
     return !!(foilOwned[cn] && foilOwned[cn].includes('foil'));
   }
