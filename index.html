@@ -2635,6 +2635,8 @@ document.head.appendChild(manifestLink);
       collection: { owned: [...ownedSet] },
       packs: { packs: boosterPacks },
       timeline: { events: timelineEvents },
+      binderConfig: binderConfig,
+      foil: foilOwned,
     };
   }
 
@@ -2701,6 +2703,14 @@ document.head.appendChild(manifestLink);
       if (payload.collection?.owned) ownedSet = new Set(payload.collection.owned);
       if (payload.packs?.packs) boosterPacks = payload.packs.packs;
       if (payload.timeline?.events) timelineEvents = payload.timeline.events;
+      if (payload.binderConfig) {
+        binderConfig = payload.binderConfig;
+        localStorage.setItem(BINDER_CONFIG_KEY, JSON.stringify(binderConfig));
+      }
+      if (payload.foil) {
+        foilOwned = payload.foil;
+        localStorage.setItem(FOIL_KEY, JSON.stringify(foilOwned));
+      }
 
       saveCollection();
       savePacks();
