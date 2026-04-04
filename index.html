@@ -3504,6 +3504,7 @@ document.head.appendChild(manifestLink);
     if (document.getElementById('tab-dashboard').classList.contains('active')) renderDashboard();
     if (document.getElementById('tab-portfolio').classList.contains('active')) renderPortfolio();
     if (document.getElementById('tab-timeline').classList.contains('active')) renderTimeline();
+    if (document.getElementById('tab-variants')?.classList.contains('active')) renderVariantBinder();
   }
 
   function removeCard(cn) {
@@ -3517,6 +3518,7 @@ document.head.appendChild(manifestLink);
     if (document.getElementById('tab-dashboard').classList.contains('active')) renderDashboard();
     if (document.getElementById('tab-portfolio').classList.contains('active')) renderPortfolio();
     if (document.getElementById('tab-timeline').classList.contains('active')) renderTimeline();
+    if (document.getElementById('tab-variants')?.classList.contains('active')) renderVariantBinder();
   }
 
   // ── FAB (Floating Action Button) ──
@@ -5065,7 +5067,7 @@ document.head.appendChild(manifestLink);
       if (btn.dataset.tab === 'timeline') renderTimeline();
       if (btn.dataset.tab === 'settings') renderSettings();
       if (btn.dataset.tab === 'foil') renderFoilBinder();
-      if (btn.dataset.tab === 'variants' && typeof renderVariantBinder === 'function') renderVariantBinder();
+      if (btn.dataset.tab === 'variants') renderVariantBinder();
     });
   });
 
@@ -5175,6 +5177,7 @@ document.head.appendChild(manifestLink);
             if (document.getElementById('tab-foil')?.classList.contains('active')) {
               renderFoilBinder();
             }
+            if (document.getElementById('tab-variants')?.classList.contains('active')) renderVariantBinder();
             return;
           }
         } catch {}
@@ -5227,6 +5230,7 @@ document.head.appendChild(manifestLink);
       if (document.getElementById('tab-foil')?.classList.contains('active')) {
         renderFoilBinder();
       }
+      if (document.getElementById('tab-variants')?.classList.contains('active')) renderVariantBinder();
     } catch (err) {
       console.warn('fetchVariants failed:', err);
     }
@@ -5530,6 +5534,205 @@ document.head.appendChild(manifestLink);
     };
     el.addEventListener('click', el._onFoilPaginate);
   }
+
+  function renderVariantBinder() {
+  const el = document.getElementById('tab-variants');
+  if (!el) return;
+
+  // ── Filter state ──
+  let activeFilter = el._variantFilter || 'All';
+  let activeRarity = el._variantRarity || '';
+  let searchQuery  = el._variantSearch || '';
+  let variantPage  = el._variantPage  || 0;
+
+  function persist() {
+    el._variantFilter = activeFilter;
+    el._variantRarity = activeRarity;
+    el._variantSearch = searchQuery;
+    el._variantPage   = variantPage;
+  }
+  function resetPage() { variantPage = 0; el._variantPage = 0; }
+
+  // ── Stats ──
+  const ownedVariantCount = variantCards.filter(c => ownedSet.has(c.collector_number)).length;
+  const variantTotal = variantCards.length;
+  const ownedPct = variantTotal > 0 ? (ownedVariantCount / variantTotal * 100) : 0;
+  const ownedFoilCount = variantCards.filter(c => hasFoil(c.collector_number)).length;
+  const variantValue = variantCards
+    .filter(c => ownedSet.has(c.collector_number))
+    .reduce((s, c) => s + Math.max(c.price_usd || 0, c.price_usd_foil || 0), 0);
+
+  const statsHTML = `
+    <div class="dash-grid" style="margin-bottom:18px">
+      <div class="dash-card">
+        <h3>Variants Owned</h3>
+        <div class="dash-big-num" style="font-size:1.4rem">${ownedVariantCount} / ${variantTotal}</div>
+        <div class="dash-sub">${ownedPct.toFixed(1)}% complete</div>
+        <div class="rarity-track" style="margin:8px 0 4px">
+          <div class="rarity-fill rare" style="width:${ownedPct.toFixed(1)}%"></div>
+        </div>
+      </div>
+      <div class="dash-card">
+        <h3>✦ Foils Owned</h3>
+        <div class="dash-big-num" style="font-size:1.4rem">${ownedFoilCount}</div>
+        <div class="dash-sub">of ${variantTotal} variant cards</div>
+      </div>
+      <div class="dash-card">
+        <h3>Variant Value</h3>
+        <div class="dash-big-num" style="font-size:1.4rem">$${variantValue.toFixed(2)}</div>
+        <div class="dash-sub">RM ${(variantValue * USD_TO_MYR).toFixed(2)} (est.)</div>
+      </div>
+    </div>`;
+
+  if (variantCards.length === 0) {
+    el.innerHTML = `<div style="padding:48px;text-align:center;color:var(--text-muted)">
+      <div style="font-size:2rem;margin-bottom:12px">◈</div>
+      <div>No variant cards loaded.</div>
+      <div style="margin-top:8px;font-size:0.85rem">Collector Variants must be enabled in Settings.</div>
+    </div>`;
+    return;
+  }
+
+  // ── Filter bar ──
+  const filterTypes = ['All', 'Owned', 'Traditional', 'Surge', 'Neon Ink', 'Chocobo Track'];
+  const rarities = ['C', 'U', 'R', 'M'];
+  const rarityMap = { C: 'common', U: 'uncommon', R: 'rare', M: 'mythic' };
+
+  const filterBarHTML = `
+    <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:14px">
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        ${filterTypes.map(f => `<button class="btn ${activeFilter === f ? 'btn-primary' : 'btn-secondary'} variant-filter-type" data-type="${f}" style="padding:4px 12px;font-size:0.82rem">${f}</button>`).join('')}
+      </div>
+      <div style="display:flex;gap:5px">
+        ${rarities.map(r => `<button class="btn ${activeRarity === r ? 'btn-primary' : 'btn-secondary'} variant-filter-rarity" data-rarity="${r}" style="padding:4px 10px;font-size:0.8rem;font-weight:700">${r}</button>`).join('')}
+      </div>
+      <input type="text" class="variant-search-input" placeholder="Search card name…" value="${searchQuery.replace(/"/g, '&quot;')}"
+        style="padding:5px 10px;border-radius:8px;border:1px solid var(--surface3);background:var(--surface2);color:var(--text);font-size:0.85rem;min-width:160px">
+    </div>`;
+
+  // ── Grid builder ──
+  function buildVariantGrid() {
+    const spp = binderConfig.slotsPerPage;
+    let cards;
+
+    if (activeFilter === 'Owned') {
+      cards = variantCards.filter(c => ownedSet.has(c.collector_number));
+    } else if (activeFilter === 'Surge') {
+      cards = variantCards.filter(c => (c.frame_effects || []).includes('surge'));
+    } else if (activeFilter === 'Neon Ink') {
+      cards = variantCards.filter(c => (c.promo_types || []).includes('neon_ink'));
+    } else if (activeFilter === 'Chocobo Track') {
+      cards = variantCards.filter(c => (c.name || '').toLowerCase().includes('chocobo'));
+    } else if (activeFilter === 'Traditional') {
+      cards = variantCards.filter(c => {
+        const fe = c.frame_effects || [];
+        const pt = c.promo_types || [];
+        return !fe.includes('surge') && !fe.includes('serialized')
+            && !pt.includes('neon_ink')
+            && !(c.name || '').toLowerCase().includes('chocobo');
+      });
+    } else {
+      cards = variantCards.slice();
+    }
+
+    if (activeRarity) {
+      cards = cards.filter(c => c.rarity === rarityMap[activeRarity]);
+    }
+    if (searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase();
+      cards = cards.filter(c => c.name.toLowerCase().includes(q));
+    }
+
+    if (cards.length === 0) {
+      return `<div style="padding:32px;text-align:center;color:var(--text-muted)">No cards match the current filters.</div>`;
+    }
+
+    const totalPages = Math.ceil(cards.length / spp);
+    if (variantPage >= totalPages) variantPage = totalPages - 1;
+    const pageCards = cards.slice(variantPage * spp, (variantPage + 1) * spp);
+
+    const slotsHTML = pageCards.map((card, idx) => {
+      const isOwned = ownedSet.has(card.collector_number);
+      const isFoilOwned = hasFoil(card.collector_number);
+      const variantClass = isFoilOwned ? getFoilSlotClass(card) : '';
+      const delayClass = isFoilOwned ? `foil-delay-${idx % 3}` : '';
+      const foilSlotCls = isFoilOwned ? 'slot-foil-owned' : '';
+      const ownedSlotCls = isOwned ? 'slot-owned' : '';
+      const imgStyle = isOwned
+        ? 'width:100%;height:100%;object-fit:cover;border-radius:4px'
+        : 'width:100%;height:100%;object-fit:cover;border-radius:4px;filter:grayscale(1) brightness(0.25);opacity:0.5';
+      const label = getFoilVariantLabel(card);
+      const imgSrc = card.image_normal || card.image_small;
+      return `<div class="card-slot foil-slot ${ownedSlotCls} ${foilSlotCls} ${variantClass} ${delayClass}" data-cn="${card.collector_number}" style="position:relative;cursor:pointer">
+        <img data-src="${imgSrc}" alt="${card.name}" style="${imgStyle}">
+        ${isFoilOwned ? '<span class="foil-badge">\u2726</span>' : ''}
+        <span style="position:absolute;bottom:2px;left:2px;right:2px;font-size:0.5rem;color:rgba(255,255,255,0.7);text-align:center;pointer-events:none;line-height:1.2;background:rgba(0,0,0,0.45);border-radius:0 0 4px 4px;padding:1px 2px">${label}</span>
+      </div>`;
+    }).join('');
+
+    const navHTML = `
+      <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-top:14px">
+        <button class="btn btn-secondary variant-prev" style="padding:6px 16px" ${variantPage === 0 ? 'disabled' : ''}>&larr; Prev</button>
+        <span style="font-size:0.85rem;color:var(--text-muted)">Page ${variantPage + 1} of ${totalPages}</span>
+        <button class="btn btn-secondary variant-next" style="padding:6px 16px" ${variantPage >= totalPages - 1 ? 'disabled' : ''}>Next &rarr;</button>
+      </div>`;
+
+    return `<div class="page-grid foil-card-grid" style="grid-template-columns:repeat(${binderConfig.gridCols},1fr);gap:6px">${slotsHTML}</div>${navHTML}`;
+  }
+
+  // ── Render ──
+  el.innerHTML = statsHTML + filterBarHTML + `<div id="variant-grid-wrap">${buildVariantGrid()}</div>`;
+
+  // ── Lazy load images ──
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) { e.target.src = e.target.dataset.src; observer.unobserve(e.target); }
+    });
+  });
+  el.querySelectorAll('img[data-src]').forEach(img => observer.observe(img));
+
+  // ── Event delegation — pagination ──
+  if (el._onVariantPaginate) el.removeEventListener('click', el._onVariantPaginate);
+  el._onVariantPaginate = function(e) {
+    if (e.target.classList.contains('variant-prev')) {
+      variantPage = Math.max(0, variantPage - 1); persist();
+      renderVariantBinder(); return;
+    }
+    if (e.target.classList.contains('variant-next')) {
+      variantPage++; persist();
+      renderVariantBinder(); return;
+    }
+    // Filter type buttons
+    const typeBtn = e.target.closest('.variant-filter-type');
+    if (typeBtn) {
+      activeFilter = typeBtn.dataset.type; resetPage(); persist(); renderVariantBinder(); return;
+    }
+    // Rarity pills
+    const rarBtn = e.target.closest('.variant-filter-rarity');
+    if (rarBtn) {
+      activeRarity = activeRarity === rarBtn.dataset.rarity ? '' : rarBtn.dataset.rarity;
+      resetPage(); persist(); renderVariantBinder(); return;
+    }
+    // Slot click — toggle ownership
+    const slot = e.target.closest('.card-slot[data-cn]');
+    if (slot) {
+      const cn = slot.dataset.cn;
+      if (ownedSet.has(cn)) removeCard(cn);
+      else addCard(cn);
+      renderVariantBinder();
+      return;
+    }
+  };
+  el.addEventListener('click', el._onVariantPaginate);
+
+  // Search input
+  if (el._onVariantSearch) el.querySelector('.variant-search-input')?.removeEventListener('input', el._onVariantSearch);
+  el._onVariantSearch = function() {
+    searchQuery = this.value; resetPage(); persist(); renderVariantBinder();
+  };
+  const searchEl = el.querySelector('.variant-search-input');
+  if (searchEl) searchEl.addEventListener('input', el._onVariantSearch);
+}
 
   async function init() {
     try {
