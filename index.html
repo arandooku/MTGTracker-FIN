@@ -2657,6 +2657,9 @@ document.head.appendChild(manifestLink);
               foilOwned = {};
               saveFoil();
               renderSettings();
+              renderDashboard();
+              if (document.getElementById('tab-foil')?.classList.contains('active')) renderFoilBinder();
+              if (document.getElementById('tab-portfolio')?.classList.contains('active')) renderPortfolio();
               showToast('Foil collection reset.');
             }}
           ]
@@ -3160,28 +3163,33 @@ document.head.appendChild(manifestLink);
         || variantCards.find(c => c.collector_number === cn);
   }
 
+  function isSurgeFoil(card) {
+    return (card.frame_effects || []).includes('surge')
+        || (card.finishes || []).includes('surge_foil');
+  }
+
   // Returns uppercase badge label for foil toast and variant chips
   function getFoilVariantLabel(card) {
     if (!card) return 'FOIL';
     const fe = card.frame_effects || [];
-    const pt = card.promo_types || [];
-    if (fe.includes('surge')) return 'SURGE FOIL';
-    if (pt.includes('neon_ink')) return 'NEON INK FOIL';
-    if ((card.name || '').includes('Traveling Chocobo')) return 'NEON INK FOIL';
-    if (fe.includes('serialized')) return 'SERIALIZED';
-    if ((card.finishes || []).includes('foil') && !(card.finishes || []).includes('nonfoil')) return 'COLLECTOR FOIL';
-    return 'TRADITIONAL FOIL';
+    const pt = card.promo_types  || [];
+    if (isSurgeFoil(card))           return 'SURGE FOIL';
+    if (pt.includes('neon_ink'))     return 'NEON INK FOIL';
+    if (fe.includes('serialized'))   return 'SERIALIZED';
+    if (fe.includes('showcase'))     return 'SHOWCASE';
+    if (fe.includes('extendedart'))  return 'EXTENDED ART';
+    return 'FOIL';
   }
 
   // Returns CSS variant class for foil slot shimmer overlay
   function getFoilSlotClass(card) {
     if (!card) return '';
     const fe = card.frame_effects || [];
-    const pt = card.promo_types || [];
-    if (fe.includes('surge')) return 'foil-variant-surge';
+    const pt = card.promo_types  || [];
+    if (isSurgeFoil(card))                                              return 'foil-variant-surge';
     if (pt.includes('neon_ink') || (card.name || '').toLowerCase().includes('chocobo')) return 'foil-variant-neon';
-    if (fe.includes('serialized')) return 'foil-variant-serialized';
-    if ((card.finishes || []).every(f => f !== 'nonfoil')) return 'foil-variant-collector';
+    if (fe.includes('serialized'))                                      return 'foil-variant-serialized';
+    if ((card.finishes || []).every(f => f !== 'nonfoil'))              return 'foil-variant-collector';
     return '';
   }
 
