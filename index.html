@@ -623,6 +623,7 @@
     padding: 28px 24px;
     animation: card-enter 0.4s cubic-bezier(0.34,1.4,0.64,1) both;
   }
+  .wizard-step-container { position: relative; overflow: hidden; }
   .wizard-progress {
     height: 4px; background: var(--surface2); border-radius: 2px;
     margin-bottom: 28px; overflow: hidden;
@@ -1863,6 +1864,8 @@ document.head.appendChild(manifestLink);
       <button class="tab-btn" data-tab="portfolio"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:6px"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Portfolio</button>
       <button class="tab-btn" data-tab="timeline"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:6px"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Timeline</button>
       <button class="tab-btn" data-tab="binder"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:6px"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Binder View</button>
+      <button class="tab-btn" data-tab="foil" id="tab-btn-foil" style="display:none">✦ Foil</button>
+      <button class="tab-btn" data-tab="settings">⚙ Settings</button>
     </div>
 
     <div id="tab-dashboard" class="tab-content active">
@@ -1898,6 +1901,9 @@ document.head.appendChild(manifestLink);
         <button class="binder-nav" id="next-page">&rsaquo;</button>
       </div>
     </div>
+
+    <div class="tab-content" id="tab-foil"></div>
+    <div class="tab-content" id="tab-settings"></div>
 
     <div class="data-actions">
       <button class="btn btn-secondary" id="export-btn">Export Collection</button>
@@ -2010,6 +2016,7 @@ document.head.appendChild(manifestLink);
     </a>
     <div class="modal-actions">
       <button class="btn btn-primary" id="modal-toggle"></button>
+      <button class="btn btn-foil" id="modal-foil-toggle" style="display:none">Add Foil ✦</button>
       <button class="btn btn-secondary" id="modal-close">Close</button>
     </div>
   </div>
@@ -4298,5 +4305,13 @@ document.head.appendChild(manifestLink);
   init();
 })();
 </script>
+<div class="toast" id="toast"></div>
+<div class="sheet-backdrop" id="sheet-backdrop"></div>
+<div class="bottom-sheet" id="bottom-sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title" id="sheet-title"></div>
+  <div class="sheet-body" id="sheet-body"></div>
+  <div class="sheet-actions" id="sheet-actions"></div>
+</div>
 </body>
 </html>
