@@ -956,6 +956,7 @@
   .binder-page:nth-child(1) { animation-delay: 0.05s; }
   .binder-page:nth-child(2) { animation-delay: 0.12s; }
   .page-label { text-align: center; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 8px; }
+  /* Default matches binderConfig default (3×3). JS overrides via inline style for non-default configs. */
   .page-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
 
   .card-slot {
@@ -1619,7 +1620,7 @@ document.head.appendChild(manifestLink);
       <p class="subtitle">
         <span>ClearEdge 360</span>
         <span class="sep"></span>
-        <span>9-Pocket Binder</span>
+        <span id="binder-preset-display">9-Pocket Binder</span>
         <span class="sep"></span>
         <span id="binder-page-count-display">34 Pages</span>
       </p>
@@ -3414,6 +3415,8 @@ document.head.appendChild(manifestLink);
     binderConfig.pageCount = totalPages;
     const pcEl = document.getElementById('binder-page-count-display');
     if (pcEl) pcEl.textContent = `${binderConfig.pageCount} Pages`;
+    const preEl = document.getElementById('binder-preset-display');
+    if (preEl) preEl.textContent = binderConfig.presetName || `${binderConfig.slotsPerPage}-Pocket Binder`;
     renderPageSelector(getPageCount());
     renderSpread();
   }
