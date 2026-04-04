@@ -3229,11 +3229,12 @@ document.head.appendChild(manifestLink);
     const fe = card.frame_effects || [];
     const pt = card.promo_types  || [];
     if (isSurgeFoil(card))           return 'SURGE FOIL';
-    if (pt.includes('neon_ink'))     return 'NEON INK FOIL';
+    if (pt.includes('neon_ink') || (card.name || '').toLowerCase().includes('chocobo')) return 'NEON INK FOIL';
     if (fe.includes('serialized'))   return 'SERIALIZED';
     if (fe.includes('showcase'))     return 'SHOWCASE';
     if (fe.includes('extendedart'))  return 'EXTENDED ART';
-    return 'FOIL';
+    if ((card.finishes || []).includes('foil') && (card.finishes || []).every(f => f !== 'nonfoil')) return 'COLLECTOR FOIL';
+    return 'TRADITIONAL FOIL';
   }
 
   // Returns CSS variant class for foil slot shimmer overlay
