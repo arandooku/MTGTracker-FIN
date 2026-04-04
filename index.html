@@ -5240,12 +5240,15 @@ document.head.appendChild(manifestLink);
     let activeFilter = el._foilFilter || 'All';
     let activeRarity = el._foilRarity || '';
     let searchQuery  = el._foilSearch || '';
+    let foilPage     = el._foilPage  || 0;
 
     function persist() {
       el._foilFilter = activeFilter;
       el._foilRarity = activeRarity;
       el._foilSearch = searchQuery;
+      el._foilPage   = foilPage;
     }
+    function resetPage() { foilPage = 0; el._foilPage = 0; }
 
     // ── Computed stats ──
     const ownedFoilCount = allCards.filter(c => hasFoil(c.collector_number)).length;
@@ -5327,40 +5330,30 @@ document.head.appendChild(manifestLink);
 
     // ── Determine which cards to show and render grid ──
     function buildGrid() {
-      const isVariantFilter = ['Surge', 'Neon Ink', 'Chocobo Track'].includes(activeFilter);
-      const isFirstRender = !el.dataset.foilRendered;
+      const spp = binderConfig.slotsPerPage;
       let cards;
 
       if (activeFilter === 'Owned') {
-        // Show only owned foils: main-set + variant
-        cards = [...allCards]
-          .sort((a, b) => compareCollector(a.collector_number, b.collector_number))
-          .filter(c => hasFoil(c.collector_number));
-        const ownedVariants = variantCards.filter(c => hasFoil(c.collector_number));
-        cards = [...cards, ...ownedVariants];
-      } else if (isVariantFilter) {
-        if (variantCards.length === 0) {
-          return `<div style="padding:32px;text-align:center;color:var(--text-muted)">No variant cards loaded yet.<br><small>Variant data will be available once the collector booster card list is fetched.</small></div>`;
-        }
-        cards = variantCards.filter(c => {
-          const finishes = c.finishes || [];
-          if (activeFilter === 'Surge')        return finishes.includes('surge_foil') || (c.frame_effects || []).includes('surge_foil');
-          if (activeFilter === 'Neon Ink')     return (c.frame_effects || []).includes('neon_ink') || c.name?.toLowerCase().includes('neon');
-          if (activeFilter === 'Chocobo Track')return (c.frame_effects || []).includes('chocobo_track') || c.name?.toLowerCase().includes('chocobo');
-          return true;
-        });
+        cards = [...allCards, ...variantCards]
+          .filter(c => hasFoil(c.collector_number))
+          .sort((a, b) => compareCollector(a.collector_number, b.collector_number));
+      } else if (activeFilter === 'Surge') {
+        cards = variantCards.filter(c => (c.frame_effects || []).includes('surge'));
+      } else if (activeFilter === 'Neon Ink') {
+        cards = variantCards.filter(c => (c.promo_types || []).includes('neon_ink') || (c.name || '').toLowerCase().includes('chocobo'));
+      } else if (activeFilter === 'Chocobo Track') {
+        cards = variantCards.filter(c => (c.name || '').toLowerCase().includes('chocobo'));
+      } else if (activeFilter === 'Traditional') {
+        cards = allCards.slice().sort((a, b) => compareCollector(a.collector_number, b.collector_number));
       } else {
-        // Traditional or All — show main-set cards
+        // All
         cards = [...allCards].sort((a, b) => compareCollector(a.collector_number, b.collector_number));
       }
 
-      // Rarity filter (skip for Owned which may include variants of mixed rarity)
-      if (activeRarity && activeFilter !== 'Owned') {
-        const rarityFull = rarityMap[activeRarity];
-        cards = cards.filter(c => c.rarity === rarityFull);
+      if (activeRarity) {
+        const rarityMap = { C: 'common', U: 'uncommon', R: 'rare', M: 'mythic' };
+        cards = cards.filter(c => c.rarity === rarityMap[activeRarity]);
       }
-
-      // Name search
       if (searchQuery.trim()) {
         const q = searchQuery.trim().toLowerCase();
         cards = cards.filter(c => c.name.toLowerCase().includes(q));
@@ -5370,21 +5363,33 @@ document.head.appendChild(manifestLink);
         return `<div style="padding:32px;text-align:center;color:var(--text-muted)">No cards match the current filters.</div>`;
       }
 
-      const slotsHTML = cards.map((card, idx) => {
-        const owned = hasFoil(card.collector_number);
-        const cls = owned ? 'slot-foil-owned' : 'slot-foil-missing';
-        const delay = (isFirstRender && idx < 20) ? (idx * 0.015).toFixed(3) : '0';
-        const animStyle = isFirstRender ? `animation:card-enter 0.3s ease both;animation-delay:${delay}s` : '';
+      const totalPages = Math.ceil(cards.length / spp);
+      if (foilPage >= totalPages) foilPage = totalPages - 1;
+      const pageCards = cards.slice(foilPage * spp, (foilPage + 1) * spp);
+
+      const slotsHTML = pageCards.map((card, idx) => {
+        const isFoilOwned = hasFoil(card.collector_number);
+        const variantClass = isFoilOwned ? getFoilSlotClass(card) : '';
+        const delayClass = isFoilOwned ? `foil-delay-${idx % 3}` : '';
+        const slotCls = isFoilOwned ? 'slot-foil-owned' : 'slot-foil-missing';
+        const imgStyle = isFoilOwned
+          ? 'width:100%;height:100%;object-fit:cover;border-radius:4px'
+          : 'width:100%;height:100%;object-fit:cover;border-radius:4px;filter:grayscale(1) brightness(0.25);opacity:0.5';
         const imgSrc = card.image_normal || card.image_small;
-        const imgOrPlaceholder = `<img data-src="${imgSrc}" alt="${card.name}" style="width:100%;height:100%;object-fit:cover;border-radius:4px${!owned ? ';filter:grayscale(0.7) brightness(0.6)' : ''}">`;
-        return `<div class="card-slot ${cls} foil-slot" data-cn="${card.collector_number}"
-          style="position:relative;${animStyle}">
-          ${imgOrPlaceholder}
-          <span class="foil-badge">✦</span>
-        </div>`;
+        return `<div class="card-slot foil-slot ${slotCls} ${variantClass} ${delayClass}" data-cn="${card.collector_number}" style="position:relative">
+      <img data-src="${imgSrc}" alt="${card.name}" style="${imgStyle}">
+      ${isFoilOwned ? '<span class="foil-badge">\u2726</span>' : ''}
+    </div>`;
       }).join('');
 
-      return `<div class="page-grid foil-card-grid" style="grid-template-columns:repeat(${binderConfig.gridCols},1fr);gap:6px">${slotsHTML}</div>`;
+      const navHTML = `
+    <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-top:14px">
+      <button class="btn btn-secondary foil-prev" style="padding:6px 16px" ${foilPage === 0 ? 'disabled' : ''}>&larr; Prev</button>
+      <span style="font-size:0.85rem;color:var(--text-muted)">Page ${foilPage + 1} of ${totalPages}</span>
+      <button class="btn btn-secondary foil-next" style="padding:6px 16px" ${foilPage >= totalPages - 1 ? 'disabled' : ''}>Next &rarr;</button>
+    </div>`;
+
+      return `<div class="page-grid foil-card-grid" style="grid-template-columns:repeat(${binderConfig.gridCols},1fr);gap:6px">${slotsHTML}</div>${navHTML}`;
     }
 
     // ── Top valuable foils ──
@@ -5489,6 +5494,7 @@ document.head.appendChild(manifestLink);
     el.querySelectorAll('.foil-filter-type').forEach(btn => {
       btn.addEventListener('click', () => {
         activeFilter = btn.dataset.type;
+        resetPage();
         reRenderGrid();
       });
     });
@@ -5496,13 +5502,31 @@ document.head.appendChild(manifestLink);
     el.querySelectorAll('.foil-filter-rarity').forEach(btn => {
       btn.addEventListener('click', () => {
         activeRarity = activeRarity === btn.dataset.rarity ? '' : btn.dataset.rarity;
+        resetPage();
         reRenderGrid();
       });
     });
 
     el.querySelector('.foil-search-input').addEventListener('input', e => {
       searchQuery = e.target.value;
+      resetPage();
       reRenderGrid();
+    });
+
+    // ── Pagination button wiring (event delegation on container) ──
+    el.addEventListener('click', function onFoilPaginate(e) {
+      if (e.target.classList.contains('foil-prev')) {
+        foilPage = Math.max(0, foilPage - 1);
+        persist();
+        reRenderGrid();
+        return;
+      }
+      if (e.target.classList.contains('foil-next')) {
+        foilPage++;
+        persist();
+        reRenderGrid();
+        return;
+      }
     });
   }
 
