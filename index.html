@@ -3418,7 +3418,7 @@ document.head.appendChild(manifestLink);
       <img src="${card.image_normal || card.image_small}" alt="${card.name}">
       <div class="toast-name">#${card.collector_number} ${card.name}</div>
       <div class="toast-foil-msg">${msg}</div>
-      <div class="toast-placement">Page ${p.page}, Slot ${p.slot}${priceStr}</div>
+      ${p.page !== '?' ? `<div class="toast-placement">Page ${p.page}, Slot ${p.slot}${priceStr}</div>` : priceStr ? `<div class="toast-placement">${priceStr.trim()}</div>` : ''}
     `;
     container.appendChild(toast);
 
