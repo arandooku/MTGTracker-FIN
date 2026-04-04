@@ -240,19 +240,6 @@
   }
   .progress-text { font-size: clamp(0.75rem, 1.8vw, 0.9rem); white-space: nowrap; font-weight: 600; }
 
-  .stats-row {
-    display: flex; justify-content: center; gap: 16px;
-    margin-top: 12px; flex-wrap: wrap;
-  }
-  .stat-badge {
-    font-size: clamp(0.65rem, 1.5vw, 0.75rem); padding: clamp(3px, 0.5vw, 4px) clamp(6px, 1.2vw, 10px);
-    border-radius: 12px; background: var(--surface);
-  }
-  .stat-badge.mythic { border: 1px solid #e8702a; color: #e8702a; }
-  .stat-badge.rare { border: 1px solid #c9a14e; color: #c9a14e; }
-  .stat-badge.uncommon { border: 1px solid #a8c4c4; color: #a8c4c4; }
-  .stat-badge.common { border: 1px solid #888; color: #888; }
-
   /* ── Tabs ── */
   .tabs {
     display: flex; gap: 4px; margin-bottom: 20px;
@@ -1991,7 +1978,6 @@ document.head.appendChild(manifestLink);
         <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
         <div class="progress-text" id="progress-text">0 / 0</div>
       </div>
-      <div class="stats-row" id="stats-row"></div>
     </header>
 
     <div class="tabs">
@@ -3504,6 +3490,7 @@ document.head.appendChild(manifestLink);
     if (document.getElementById('tab-dashboard').classList.contains('active')) renderDashboard();
     if (document.getElementById('tab-portfolio').classList.contains('active')) renderPortfolio();
     if (document.getElementById('tab-timeline').classList.contains('active')) renderTimeline();
+    if (document.getElementById('tab-foil')?.classList.contains('active')) renderFoilBinder();
     if (document.getElementById('tab-variants')?.classList.contains('active')) renderVariantBinder();
   }
 
@@ -3518,6 +3505,7 @@ document.head.appendChild(manifestLink);
     if (document.getElementById('tab-dashboard').classList.contains('active')) renderDashboard();
     if (document.getElementById('tab-portfolio').classList.contains('active')) renderPortfolio();
     if (document.getElementById('tab-timeline').classList.contains('active')) renderTimeline();
+    if (document.getElementById('tab-foil')?.classList.contains('active')) renderFoilBinder();
     if (document.getElementById('tab-variants')?.classList.contains('active')) renderVariantBinder();
   }
 
@@ -3931,8 +3919,6 @@ document.head.appendChild(manifestLink);
     const pct = total ? (owned / total * 100) : 0;
     document.getElementById('progress-fill').style.width = pct.toFixed(1) + '%';
     document.getElementById('progress-text').textContent = `${owned} / ${total} (${pct.toFixed(1)}%)`;
-
-    document.getElementById('stats-row').innerHTML = '';
   }
 
   // ── Rendering: Dashboard ──
@@ -4274,7 +4260,7 @@ document.head.appendChild(manifestLink);
       { target: 75, label: '25%' },
       { target: 150, label: '50%' },
       { target: 225, label: '75%' },
-      { target: 300, label: '100%' },
+      { target: allCards.length || 309, label: '100%' },
     ];
     // Walk through add events to find when each milestone was hit
     const seen = new Set();
@@ -5159,6 +5145,8 @@ document.head.appendChild(manifestLink);
     if (document.getElementById('tab-dashboard').classList.contains('active')) renderDashboard();
     if (document.getElementById('tab-portfolio').classList.contains('active')) renderPortfolio();
     if (document.getElementById('tab-timeline').classList.contains('active')) renderTimeline();
+    if (document.getElementById('tab-foil')?.classList.contains('active')) renderFoilBinder();
+    if (document.getElementById('tab-variants')?.classList.contains('active')) renderVariantBinder();
   }
 
   // ── Init ──
@@ -5373,7 +5361,7 @@ document.head.appendChild(manifestLink);
       const slotsHTML = pageCards.map((card, idx) => {
         const isFoilOwned = hasFoil(card.collector_number);
         const variantClass = isFoilOwned ? getFoilSlotClass(card) : '';
-        const delayClass = isFoilOwned ? `foil-delay-${idx % 3}` : '';
+        const delayClass = isFoilOwned ? `foil-delay-${(idx % 2) + 1}` : '';
         const slotCls = isFoilOwned ? 'slot-foil-owned' : 'slot-foil-missing';
         const imgStyle = isFoilOwned
           ? 'width:100%;height:100%;object-fit:cover;border-radius:4px'
@@ -5655,15 +5643,14 @@ document.head.appendChild(manifestLink);
       const isOwned = ownedSet.has(card.collector_number);
       const isFoilOwned = hasFoil(card.collector_number);
       const variantClass = isFoilOwned ? getFoilSlotClass(card) : '';
-      const delayClass = isFoilOwned ? `foil-delay-${idx % 3}` : '';
+      const delayClass = isFoilOwned ? `foil-delay-${(idx % 2) + 1}` : '';
       const foilSlotCls = isFoilOwned ? 'slot-foil-owned' : 'slot-foil-missing';
-      const ownedSlotCls = isOwned ? 'slot-owned' : '';
       const imgStyle = isOwned
         ? 'width:100%;height:100%;object-fit:cover;border-radius:4px'
         : 'width:100%;height:100%;object-fit:cover;border-radius:4px;filter:grayscale(1) brightness(0.25);opacity:0.5';
       const label = getFoilVariantLabel(card);
       const imgSrc = card.image_normal || card.image_small;
-      return `<div class="card-slot foil-slot ${ownedSlotCls} ${foilSlotCls} ${variantClass} ${delayClass}" data-cn="${card.collector_number}" style="position:relative;cursor:pointer">
+      return `<div class="card-slot foil-slot ${foilSlotCls} ${variantClass} ${delayClass}" data-cn="${card.collector_number}" style="position:relative;cursor:pointer">
         <img data-src="${imgSrc}" alt="${card.name}" style="${imgStyle}">
         ${isFoilOwned ? '<span class="foil-badge">\u2726</span>' : ''}
         <span style="position:absolute;bottom:2px;left:2px;right:2px;font-size:0.5rem;color:rgba(255,255,255,0.7);text-align:center;pointer-events:none;line-height:1.2;background:rgba(0,0,0,0.45);border-radius:0 0 4px 4px;padding:1px 2px">${label}</span>
