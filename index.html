@@ -3803,10 +3803,7 @@ document.head.appendChild(manifestLink);
           ${topFoils.length > 0 ? `
             <div class="dash-sub" style="margin-top:10px;color:var(--text-muted);font-size:0.78rem;margin-bottom:4px">Top owned foils:</div>
             ${topFoils.map(c => `
-              <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.8rem;padding:3px 0;cursor:pointer;border-radius:6px;transition:background 0.15s"
-                   onclick="openModal(allCards.concat(variantCards).find(x => x.collector_number === '${c.collector_number}'))"
-                   onmouseover="this.style.background='rgba(255,255,255,0.05)'"
-                   onmouseout="this.style.background=''">
+              <div class="foil-top-row" data-foil-cn="${c.collector_number}" style="display:flex;justify-content:space-between;align-items:center;font-size:0.8rem;padding:3px 0;border-radius:6px;transition:background 0.15s">
                 <span style="color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:70%">${c.name}</span>
                 <span style="color:#ffd93d;flex-shrink:0;margin-left:8px">$${(c.price_usd_foil || 0).toFixed(2)}</span>
               </div>
@@ -3864,6 +3861,17 @@ document.head.appendChild(manifestLink);
         </div>
       </div>
     `;
+    // Wire foil top-row clicks
+    dash.querySelectorAll('.foil-top-row').forEach(function(row) {
+      var cn = row.dataset.foilCn;
+      row.style.cursor = 'pointer';
+      row.addEventListener('mouseover', function() { this.style.background = 'rgba(255,255,255,0.05)'; });
+      row.addEventListener('mouseout', function() { this.style.background = ''; });
+      row.addEventListener('click', function() {
+        var card = allCards.concat(variantCards).find(function(x) { return x.collector_number === cn; });
+        if (card) openModal(card);
+      });
+    });
   }
 
   // ── Rendering: Portfolio ──
