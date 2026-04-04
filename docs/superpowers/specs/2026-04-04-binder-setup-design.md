@@ -179,6 +179,67 @@ Current hardcoded values to replace with config-driven equivalents:
 
 ---
 
+## UI Design Language & Animations
+
+All new UI must feel like a natural extension of the existing Catppuccin-themed, dark-first aesthetic. The guiding principle: **purposeful motion, no decorative noise**. Every animation communicates state change.
+
+### Design Tokens (reuse existing CSS variables)
+- Surfaces: `--surface`, `--surface2`, `--slot-bg`
+- Accent: `--accent` (#f38ba8 rose / #d20f39 light), `--accent2` (#cba6f7 lavender / #8839ef light)
+- Spring easing: `cubic-bezier(0.34, 1.4, 0.64, 1)` — matches existing modal-in, card-enter
+- Strong spring: `cubic-bezier(0.34, 1.56, 0.64, 1)` — matches missing-inspect hover
+- Text: `--text`, `--text-muted`
+
+### Wizard Step Transitions
+- Steps slide horizontally: entering step slides in from the right (`translateX(32px) → 0`), exiting step slides out to the left (`0 → translateX(-32px)`), both with `opacity 0→1 / 1→0`, duration `0.3s`, easing `cubic-bezier(0.4,0,0.2,1)`
+- Going Back reverses the direction
+- Progress pill bar fills smoothly: `width` transition `0.4s ease`
+
+### Toggle Switches
+- Custom CSS toggle (not native checkbox): pill track + circle thumb
+- Thumb slides with `transform: translateX` — `0.22s cubic-bezier(0.34,1.4,0.64,1)` (slight overshoot)
+- Track color transitions: `--surface2` → `--accent` over `0.2s ease`
+- Locked toggles (Main Set): visually distinct — muted opacity, lock icon, `cursor: not-allowed`
+- Minimum tap target: 44×28px
+
+### Preset Dropdown & Custom Inputs
+- Custom-styled `<select>` with chevron icon, matches existing input aesthetic
+- Custom inputs (rows/cols) have a focus ring: `box-shadow: 0 0 0 2px var(--accent)` with `0.15s ease`
+- Live summary line beneath animates value changes: number counts up/down with a subtle `scale(1.08) → scale(1)` pop, `0.2s spring`
+
+### Settings Form Save Button
+- Default state: standard `--accent` fill
+- On click: brief `scale(0.96)` press → release spring back `cubic-bezier(0.34,1.56,0.64,1)`
+- On success: button briefly shows a checkmark icon with a `scale(0→1)` entrance, then label returns — `0.4s` total
+- Toast notification slides in from bottom: `translateY(100%) → translateY(0)`, fades out after 2s
+
+### Section Headers in Settings Form
+- Each section (`Binder Setup`, `Collection Scope`, `Danger Zone`) has a thin `--accent` left-border rule and a label in `--text-muted`
+- Danger Zone uses `--accent` in red tint (`#f38ba8` dark / `#d20f39` light) for its border and action buttons
+
+### First-Run Wizard Container
+- Wizard card: `background: var(--surface)`, `border-radius: 16px`, `box-shadow: 0 8px 32px var(--shadow)`
+- Entrance: `card-enter` keyframe (already defined — `translateY(12px) opacity:0 → translateY(0) opacity:1`), `0.4s cubic-bezier(0.34,1.4,0.64,1)`
+- "Set Up My Binder" CTA button: full-width, `--accent` background, subtle shimmer sweep on hover (same pattern as `.missing-inspect::after`)
+
+### Foil Binder Tab Entry Animation
+- When Foil tab becomes visible after enabling in Settings: tab button fades + scales in `(scale(0.85) opacity:0 → scale(1) opacity:1)`, `0.3s spring`
+- Grid slots enter staggered: `animation-delay: index * 0.015s` (same pattern as existing `card-enter` stagger)
+
+### Bottom Sheet (Mobile Danger Zone Dialogs)
+- Slides up from bottom: `translateY(100%) → translateY(0)`, `0.35s cubic-bezier(0.34,1.4,0.64,1)`
+- Backdrop fades in: `opacity 0→0.6`, `0.25s ease`
+- Dismiss: reverse slide + fade, `0.25s ease`
+- Drag handle indicator (2px × 32px rounded pill) at top of sheet
+
+### General Principles
+- No animation exceeds `0.5s` — keep it snappy
+- `prefers-reduced-motion: reduce` media query wraps all transitions/animations with `duration: 0.01ms` fallback
+- Interactive elements have `:hover` and `:active` states — no bare, unresponsive buttons
+- Focus-visible outlines for keyboard/accessibility: `outline: 2px solid var(--accent); outline-offset: 2px`
+
+---
+
 ## Mobile Considerations
 
 The existing app is built mobile-first (viewport meta, `100dvh`, `safe-area-inset`, `touch-action: manipulation`, `-webkit-tap-highlight-color: transparent`). All new UI must match these existing patterns.
