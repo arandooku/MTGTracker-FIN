@@ -37,19 +37,19 @@
     --chart-empty: #45475a;
   }
   [data-theme="light"] {
-    --bg: #eff1f5;
-    --surface: #e6e9ef;
-    --surface2: #ccd0da;
-    --surface3: #bcc0cc;
-    --accent: #d20f39;
-    --accent2: #8839ef;
-    --text: #4c4f69;
-    --text-muted: #6c6f85;
-    --owned-border: #40a02b;
-    --slot-bg: #dce0e8;
-    --shadow: rgba(220,224,232,0.5);
-    --modal-bg: rgba(76,79,105,0.5);
-    --chart-empty: #ccd0da;
+    --bg: #f5f3ef;
+    --surface: #eae7e0;
+    --surface2: #ddd9d0;
+    --surface3: #c5c0b6;
+    --accent: #c0392b;
+    --accent2: #7e57c2;
+    --text: #3b3632;
+    --text-muted: #655c52;
+    --owned-border: #4caf50;
+    --slot-bg: #e8e4dc;
+    --shadow: rgba(59,54,50,0.08);
+    --modal-bg: rgba(59,54,50,0.55);
+    --chart-empty: #ddd9d0;
   }
 
   body {
@@ -108,6 +108,36 @@
   [data-theme="light"] .brand-icon img {
     filter: brightness(0);
   }
+  /* Light mode readability fixes */
+  [data-theme="light"] {
+    --foil-color: #b8860b;
+    --foil-color-bg: rgba(184,134,11,0.1);
+  }
+  [data-theme="dark"] {
+    --foil-color: #ffd93d;
+    --foil-color-bg: rgba(255,217,61,0.1);
+  }
+  [data-theme="light"] .rarity-label.uncommon { color: #4a8a8a; }
+  [data-theme="light"] .rarity-label.common { color: #6b6560; }
+  [data-theme="light"] .rarity-fill.uncommon { background: #4a8a8a; }
+  [data-theme="light"] .rarity-fill.common { background: #9e9892; }
+  [data-theme="light"] .rarity-count { color: #5a5550; }
+  [data-theme="light"] .top-card-item .rank { color: #b0392b; }
+  [data-theme="light"] .value-box { background: #ede9e1; }
+  [data-theme="light"] .price-source { background: #ede9e1; }
+  [data-theme="light"] .dash-card { background: #eae7e0; border: 1px solid #ddd9d0; }
+  [data-theme="light"] .dash-card:hover { border-color: #c5c0b6; }
+  [data-theme="light"] .top-card-item { background: #ede9e1; }
+  [data-theme="light"] .fill-cell { background: #ddd9d0; }
+  [data-theme="light"] .foil-chip.owned { border-color: rgba(184,134,11,0.5); color: var(--foil-color); background: var(--foil-color-bg); }
+  [data-theme="light"] .foil-chip.unowned { border-color: #c5c0b6; color: #7a7268; }
+  [data-theme="light"] .foil-badge { color: var(--foil-color); text-shadow: 0 0 4px rgba(184,134,11,0.6); }
+  [data-theme="light"] .ac-variant-badge.vb-surge { color: #9e7c0a; border-color: #9e7c0a44; background: #9e7c0a18; }
+  [data-theme="light"] .ac-variant-badge.vb-chocobo { color: #0d7d55; border-color: #0d7d5544; background: #0d7d5518; }
+  [data-theme="light"] .ac-variant-badge.vb-traditional { color: #6a3dba; border-color: #6a3dba44; background: #6a3dba18; }
+  [data-theme="light"] .ac-variant-badge.vb-extended { color: #2563a8; border-color: #2563a844; background: #2563a818; }
+  [data-theme="light"] .ac-variant-badge.vb-showcase { color: #c02050; border-color: #c0205044; background: #c0205018; }
+  [data-theme="light"] .ac-variant-badge.vb-collector { color: #5a5550; border-color: #5a555044; background: #5a555018; }
   .brand-text { text-align: left; }
   .brand-title {
     font-size: clamp(1rem, 4vw, 2.4rem); font-weight: 800; line-height: 1.1;
@@ -119,7 +149,7 @@
   }
   .brand-title .tcg { color: var(--text); font-weight: 600; }
   .brand-title .ver {
-    font-size: clamp(0.4rem, 1vw, 0.55rem); color: var(--text-muted);
+    font-size: clamp(0.55rem, 1vw, 0.65rem); color: var(--text-muted);
     font-weight: 600; vertical-align: super;
   }
   .brand-set {
@@ -395,9 +425,9 @@
   }
   .price-source {
     display: inline-flex; align-items: center; gap: 5px;
-    font-size: 0.7rem; color: var(--text-muted);
-    background: var(--slot-bg); padding: 4px 10px;
-    border-radius: 12px; line-height: 1.3;
+    font-size: 0.75rem; color: var(--text-muted);
+    background: var(--slot-bg); padding: 6px 12px;
+    border-radius: 12px; line-height: 1.4;
   }
   .price-source a {
     color: var(--accent2); text-decoration: none; font-weight: 600;
@@ -691,22 +721,39 @@
 
   /* ── Settings Form ── */
   .settings-section {
-    margin-bottom: 28px;
-    padding: 18px 20px;
+    margin-bottom: 16px;
+    padding: 16px 18px;
     background: var(--surface); border-radius: 12px;
-    border-left: 3px solid var(--accent);
+    border: 1px solid var(--surface2);
   }
-  .settings-section.danger { border-left-color: var(--accent); }
+  .settings-section-header {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 12px;
+  }
+  .settings-section-icon {
+    width: 28px; height: 28px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--slot-bg); color: var(--text-muted); flex-shrink: 0;
+  }
   .settings-section-title {
-    font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em;
-    text-transform: uppercase; color: var(--text-muted); margin-bottom: 14px;
+    font-size: 0.78rem; font-weight: 700; letter-spacing: 0.06em;
+    text-transform: uppercase; color: var(--text-muted);
+  }
+  .settings-section-sub {
+    font-size: 0.7rem; color: var(--text-muted); opacity: 0.7; margin-top: 1px;
+  }
+  .settings-section.danger {
+    border-color: transparent;
+    background: transparent;
+    padding: 12px 0 0;
   }
   .settings-live-summary {
     font-size: 0.8rem; color: var(--text-muted);
     margin-top: 10px; min-height: 1.2em;
+    background: var(--slot-bg); padding: 8px 12px; border-radius: 8px;
+    text-align: center;
   }
   .settings-live-summary .pop {
-    display: inline-block;
+    display: inline-block; font-weight: 700; color: var(--text);
     animation: num-pop 0.2s cubic-bezier(0.34,1.56,0.64,1) both;
   }
   @keyframes num-pop {
@@ -714,29 +761,52 @@
     to   { transform: scale(1); }
   }
   .settings-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
-  .settings-row label { font-size: 0.85rem; color: var(--text-muted); white-space: nowrap; }
-  .custom-inputs { display: none; align-items: center; gap: 8px; }
+  .settings-row label { font-size: 0.82rem; color: var(--text-muted); white-space: nowrap; min-width: 50px; }
+  .settings-row select, .settings-row input[type="number"] {
+    padding: 7px 12px; background: var(--slot-bg); border: 1px solid var(--surface2);
+    border-radius: 8px; color: var(--text); font-size: 0.85rem;
+    transition: border-color 0.2s;
+  }
+  .settings-row select:focus, .settings-row input[type="number"]:focus {
+    outline: none; border-color: var(--accent);
+  }
+  .custom-inputs { display: none; align-items: center; gap: 8px; margin-top: 8px; }
   .custom-inputs.visible { display: flex; }
   .custom-inputs input {
     width: 56px; padding: 6px 8px; background: var(--slot-bg);
     border: 1px solid var(--surface2); border-radius: 8px;
     color: var(--text); font-size: 0.9rem; text-align: center;
-    transition: box-shadow 0.15s ease;
+    transition: border-color 0.2s;
   }
-  .custom-inputs input:focus { outline: none; box-shadow: 0 0 0 2px var(--accent); }
-  .danger-toggle { font-size: 0.82rem; color: var(--accent); cursor: pointer; background: none; border: none; padding: 4px 0; }
-  .danger-actions { display: none; flex-direction: column; gap: 8px; margin-top: 12px; }
+  .custom-inputs input:focus { outline: none; border-color: var(--accent); }
+  .danger-toggle {
+    font-size: 0.78rem; color: var(--text-muted); cursor: pointer;
+    background: none; border: none; padding: 4px 0;
+    display: flex; align-items: center; gap: 4px;
+  }
+  .danger-toggle:hover { color: var(--accent); }
+  .danger-actions { display: none; flex-direction: column; gap: 6px; margin-top: 10px; }
   .danger-actions.visible { display: flex; }
+  .danger-actions .btn { font-size: 0.78rem; padding: 8px 14px; text-align: left; }
 
   /* ── Save Button States ── */
-  .save-btn-wrap { margin-top: 20px; }
+  .save-btn-wrap { margin-top: 16px; }
   .save-btn-wrap .btn-save {
-    width: 100%; min-height: 48px; font-size: 0.95rem; font-weight: 700;
-    position: relative; overflow: hidden;
+    width: 100%; min-height: 44px; font-size: 0.9rem; font-weight: 700;
+    position: relative; overflow: hidden; border-radius: 10px;
     transition: transform 0.08s cubic-bezier(0.34,1.56,0.64,1), background 0.2s;
   }
-  .save-btn-wrap .btn-save:active { transform: scale(0.96); }
+  .save-btn-wrap .btn-save:active { transform: scale(0.97); }
   .save-btn-wrap .btn-save.success { background: var(--owned-border); color: #1e1e2e; }
+
+  /* Settings data row */
+  .settings-data-row {
+    display: flex; gap: 6px; flex-wrap: wrap;
+  }
+  .settings-data-row .btn {
+    flex: 1; min-width: 0; font-size: 0.75rem; padding: 8px 10px;
+    display: flex; align-items: center; justify-content: center; gap: 5px;
+  }
 
   /* ── Toast ── */
   .toast {
@@ -821,14 +891,18 @@
     border: 1.5px solid rgba(255,255,255,0.3) !important;
     box-shadow: 0 0 14px rgba(255,200,100,0.3) !important;
   }
+  .slot-variant-owned {
+    border: 1.5px solid rgba(107,203,119,0.5) !important;
+    box-shadow: 0 0 10px rgba(107,203,119,0.2) !important;
+  }
   .slot-foil-missing {
-    opacity: 0.45;
+    opacity: 0.7;
     border: 1px dashed var(--surface3) !important;
   }
   .foil-badge {
     position: absolute; top: 2px; right: 3px;
-    font-size: 0.55rem; color: #ffd93d;
-    text-shadow: 0 0 6px rgba(255,217,61,0.9);
+    font-size: 0.7rem; color: var(--foil-color);
+    text-shadow: 0 0 6px var(--foil-color-bg);
     pointer-events: none;
   }
   /* ── Foil card shimmer overlay (::after on owned slots) ── */
@@ -842,7 +916,7 @@
     50%       { opacity: 1; }
   }
 
-  /* Base overlay — traditional foil rainbow */
+  /* Base overlay — foil rainbow */
   .foil-slot.slot-foil-owned::after {
     content: ''; position: absolute; inset: 0; border-radius: 4px;
     pointer-events: none; z-index: 1;
@@ -855,13 +929,21 @@
     mix-blend-mode: screen;
     animation: foil-card-shimmer 4s ease-in-out infinite;
   }
-  /* Surge — electric blue-white, faster */
+  /* Surge — bold diagonal rainbow streaks, high intensity, fast sweep */
+  @keyframes surge-sweep {
+    0%   { background-position: 200% 0%; }
+    100% { background-position: -200% 0%; }
+  }
   .foil-slot.foil-variant-surge.slot-foil-owned::after {
-    background: linear-gradient(115deg,
-      transparent 20%, rgba(160,210,255,0.5) 35%,
-      rgba(255,255,255,0.55) 50%, rgba(120,175,255,0.5) 65%,
-      transparent 80%);
-    animation-duration: 2.5s;
+    background: repeating-linear-gradient(35deg,
+      transparent 0%, rgba(255,50,150,0.45) 4%,
+      rgba(50,180,255,0.5) 8%, rgba(80,255,180,0.45) 12%,
+      rgba(255,220,50,0.5) 16%, rgba(180,80,255,0.45) 20%,
+      transparent 24%);
+    background-size: 300% 100%;
+    mix-blend-mode: screen;
+    animation: surge-sweep 2.2s linear infinite;
+    opacity: 0.85;
   }
   /* Neon ink — pulsing radial glow */
   .foil-slot.foil-variant-neon.slot-foil-owned::after {
@@ -892,7 +974,7 @@
 
   /* Variant-specific border glow overrides */
   .foil-slot.foil-variant-surge.slot-foil-owned {
-    box-shadow: 0 0 14px rgba(100,180,255,0.45) !important;
+    box-shadow: 0 0 10px rgba(100,180,255,0.4), 0 0 20px rgba(200,80,255,0.25) !important;
   }
   .foil-slot.foil-variant-neon.slot-foil-owned {
     box-shadow: 0 0 14px rgba(255,80,200,0.5) !important;
@@ -913,25 +995,40 @@
   }
   .btn-foil:hover { filter: brightness(1.1); }
   .modal-foil-info {
-    display: flex; flex-wrap: wrap; gap: 6px;
-    margin: 8px 0 4px; min-height: 0;
-    justify-content: center;
+    display: flex; flex-wrap: wrap; gap: 5px;
+    min-height: 0;
   }
   .foil-chip {
-    display: inline-flex; align-items: center; gap: 5px;
-    font-size: 0.72rem; padding: 3px 10px;
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 0.68rem; padding: 2px 8px;
     border-radius: 20px; border: 1px solid;
     line-height: 1.5;
+    transition: all 0.2s ease;
+    text-decoration: none;
   }
+  .foil-chip[data-nav-tab] { cursor: pointer; }
+  .foil-chip .chip-arrow {
+    font-size: 0.65rem; opacity: 0.5; transition: opacity 0.2s, transform 0.2s;
+  }
+  .foil-chip:hover .chip-arrow { opacity: 1; transform: translateX(2px); }
   .foil-chip.owned {
     border-color: rgba(255,217,61,0.6);
-    color: #ffd93d;
-    background: rgba(255,217,61,0.1);
+    color: var(--foil-color);
+    background: var(--foil-color-bg);
+  }
+  .foil-chip.owned:hover {
+    background: rgba(255,217,61,0.2);
+    border-color: rgba(255,217,61,0.8);
   }
   .foil-chip.unowned {
     border-color: var(--surface2);
     color: var(--text-muted);
     background: transparent;
+  }
+  .foil-chip.unowned:hover {
+    border-color: var(--accent);
+    color: var(--text);
+    background: var(--surface2);
   }
   .foil-chip.unavailable {
     border-color: transparent;
@@ -940,6 +1037,7 @@
     opacity: 0.75;
     font-style: italic;
     font-size: 0.7rem;
+    cursor: default;
   }
 
   /* ── Timeline ── */
@@ -1005,8 +1103,8 @@
   }
   .heatmap-cell:hover::before { opacity: 1; transform: translateX(-50%) scale(1); }
   .heatmap-labels {
-    display: flex; font-size: 0.6rem; color: var(--text-muted);
-    margin-top: 4px; gap: 3px; padding-left: 2px;
+    display: flex; font-size: 0.68rem; color: var(--text-muted);
+    margin-top: 6px; gap: 6px; padding-left: 4px;
   }
 
   /* Activity feed */
@@ -1071,11 +1169,36 @@
   .btn-primary:hover { opacity: 0.9; }
   .btn-secondary { background: var(--surface2); color: var(--text); }
   .btn-secondary:hover { opacity: 0.9; }
+  .btn:disabled, .btn[disabled] {
+    opacity: 0.4; cursor: not-allowed; pointer-events: none;
+  }
 
   /* ── Binder View ── */
+  .binder-search-bar {
+    display: flex; align-items: center; gap: 8px; width: 100%;
+    margin-bottom: 10px; flex-wrap: wrap;
+  }
+  .binder-search-bar input {
+    flex: 1; min-width: 140px; padding: 7px 12px;
+    border-radius: 8px; border: 1px solid var(--surface3);
+    background: var(--surface2); color: var(--text);
+    font-size: 0.85rem; outline: none; transition: border-color 0.2s;
+  }
+  .binder-search-bar input:focus { border-color: var(--accent); }
+  .binder-filter-pills { display: flex; gap: 4px; flex-shrink: 0; }
+  .binder-fpill {
+    padding: 5px 12px; border-radius: 8px; border: 1px solid var(--surface3);
+    background: transparent; color: var(--text-muted); font-size: 0.78rem;
+    font-weight: 600; cursor: pointer; transition: all 0.2s;
+  }
+  .binder-fpill:hover { border-color: var(--accent); color: var(--text); }
+  .binder-fpill.active { background: var(--accent); color: #1e1e2e; border-color: var(--accent); }
+  .binder-search-bar .search-match-count {
+    font-size: 0.75rem; color: var(--text-muted); white-space: nowrap;
+  }
   .binder-top-controls {
-    display: flex; justify-content: center; align-items: center;
-    gap: 12px; margin-bottom: 16px;
+    display: flex; flex-direction: column; align-items: center;
+    gap: 8px; margin-bottom: 16px;
     animation: card-enter 0.3s ease both;
     position: relative; z-index: 200;
   }
@@ -1186,66 +1309,6 @@
   }
 
   /* Page flip overlay — full 180deg turn like a real page */
-  .page-flip-overlay {
-    position: absolute; top: 0; z-index: 10;
-    height: 100%;
-    pointer-events: none;
-    transform-style: preserve-3d;
-  }
-  .page-flip-overlay .flip-front,
-  .page-flip-overlay .flip-back {
-    position: absolute; inset: 0;
-    backface-visibility: hidden;
-    border-radius: 10px;
-    overflow: hidden;
-  }
-  .page-flip-overlay .flip-back {
-    transform: rotateY(180deg);
-    background: var(--surface);
-  }
-
-  .page-flip-overlay.flip-forward {
-    transform-origin: left center;
-    animation: book-forward 0.65s cubic-bezier(0.4, 0.0, 0.2, 1) forwards;
-  }
-  @keyframes book-forward {
-    0%   { transform: rotateY(0deg); }
-    100% { transform: rotateY(-180deg); }
-  }
-
-  .page-flip-overlay.flip-backward {
-    transform-origin: right center;
-    animation: book-backward 0.65s cubic-bezier(0.4, 0.0, 0.2, 1) forwards;
-  }
-  @keyframes book-backward {
-    0%   { transform: rotateY(0deg); }
-    100% { transform: rotateY(180deg); }
-  }
-
-  /* Shadow on the spread during flip */
-  .page-flip-shadow {
-    position: absolute; top: 0; height: 100%; width: 50%;
-    z-index: 5; pointer-events: none;
-  }
-  .page-flip-shadow.forward {
-    left: 0;
-    animation: shadow-forward 0.65s ease both;
-  }
-  @keyframes shadow-forward {
-    0%   { background: transparent; }
-    40%  { background: linear-gradient(to right, rgba(0,0,0,0.12), transparent); }
-    100% { background: transparent; }
-  }
-  .page-flip-shadow.backward {
-    right: 0;
-    animation: shadow-backward 0.65s ease both;
-  }
-  @keyframes shadow-backward {
-    0%   { background: transparent; }
-    40%  { background: linear-gradient(to left, rgba(0,0,0,0.12), transparent); }
-    100% { background: transparent; }
-  }
-
   @media (max-width: 700px) {
     /* Tab nav — hide top pills, show bottom nav */
     .tabs { display: none !important; }
@@ -1275,8 +1338,22 @@
     .fab-util-btn { min-height: 44px; min-width: 44px; }
 
     /* Modal */
-    .modal { padding: 18px; max-width: 92vw; }
-    .modal h3 { font-size: 1rem; }
+    .modal { padding: 16px; max-width: 92vw; }
+    .modal h3 { font-size: 0.95rem; }
+    .modal .btn { min-height: 44px; }
+    .modal-header-row {
+      flex-direction: column; align-items: center; gap: 10px; text-align: center;
+    }
+    .modal-card-col { width: 140px; }
+    .modal-info-col { align-items: center; }
+    .modal-info-col h3 { text-align: center; }
+    .modal-info-col .detail { text-align: center; }
+    .modal-info-col .modal-foil-info { justify-content: center; }
+    .modal-info-col .modal-actions { justify-content: center; }
+    .viz-icon-btn { width: 40px; height: 40px; }
+    .viz-icon-btn svg { width: 16px; height: 16px; }
+    .modal-price-refresh { width: 36px; height: 36px; min-width: 36px; font-size: 0.9rem; }
+    .page-grid { gap: 8px; }
     .sync-modal { padding: 18px; max-width: 92vw; }
 
     /* Mobile slide animation */
@@ -1346,7 +1423,7 @@
   }
   .card-slot .placeholder .num { font-size: 1.1rem; font-weight: 700; color: var(--text-muted); }
   .card-slot .placeholder .pname {
-    font-size: 0.55rem; color: var(--text-muted); margin-top: 2px;
+    font-size: 0.65rem; color: var(--text-muted); margin-top: 2px;
     overflow: hidden; text-overflow: ellipsis;
     display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
   }
@@ -1383,8 +1460,32 @@
   }
   .modal {
     background: var(--surface); border-radius: 16px;
-    padding: 24px; max-width: 420px; width: 92%;
+    padding: 20px; max-width: 460px; width: 94%;
+    max-height: 90vh; max-height: 90dvh;
+    overflow-y: auto; overflow-x: hidden;
     text-align: center; position: relative;
+  }
+  /* Header: card image left, info right on desktop */
+  .modal-header-row {
+    display: flex; gap: 16px; align-items: flex-start;
+    margin-bottom: 12px; text-align: left;
+  }
+  .modal-card-col {
+    flex-shrink: 0; width: 150px;
+  }
+  .modal-info-col {
+    flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px;
+  }
+  .modal-info-col h3 { text-align: left; }
+  .modal-info-col .detail { text-align: left; margin-bottom: 0; }
+  .modal-info-col .modal-foil-info { justify-content: flex-start; margin: 0; }
+  .modal-info-col .modal-actions {
+    display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-start; margin-top: 4px;
+  }
+  .modal-info-col .modal-actions .btn { padding: 6px 14px; font-size: 0.78rem; }
+  .modal-footer {
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--surface2);
   }
   @keyframes modal-in {
     from { transform: scale(0.85) translateY(20px); opacity: 0; }
@@ -1395,46 +1496,18 @@
     to { transform: scale(0.9) translateY(10px); opacity: 0; }
   }
   .card-visualizer {
-    perspective: 1000px; margin-bottom: 16px;
-    cursor: grab; -webkit-user-select: none; user-select: none;
-    position: relative;
+    perspective: 1000px; margin-bottom: 6px;
+    position: relative; width: 100%;
+    cursor: pointer;
   }
-  .card-visualizer:active { cursor: grabbing; }
+  .card-visualizer:hover .card-3d img:first-child { filter: brightness(1.05); }
+  .card-visualizer:active .card-3d { transform: scale(0.97); }
 
-  /* Drag hint overlay */
-  .drag-hint {
-    position: absolute; inset: 0; z-index: 5;
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    pointer-events: none;
-    opacity: 0; transition: opacity 0.4s;
-  }
-  .card-visualizer:not(.interacted) .drag-hint {
-    animation: hint-fade 3s 0.8s ease both;
-  }
   @keyframes hint-fade {
     0% { opacity: 0; }
     15% { opacity: 1; }
     85% { opacity: 1; }
     100% { opacity: 0; }
-  }
-  .drag-hint-icon {
-    width: 48px; height: 48px;
-    background: rgba(0,0,0,0.5); border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    margin-bottom: 8px;
-    animation: hint-drag 2s 1s ease-in-out infinite;
-  }
-  @keyframes hint-drag {
-    0%, 100% { transform: translateX(0); }
-    25% { transform: translateX(-16px) rotate(-8deg); }
-    75% { transform: translateX(16px) rotate(8deg); }
-  }
-  .drag-hint-icon svg { stroke: #fff; }
-  .drag-hint-text {
-    font-size: 0.75rem; color: #fff;
-    background: rgba(0,0,0,0.5); padding: 4px 12px;
-    border-radius: 12px;
   }
   .card-3d {
     width: 100%; aspect-ratio: 5 / 7;
@@ -1479,24 +1552,186 @@
     opacity: 1;
     animation: foil-shimmer 3s ease infinite;
   }
-  .viz-controls { display: flex; gap: 8px; justify-content: center; margin-bottom: 12px; }
-  .viz-controls .btn { font-size: 0.78rem; padding: 5px 12px; }
-  .modal h3 { margin-bottom: 4px; font-size: 1.1rem; }
-  .modal .detail { color: var(--text-muted); font-size: 0.85rem; margin-bottom: 14px; }
-  .modal .modal-actions { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
-  .modal .btn { padding: 8px 20px; }
+  #card-3d.foil-owned.foil-variant-surge .foil-overlay {
+    background: repeating-linear-gradient(35deg,
+      transparent 0%, rgba(255,50,150,0.35) 4%,
+      rgba(50,180,255,0.4) 8%, rgba(80,255,180,0.35) 12%,
+      rgba(255,220,50,0.4) 16%, rgba(180,80,255,0.35) 20%,
+      transparent 24%);
+    background-size: 300% 100%;
+    animation: surge-sweep 2.2s linear infinite;
+  }
+  #card-3d.foil-owned.foil-variant-neon .foil-overlay {
+    background: radial-gradient(ellipse at center,
+      rgba(255,80,180,0.3) 0%, rgba(80,220,255,0.2) 50%, transparent 75%);
+    background-size: 100% 100%;
+    animation: foil-neon-pulse 2s ease-in-out infinite;
+  }
+  #card-3d.foil-owned.foil-variant-collector .foil-overlay {
+    background: linear-gradient(115deg,
+      rgba(200,220,255,0.25) 0%, rgba(255,255,255,0.3) 50%, rgba(200,220,255,0.25) 100%);
+    background-size: 300% 300%;
+    animation: foil-card-shimmer 3.5s ease-in-out infinite;
+  }
+  .viz-controls { display: flex; gap: 6px; justify-content: center; margin-top: 4px; }
+  .viz-icon-btn {
+    width: 34px; height: 34px; border-radius: 50%;
+    border: 1px solid var(--surface3); background: var(--slot-bg);
+    color: var(--text-muted); cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s; padding: 0;
+  }
+  .viz-icon-btn:hover { color: var(--text); border-color: var(--text-muted); background: var(--surface2); }
+  .viz-icon-btn.viz-inspect { border-color: var(--accent); color: var(--accent); }
+  .viz-icon-btn.viz-inspect:hover { background: var(--accent); color: #fff; }
+  .modal h3 { margin-bottom: 2px; font-size: 1rem; line-height: 1.3; }
+  .modal .detail { color: var(--text-muted); font-size: 0.78rem; margin-bottom: 0; line-height: 1.4; }
+
+  /* Modal price panel */
+  .modal-prices {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 5px; margin-bottom: 0;
+  }
+  .modal-prices.single-col { grid-template-columns: 1fr; max-width: 160px; margin-left: auto; margin-right: auto; }
+  .modal-price-chip {
+    display: flex; flex-direction: column; align-items: center;
+    padding: 8px 10px; border-radius: 8px;
+    background: var(--slot-bg); border: 1px solid var(--surface2);
+    text-align: center; min-width: 0;
+  }
+  .modal-price-chip .price-label {
+    font-weight: 600; color: var(--text-muted); font-size: 0.7rem;
+    text-transform: uppercase; letter-spacing: 0.3px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    max-width: 100%; line-height: 1.3;
+  }
+  .modal-price-chip .price-val {
+    font-weight: 800; font-size: 0.92rem; line-height: 1.3;
+  }
+  .modal-price-chip .price-val.usd { color: var(--owned-border); }
+  .modal-price-chip .price-val.myr { color: var(--accent); }
+  .modal-price-chip .price-val.foil { color: var(--foil-color); }
+  .modal-price-chip .price-sub {
+    font-size: 0.65rem; color: var(--text-muted); line-height: 1.3;
+  }
+  .modal-price-chip.no-price {
+    border-style: dashed; opacity: 0.6; grid-column: 1 / -1;
+  }
+  .modal-price-ts {
+    grid-column: 1 / -1; text-align: center;
+    font-size: 0.65rem; color: var(--text-muted);
+    padding-top: 2px;
+    display: flex; align-items: center; justify-content: center; gap: 4px;
+  }
+  .modal-price-refresh {
+    background: none; border: 1px solid var(--surface3); border-radius: 50%;
+    width: 28px; height: 28px; min-width: 28px;
+    display: inline-flex; align-items: center; justify-content: center;
+    cursor: pointer; color: var(--text-muted); font-size: 0.8rem;
+    transition: all 0.2s; padding: 0;
+  }
+  .modal-price-refresh:hover { color: var(--accent); border-color: var(--accent); }
+  .modal-price-refresh.spinning { animation: spin-refresh 0.7s linear infinite; color: var(--accent); }
+  .modal .btn { padding: 6px 16px; font-size: 0.8rem; }
   .scryfall-link {
-    display: inline-flex; align-items: center; gap: 5px;
-    font-size: 0.78rem; color: var(--text-muted);
-    text-decoration: none; padding: 6px 14px;
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 0.72rem; color: var(--text-muted);
+    text-decoration: none; padding: 5px 12px;
     background: var(--slot-bg); border-radius: 8px;
-    transition: all 0.2s; margin-bottom: 10px;
+    transition: all 0.2s;
   }
   .scryfall-link:hover {
     color: var(--accent); background: var(--surface2);
-    transform: translateY(-1px);
   }
   .scryfall-link svg { flex-shrink: 0; }
+
+  /* ── Full-screen Card Inspect ── */
+  .inspect-overlay {
+    display: none; position: fixed; inset: 0; z-index: 1100;
+    background: rgba(0,0,0,0.92);
+    flex-direction: column; align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  .inspect-overlay.visible { display: flex; animation: overlay-fade-in 0.25s ease both; }
+  .inspect-card-wrap {
+    perspective: 1200px; position: relative;
+    width: min(75vw, 350px); max-height: 70vh;
+    aspect-ratio: 5 / 7;
+    cursor: grab; -webkit-user-select: none; user-select: none;
+  }
+  .inspect-card-wrap:active { cursor: grabbing; }
+  .inspect-hint {
+    position: absolute; inset: 0; z-index: 5;
+    display: flex; align-items: center; justify-content: center;
+    pointer-events: none; animation: hint-fade 3s 0.5s ease both;
+  }
+  .inspect-hint-text {
+    font-size: 0.8rem; color: #fff; background: rgba(0,0,0,0.6);
+    padding: 6px 16px; border-radius: 16px;
+  }
+  .inspect-3d {
+    width: 100%; height: 100%;
+    transform-style: preserve-3d;
+    position: relative; border-radius: 14px;
+    will-change: transform;
+  }
+  .inspect-3d img {
+    width: 100%; height: 100%; object-fit: cover;
+    border-radius: 14px; backface-visibility: hidden;
+    box-shadow: 0 12px 48px rgba(0,0,0,0.6);
+  }
+  .inspect-3d .inspect-card-back {
+    position: absolute; inset: 0; transform: rotateY(180deg);
+    backface-visibility: hidden; border-radius: 14px;
+    box-shadow: 0 12px 48px rgba(0,0,0,0.6);
+  }
+  .inspect-3d .inspect-card-back img { border-radius: 14px; }
+  .inspect-shine {
+    position: absolute; inset: 0; border-radius: 14px;
+    pointer-events: none; backface-visibility: hidden;
+  }
+  .inspect-foil-overlay {
+    position: absolute; inset: 0; border-radius: 14px;
+    pointer-events: none; backface-visibility: hidden;
+    opacity: 0; transition: opacity 0.5s ease;
+    background: linear-gradient(115deg,
+      rgba(255,107,157,0.28) 0%, rgba(255,217,61,0.28) 20%,
+      rgba(107,203,119,0.28) 40%, rgba(77,150,255,0.28) 60%,
+      rgba(199,125,255,0.28) 80%, rgba(255,107,157,0.28) 100%);
+    background-size: 300% 300%;
+    mix-blend-mode: screen; z-index: 2;
+  }
+  .inspect-3d.foil-owned .inspect-foil-overlay {
+    opacity: 1; animation: foil-shimmer 3s ease infinite;
+  }
+  .inspect-3d.foil-owned.foil-variant-surge .inspect-foil-overlay {
+    background: repeating-linear-gradient(35deg,
+      transparent 0%, rgba(255,50,150,0.35) 4%,
+      rgba(50,180,255,0.4) 8%, rgba(80,255,180,0.35) 12%,
+      rgba(255,220,50,0.4) 16%, rgba(180,80,255,0.35) 20%,
+      transparent 24%);
+    background-size: 300% 100%;
+    animation: surge-sweep 2.2s linear infinite;
+  }
+  .inspect-3d.foil-owned.foil-variant-neon .inspect-foil-overlay {
+    background: radial-gradient(ellipse at center,
+      rgba(255,80,180,0.3) 0%, rgba(80,220,255,0.2) 50%, transparent 75%);
+    animation: foil-neon-pulse 2s ease-in-out infinite;
+  }
+  .inspect-3d.foil-owned.foil-variant-collector .inspect-foil-overlay {
+    background: linear-gradient(115deg,
+      rgba(200,220,255,0.25) 0%, rgba(255,255,255,0.3) 50%, rgba(200,220,255,0.25) 100%);
+    background-size: 300% 300%;
+    animation: foil-card-shimmer 3.5s ease-in-out infinite;
+  }
+  .inspect-controls {
+    display: flex; gap: 8px; margin-top: 20px;
+  }
+  .inspect-controls .btn { font-size: 0.82rem; padding: 8px 18px; min-width: 70px; }
+  @media (max-width: 700px) {
+    .inspect-card-wrap { width: min(85vw, 300px); }
+    .inspect-controls .btn { padding: 10px 16px; min-height: 44px; }
+  }
 
   /* ── FAB (Floating Action Button) ── */
   .fab-search {
@@ -1535,7 +1770,7 @@
     pointer-events: auto;
   }
   @media (max-width: 500px) {
-    .fab-panel { width: calc(100vw - 32px); right: -8px; max-height: 70vh; }
+    .fab-panel { width: calc(100vw - 32px); right: 0; max-height: 70vh; }
     .fab-search { right: max(18px, env(safe-area-inset-right, 18px)); }
     .fab-btn { width: 50px; height: 50px; font-size: 1.6rem; }
   }
@@ -1582,6 +1817,33 @@
     padding: 2px 6px; border: 1px solid var(--owned-border); border-radius: 4px;
   }
 
+  /* Variant type badges in autocomplete */
+  .ac-variant-badge {
+    font-size: 0.7rem; font-weight: 700; letter-spacing: 0.3px;
+    padding: 2px 7px; border-radius: 4px; white-space: nowrap; line-height: 1.5;
+  }
+  .ac-variant-badge.vb-traditional { color: #c4b5fd; border: 1px solid #7c3aed44; background: #7c3aed18; }
+  .ac-variant-badge.vb-extended    { color: #93c5fd; border: 1px solid #3b82f644; background: #3b82f618; }
+  .ac-variant-badge.vb-showcase    { color: #fda4af; border: 1px solid #f4366244; background: #f4366218; }
+  .ac-variant-badge.vb-surge       { color: #fde68a; border: 1px solid #f59e0b44; background: #f59e0b18; }
+  .ac-variant-badge.vb-chocobo     { color: #6ee7b7; border: 1px solid #10b98144; background: #10b98118; }
+  .ac-variant-badge.vb-collector   { color: #e2e8f0; border: 1px solid #94a3b844; background: #94a3b818; }
+  .ac-variant-badge.vb-normal      { color: var(--text-muted); border: 1px solid var(--surface3); background: transparent; }
+  .ac-rarity-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+  .ac-rarity-dot.common   { background: #aaa; }
+  .ac-rarity-dot.uncommon { background: #72b5b5; }
+  .ac-rarity-dot.rare     { background: #daa520; }
+  .ac-rarity-dot.mythic   { background: #f43662; }
+
+  /* Foil add button styles */
+  .ac-foil-toggle {
+    background: none; border: 1px solid var(--surface3); border-radius: 12px;
+    padding: 1px 8px; font-size: 0.68rem; cursor: pointer; color: var(--text-muted);
+    line-height: 1.5; transition: all 0.15s; white-space: nowrap;
+  }
+  .ac-foil-toggle:hover { border-color: var(--foil-color); color: var(--foil-color); }
+  .ac-foil-toggle.foil-owned { border-color: var(--foil-color); color: var(--foil-color); background: var(--foil-color-bg); }
+
   /* FAB recent list */
   .fab-recent {
     flex: 1; overflow-y: auto; padding: 8px 18px 14px;
@@ -1594,7 +1856,7 @@
   .fab-recent-title .btn { font-size: 0.7rem; padding: 2px 8px; }
   .fab-recent-item {
     display: flex; align-items: center; gap: 10px;
-    padding: 8px 0; border-bottom: 1px solid var(--surface2);
+    padding: 10px 0; border-bottom: 1px solid var(--surface2);
     animation: slideIn 0.3s ease;
   }
   @keyframes slideIn {
@@ -2024,13 +2286,9 @@ document.head.appendChild(manifestLink);
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
         Binder
       </button>
-      <button class="tab-btn" data-tab="foil" id="tab-btn-foil" style="display:none">
+      <button class="tab-btn" data-tab="collector" id="tab-btn-collector" style="display:none">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-        Foil ✦
-      </button>
-      <button class="tab-btn" data-tab="variants" id="tab-btn-variants" style="display:none">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
-        Variants ◈
+        Collector ✦
       </button>
       <button class="tab-btn" data-tab="settings">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
@@ -2051,11 +2309,8 @@ document.head.appendChild(manifestLink);
       <button class="bnav-btn" data-tab="binder">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
       </button>
-      <button class="bnav-btn" data-tab="foil" id="bnav-btn-foil" style="display:none">
+      <button class="bnav-btn" data-tab="collector" id="bnav-btn-collector" style="display:none">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-      </button>
-      <button class="bnav-btn" data-tab="variants" id="bnav-btn-variants" style="display:none">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
       </button>
       <button class="bnav-btn" data-tab="settings">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
@@ -2076,6 +2331,14 @@ document.head.appendChild(manifestLink);
 
     <div id="tab-binder" class="tab-content">
       <div class="binder-top-controls">
+        <div class="binder-search-bar">
+          <input type="text" id="binder-search-input" placeholder="Search by name or #..." autocomplete="off">
+          <div class="binder-filter-pills">
+            <button class="binder-fpill active" data-filter="all">All</button>
+            <button class="binder-fpill" data-filter="owned">Owned</button>
+            <button class="binder-fpill" data-filter="missing">Missing</button>
+          </div>
+        </div>
         <div class="page-nav-widget" id="page-nav-widget">
           <div class="page-nav-label" id="page-nav-label">Pages <span>1–2</span></div>
           <div class="page-slider-wrap">
@@ -2096,11 +2359,10 @@ document.head.appendChild(manifestLink);
       </div>
     </div>
 
-    <div class="tab-content" id="tab-foil"></div>
+    <div class="tab-content" id="tab-collector"></div>
     <div class="tab-content" id="tab-settings"></div>
-    <div class="tab-content" id="tab-variants"></div>
 
-    <div class="data-actions">
+    <div class="data-actions" style="display:none">
       <button class="btn btn-secondary" id="export-btn">Export Collection</button>
       <button class="btn btn-secondary" id="import-btn">Import Collection</button>
       <button class="btn btn-danger" id="reset-btn">Reset All</button>
@@ -2182,40 +2444,73 @@ document.head.appendChild(manifestLink);
 <!-- Card Visualizer Modal -->
 <div class="modal-overlay" id="modal-overlay">
   <div class="modal" id="modal">
-    <div class="card-visualizer" id="card-visualizer">
-      <div class="drag-hint" id="drag-hint">
-        <div class="drag-hint-icon">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="15 18 9 12 15 6"/><polyline points="9 18 15 12 9 6" transform="translate(6,0)"/>
-          </svg>
+    <!-- Top: image + name + detail side by side on desktop, stacked on mobile -->
+    <div class="modal-header-row">
+      <div class="modal-card-col">
+        <div class="card-visualizer" id="card-visualizer">
+          <div class="card-3d" id="card-3d">
+            <img id="modal-img" src="" alt="">
+            <div class="card-shine" id="card-shine"></div>
+            <div class="foil-overlay" id="modal-foil-overlay"></div>
+            <div class="card-back">
+              <img id="modal-back-img" src="" alt="Card back">
+            </div>
+          </div>
         </div>
-        <span class="drag-hint-text">Drag to rotate</span>
+        <div class="viz-controls">
+          <button class="viz-icon-btn" id="viz-reset" title="Reset rotation">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+          </button>
+          <button class="viz-icon-btn" id="viz-flip" title="Flip card">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+          </button>
+          <button class="viz-icon-btn viz-inspect" id="btn-inspect-card" title="Full-screen inspect">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg>
+          </button>
+        </div>
       </div>
-      <div class="card-3d" id="card-3d">
-        <img id="modal-img" src="" alt="">
-        <div class="card-shine" id="card-shine"></div>
-        <div class="foil-overlay" id="modal-foil-overlay"></div>
-        <div class="card-back">
-          <img id="modal-back-img" src="" alt="Card back">
+      <div class="modal-info-col">
+        <h3 id="modal-name"></h3>
+        <p class="detail" id="modal-detail"></p>
+        <div id="modal-foil-info" class="modal-foil-info"></div>
+        <div class="modal-actions">
+          <button class="btn btn-primary" id="modal-toggle"></button>
+          <button class="btn btn-foil" id="modal-foil-toggle" style="display:none">Add Foil ✦</button>
         </div>
       </div>
     </div>
-    <div class="viz-controls">
-      <button class="btn btn-secondary" id="viz-reset"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>Reset</button>
-      <button class="btn btn-secondary" id="viz-flip"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>Flip</button>
-    </div>
-    <h3 id="modal-name"></h3>
-    <p class="detail" id="modal-detail"></p>
-    <div id="modal-foil-info" class="modal-foil-info"></div>
-    <a class="scryfall-link" id="scryfall-link" href="#" target="_blank" rel="noopener">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-      View on Scryfall
-    </a>
-    <div class="modal-actions">
-      <button class="btn btn-primary" id="modal-toggle"></button>
-      <button class="btn btn-foil" id="modal-foil-toggle" style="display:none">Add Foil ✦</button>
+    <!-- Prices -->
+    <div id="modal-prices" class="modal-prices"></div>
+    <!-- Footer -->
+    <div class="modal-footer">
+      <a class="scryfall-link" id="scryfall-link" href="#" target="_blank" rel="noopener">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        Scryfall
+      </a>
       <button class="btn btn-secondary" id="modal-close">Close</button>
     </div>
+  </div>
+</div>
+
+<!-- Full-screen Card Inspect -->
+<div class="inspect-overlay" id="inspect-overlay">
+  <div class="inspect-card-wrap">
+    <div class="inspect-hint" id="inspect-hint">
+      <span class="inspect-hint-text">Drag to rotate</span>
+    </div>
+    <div class="inspect-3d" id="inspect-3d">
+      <img id="inspect-img" src="" alt="">
+      <div class="inspect-shine" id="inspect-shine"></div>
+      <div class="inspect-foil-overlay" id="inspect-foil-overlay"></div>
+      <div class="inspect-card-back">
+        <img id="inspect-back-img" src="" alt="Card back">
+      </div>
+    </div>
+  </div>
+  <div class="inspect-controls">
+    <button class="btn btn-secondary" id="inspect-reset">Reset</button>
+    <button class="btn btn-secondary" id="inspect-flip">Flip</button>
+    <button class="btn btn-secondary" id="inspect-close">Close</button>
   </div>
 </div>
 
@@ -2232,7 +2527,7 @@ document.head.appendChild(manifestLink);
 <script>
 (function() {
   // ── State ──
-  const CACHE_KEY = 'fin-card-data-v5';
+  const CACHE_KEY = 'fin-card-data-v6';
   const COLLECTION_KEY = 'fin-collection';
   const THEME_KEY = 'fin-theme';
   const CACHE_TTL = 7 * 24 * 60 * 60 * 1000;
@@ -2244,7 +2539,7 @@ document.head.appendChild(manifestLink);
   const GIST_KEY = 'fin-gist-config';
   const BINDER_CONFIG_KEY = 'fin-binder-config';
   const FOIL_KEY         = 'fin-foil-collection';
-  const VARIANT_KEY      = 'fin-variant-data-v1';
+  const VARIANT_KEY      = 'fin-variant-data-v2';
   const VARIANT_TTL      = 7 * 24 * 60 * 60 * 1000;
 
   const BINDER_PRESETS = [
@@ -2291,12 +2586,22 @@ document.head.appendChild(manifestLink);
   function loadConfig() {
     try {
       const raw = localStorage.getItem(BINDER_CONFIG_KEY);
-      if (raw) return JSON.parse(raw);
+      if (raw) {
+        const cfg = JSON.parse(raw);
+        // Migrate old scope flags → collectorBinder
+        if (cfg.scope && !('collectorBinder' in cfg.scope)) {
+          cfg.scope.collectorBinder = !!(cfg.scope.collectorVariants || cfg.scope.foilBinder);
+          delete cfg.scope.collectorVariants;
+          delete cfg.scope.foilBinder;
+          localStorage.setItem(BINDER_CONFIG_KEY, JSON.stringify(cfg));
+        }
+        return cfg;
+      }
     } catch (e) {}
     return {
       gridRows: 3, gridCols: 3, slotsPerPage: 9, pageCount: 34,
       presetName: '9-pocket (3×3)',
-      scope: { mainSet: true, collectorVariants: false, foilBinder: false },
+      scope: { mainSet: true, collectorBinder: false },
       configured: false,
     };
   }
@@ -2313,7 +2618,7 @@ document.head.appendChild(manifestLink);
 
   function getActiveCardCount() {
     var cv = document.getElementById('wiz-cv');
-    var cvEnabled = cv ? cv.checked : binderConfig.scope.collectorVariants;
+    var cvEnabled = cv ? cv.checked : binderConfig.scope.collectorBinder;
     var base = allCards.length || 309;
     var variants = (cvEnabled && variantCards.length > 0) ? variantCards.length : 0;
     return base + variants;
@@ -2412,26 +2717,22 @@ document.head.appendChild(manifestLink);
   }
 
   function wizardStep2() {
-    var cv = binderConfig.scope.collectorVariants;
-    var fb = binderConfig.scope.foilBinder;
+    var cb = binderConfig.scope.collectorBinder;
     var pages = calcPageCount(binderConfig.slotsPerPage || 9);
     return '<div class="wizard-step" id="wiz-step">' +
       '<h2>What will you collect?</h2>' +
       '<p class="step-sub">Choose the card pools you want to track.</p>' +
       '<div class="toggle-wrap"><div class="toggle-label"><strong>Main Set</strong><span>~309 booster-pack cards (always included)</span></div>' +
       '<label class="toggle-switch locked"><input type="checkbox" checked disabled><span class="toggle-track"></span><span class="toggle-thumb"></span></label></div>' +
-      '<div class="toggle-wrap"><div class="toggle-label"><strong>Collector Variants</strong><span>Borderless, showcase, surge foil, neon ink &amp; more</span></div>' +
-      '<label class="toggle-switch"><input type="checkbox" id="wiz-cv"' + (cv ? ' checked' : '') + '><span class="toggle-track"></span><span class="toggle-thumb"></span></label></div>' +
-      '<div class="toggle-wrap"><div class="toggle-label"><strong>Foil Binder</strong><span>Adds a separate tab to track foil ownership</span></div>' +
-      '<label class="toggle-switch"><input type="checkbox" id="wiz-fb"' + (fb ? ' checked' : '') + '><span class="toggle-track"></span><span class="toggle-thumb"></span></label></div>' +
+      '<div class="toggle-wrap"><div class="toggle-label"><strong>Collector Binder</strong><span>Foils, extended art, showcase, surge foil, chocobo track &amp; more</span></div>' +
+      '<label class="toggle-switch"><input type="checkbox" id="wiz-cv"' + (cb ? ' checked' : '') + '><span class="toggle-track"></span><span class="toggle-thumb"></span></label></div>' +
       '<p class="settings-live-summary" id="wiz-step2-summary">Tracking <span class="pop">' + (allCards.length || 309) + '</span> cards across <span class="pop">' + pages + '</span> pages</p>' +
       '<div class="wizard-nav"><button class="btn btn-secondary" id="wiz-back">← Back</button><button class="btn btn-primary wizard-cta" id="wiz-next">Next →</button></div>' +
       '</div>';
   }
 
   function wizardStep3() {
-    var cv = binderConfig.scope.collectorVariants;
-    var fb = binderConfig.scope.foilBinder;
+    var cb = binderConfig.scope.collectorBinder;
     var spp = binderConfig.slotsPerPage || 9;
     var pages = calcPageCount(spp);
     return '<div class="wizard-step" id="wiz-step">' +
@@ -2439,7 +2740,7 @@ document.head.appendChild(manifestLink);
       '<p class="step-sub">Your binder is configured. You can change this later in Settings.</p>' +
       '<div class="settings-section" style="margin-top:0"><div class="settings-section-title">Summary</div>' +
       '<p style="font-size:0.88rem;margin-bottom:6px"><strong>' + binderConfig.presetName + '</strong> · ' + spp + ' slots/page · ' + pages + ' pages</p>' +
-      '<p style="font-size:0.85rem;color:var(--text-muted)">Main Set ' + (cv ? '· Collector Variants ' : '') + (fb ? '· Foil Binder' : '') + '</p>' +
+      '<p style="font-size:0.85rem;color:var(--text-muted)">Main Set ' + (cb ? '· Collector Binder' : '') + '</p>' +
       '</div>' +
       '<div class="wizard-nav"><button class="btn btn-secondary" id="wiz-back">← Back</button><button class="btn btn-primary wizard-cta" id="wiz-finish">Set Up My Binder</button></div>' +
       '</div>';
@@ -2477,9 +2778,7 @@ document.head.appendChild(manifestLink);
       });
     }
     var cvEl = document.getElementById('wiz-cv');
-    var fbEl = document.getElementById('wiz-fb');
-    if (cvEl) cvEl.addEventListener('change', function() { binderConfig.scope.collectorVariants = cvEl.checked; updateWizardStep2Summary(); });
-    if (fbEl) fbEl.addEventListener('change', function() { binderConfig.scope.foilBinder = fbEl.checked; updateWizardStep2Summary(); });
+    if (cvEl) cvEl.addEventListener('change', function() { binderConfig.scope.collectorBinder = cvEl.checked; updateWizardStep2Summary(); });
 
     var nextBtn = document.getElementById('wiz-next');
     var backBtn = document.getElementById('wiz-back');
@@ -2544,14 +2843,10 @@ document.head.appendChild(manifestLink);
   }
 
   function applyConfigToTabs() {
-    var foilBtn = document.getElementById('tab-btn-foil');
-    if (foilBtn) foilBtn.style.display = binderConfig.scope.foilBinder ? '' : 'none';
-    var variantBtn = document.getElementById('tab-btn-variants');
-    if (variantBtn) variantBtn.style.display = binderConfig.scope.collectorVariants ? '' : 'none';
-    var foilBnavBtn = document.getElementById('bnav-btn-foil');
-    if (foilBnavBtn) foilBnavBtn.style.display = binderConfig.scope.foilBinder ? '' : 'none';
-    var variantBnavBtn = document.getElementById('bnav-btn-variants');
-    if (variantBnavBtn) variantBnavBtn.style.display = binderConfig.scope.collectorVariants ? '' : 'none';
+    var collectorBtn = document.getElementById('tab-btn-collector');
+    if (collectorBtn) collectorBtn.style.display = binderConfig.scope.collectorBinder ? '' : 'none';
+    var collectorBnavBtn = document.getElementById('bnav-btn-collector');
+    if (collectorBnavBtn) collectorBnavBtn.style.display = binderConfig.scope.collectorBinder ? '' : 'none';
     var pcEl = document.getElementById('binder-page-count-display');
     if (pcEl) pcEl.textContent = binderConfig.pageCount + ' Pages';
     var preEl = document.getElementById('binder-preset-display');
@@ -2568,38 +2863,72 @@ document.head.appendChild(manifestLink);
     var spp = cfg.slotsPerPage;
     var totalSlots = spp * cfg.pageCount;
 
+    var ownedCount = ownedSet.size;
+    var foilCount = Object.keys(foilOwned).length;
+    var variantCount = variantCards.length;
+
     el.innerHTML = '<div class="settings-wrap">' +
+
+      // ── Binder Setup ──
       '<div class="settings-section">' +
-      '<div class="settings-section-title">Binder Setup</div>' +
-      '<div class="settings-row"><label>Type</label><select id="sf-preset" class="btn btn-secondary" style="padding:8px 12px">' + presetOptions + '</select></div>' +
+      '<div class="settings-section-header">' +
+        '<div class="settings-section-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></div>' +
+        '<div><div class="settings-section-title">Binder Layout</div>' +
+        '<div class="settings-section-sub">Grid size and page count</div></div>' +
+      '</div>' +
+      '<div class="settings-row"><label>Type</label><select id="sf-preset">' + presetOptions + '</select></div>' +
       '<div class="custom-inputs' + (isCustom ? ' visible' : '') + '" id="sf-custom">' +
-      '<input id="sf-rows" type="number" inputmode="numeric" min="1" max="10" value="' + cfg.gridRows + '" placeholder="Rows">' +
-      '<span style="color:var(--text-muted)">×</span>' +
-      '<input id="sf-cols" type="number" inputmode="numeric" min="1" max="10" value="' + cfg.gridCols + '" placeholder="Cols">' +
+        '<input id="sf-rows" type="number" inputmode="numeric" min="1" max="10" value="' + cfg.gridRows + '" placeholder="Rows">' +
+        '<span style="color:var(--text-muted)">×</span>' +
+        '<input id="sf-cols" type="number" inputmode="numeric" min="1" max="10" value="' + cfg.gridCols + '" placeholder="Cols">' +
       '</div>' +
-      '<div class="settings-row" style="margin-top:10px"><label>Pages</label>' +
-      '<input id="sf-pages" type="number" inputmode="numeric" min="1" max="999" value="' + cfg.pageCount + '" style="width:64px;padding:6px 8px;background:var(--slot-bg);border:1px solid var(--surface2);border-radius:8px;color:var(--text);font-size:0.9rem;transition:box-shadow 0.15s ease">' +
+      '<div class="settings-row"><label>Pages</label>' +
+        '<input id="sf-pages" type="number" inputmode="numeric" min="1" max="999" value="' + cfg.pageCount + '" style="width:64px">' +
       '</div>' +
-      '<p class="settings-live-summary"><span id="sf-s1">' + spp + '</span> slots/page · <span id="sf-s2">' + cfg.pageCount + '</span> pages · <span id="sf-s3">' + totalSlots + '</span> total slots</p>' +
+      '<div class="settings-live-summary"><span id="sf-s1">' + spp + '</span> slots/page &middot; <span id="sf-s2">' + cfg.pageCount + '</span> pages &middot; <span id="sf-s3">' + totalSlots + '</span> total</div>' +
       '</div>' +
+
+      // ── Collection Scope ──
       '<div class="settings-section">' +
-      '<div class="settings-section-title">Collection Scope</div>' +
-      '<div class="toggle-wrap"><div class="toggle-label"><strong>Main Set</strong><span>~309 booster-pack cards</span></div>' +
-      '<label class="toggle-switch locked"><input type="checkbox" checked disabled><span class="toggle-track"></span><span class="toggle-thumb"></span></label></div>' +
-      '<div class="toggle-wrap"><div class="toggle-label"><strong>Collector Variants</strong><span>Borderless, showcase, surge foil, neon ink &amp; more</span></div>' +
-      '<label class="toggle-switch"><input type="checkbox" id="sf-cv"' + (cfg.scope.collectorVariants ? ' checked' : '') + '><span class="toggle-track"></span><span class="toggle-thumb"></span></label></div>' +
-      '<div class="toggle-wrap"><div class="toggle-label"><strong>Foil Binder</strong><span>Separate tab for foil ownership tracking</span></div>' +
-      '<label class="toggle-switch"><input type="checkbox" id="sf-fb"' + (cfg.scope.foilBinder ? ' checked' : '') + '><span class="toggle-track"></span><span class="toggle-thumb"></span></label></div>' +
+      '<div class="settings-section-header">' +
+        '<div class="settings-section-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></div>' +
+        '<div><div class="settings-section-title">Collection Scope</div>' +
+        '<div class="settings-section-sub">What to track in this binder</div></div>' +
       '</div>' +
+      '<div class="toggle-wrap"><div class="toggle-label"><strong>Main Set</strong><span>' + (allCards.length || '~309') + ' booster cards</span></div>' +
+        '<label class="toggle-switch locked"><input type="checkbox" checked disabled><span class="toggle-track"></span><span class="toggle-thumb"></span></label></div>' +
+      '<div class="toggle-wrap"><div class="toggle-label"><strong>Collector Variants</strong><span>Foils, extended art, showcase, surge foil, chocobo track</span></div>' +
+        '<label class="toggle-switch"><input type="checkbox" id="sf-cb"' + (cfg.scope.collectorBinder ? ' checked' : '') + '><span class="toggle-track"></span><span class="toggle-thumb"></span></label></div>' +
+      '</div>' +
+
+      // ── Save ──
       '<div class="save-btn-wrap"><button class="btn btn-primary btn-save" id="sf-save">Save Changes</button></div>' +
+
+      // ── Data Management ──
+      '<div class="settings-section">' +
+      '<div class="settings-section-header">' +
+        '<div class="settings-section-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div>' +
+        '<div><div class="settings-section-title">Data</div>' +
+        '<div class="settings-section-sub">' + ownedCount + ' cards &middot; ' + foilCount + ' foils' + (variantCount > 0 ? ' &middot; ' + variantCount + ' variants' : '') + '</div></div>' +
+      '</div>' +
+      '<div class="settings-data-row">' +
+        '<button class="btn btn-secondary" id="sf-export">Export</button>' +
+        '<button class="btn btn-secondary" id="sf-import">Import</button>' +
+      '</div>' +
+      '</div>' +
+
+      // ── Danger Zone ──
       '<div class="settings-section danger">' +
-      '<div class="settings-section-title">Danger Zone</div>' +
-      '<button class="danger-toggle" id="sf-danger-toggle">▸ Show options</button>' +
+      '<button class="danger-toggle" id="sf-danger-toggle">' +
+        '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>' +
+        ' Danger Zone</button>' +
       '<div class="danger-actions" id="sf-danger-actions">' +
-      '<button class="btn btn-secondary" id="sf-reset-collection">Reset Collection</button>' +
-      '<button class="btn btn-secondary" id="sf-reset-foil">Reset Foil Collection</button>' +
-      '<button class="btn btn-danger" id="sf-reset-all">Reset Everything</button>' +
-      '</div></div>' +
+        '<button class="btn btn-secondary" id="sf-reset-collection">Reset Collection</button>' +
+        '<button class="btn btn-secondary" id="sf-reset-foil">Reset Foil Collection</button>' +
+        '<button class="btn btn-danger" id="sf-reset-all">Reset Everything</button>' +
+      '</div>' +
+      '</div>' +
+
       '</div>';
 
     bindSettingsFormEvents();
@@ -2653,20 +2982,20 @@ document.head.appendChild(manifestLink);
       if (el) el.addEventListener('input', updateSfSummary);
     });
 
-    var sfCvEl = document.getElementById('sf-cv');
-    if (sfCvEl) {
-      sfCvEl.addEventListener('change', function() {
-        var sfSummaryNote = document.getElementById('sf-cv-note');
+    var sfCbEl = document.getElementById('sf-cb');
+    if (sfCbEl) {
+      sfCbEl.addEventListener('change', function() {
+        var sfSummaryNote = document.getElementById('sf-cb-note');
         if (!sfSummaryNote) {
           sfSummaryNote = document.createElement('div');
-          sfSummaryNote.id = 'sf-cv-note';
+          sfSummaryNote.id = 'sf-cb-note';
           sfSummaryNote.className = 'dash-sub';
           sfSummaryNote.style.cssText = 'margin-top:4px;font-size:0.8rem;color:var(--text-muted)';
-          var sfCvInput = document.getElementById('sf-cv');
-          if (sfCvInput) sfCvInput.closest('.toggle-wrap').after(sfSummaryNote);
+          var sfCbInput = document.getElementById('sf-cb');
+          if (sfCbInput) sfCbInput.closest('.toggle-wrap').after(sfSummaryNote);
         }
-        var isCvOn = document.getElementById('sf-cv') ? document.getElementById('sf-cv').checked : false;
-        sfSummaryNote.textContent = isCvOn ?
+        var isCbOn = document.getElementById('sf-cb') ? document.getElementById('sf-cb').checked : false;
+        sfSummaryNote.textContent = isCbOn ?
           (variantCards.length > 0 ? '+' + variantCards.length + ' collector variant cards' : 'Variants will load on save') :
           '';
       });
@@ -2713,7 +3042,7 @@ document.head.appendChild(manifestLink);
               saveFoil();
               renderSettings();
               renderDashboard();
-              if (document.getElementById('tab-foil')?.classList.contains('active')) renderFoilBinder();
+              if (document.getElementById('tab-collector')?.classList.contains('active')) renderCollectorTab();
               if (document.getElementById('tab-portfolio')?.classList.contains('active')) renderPortfolio();
               showToast('Foil collection reset.');
             }}
@@ -2754,8 +3083,7 @@ document.head.appendChild(manifestLink);
           presetName: presetEl ? presetEl.value : binderConfig.presetName,
           scope: {
             mainSet: true,
-            collectorVariants: document.getElementById('sf-cv') ? document.getElementById('sf-cv').checked : binderConfig.scope.collectorVariants,
-            foilBinder: document.getElementById('sf-fb') ? document.getElementById('sf-fb').checked : binderConfig.scope.foilBinder,
+            collectorBinder: document.getElementById('sf-cb') ? document.getElementById('sf-cb').checked : binderConfig.scope.collectorBinder,
           },
           configured: true,
         };
@@ -2764,7 +3092,7 @@ document.head.appendChild(manifestLink);
         if (document.getElementById('tab-binder').classList.contains('active')) {
           renderBinder();
         }
-        if (newCfg.scope.collectorVariants && variantCards.length === 0) {
+        if (newCfg.scope.collectorBinder && variantCards.length === 0) {
           fetchVariants();
         }
         saveBtn.textContent = '✓ Saved';
@@ -2774,6 +3102,20 @@ document.head.appendChild(manifestLink);
           saveBtn.classList.remove('success');
         }, 1500);
         showToast('Binder updated.');
+      });
+    }
+
+    // Export/Import in settings
+    var sfExport = document.getElementById('sf-export');
+    if (sfExport) {
+      sfExport.addEventListener('click', function() {
+        document.getElementById('export-btn').click();
+      });
+    }
+    var sfImport = document.getElementById('sf-import');
+    if (sfImport) {
+      sfImport.addEventListener('click', function() {
+        document.getElementById('import-btn').click();
       });
     }
   }
@@ -2873,7 +3215,7 @@ document.head.appendChild(manifestLink);
   }
 
   async function gistPush() {
-    if (!gistConfig.token || isSyncing) return;
+    if (!gistConfig.token || isSyncing) return false;
     isSyncing = true;
     updateSyncDot('syncing');
 
@@ -2908,9 +3250,11 @@ document.head.appendChild(manifestLink);
         saveGistConfig();
       }
       updateSyncDot('connected');
+      return true;
     } catch (err) {
       console.error('Sync push failed:', err);
       updateSyncDot('error');
+      return false;
     } finally {
       isSyncing = false;
     }
@@ -2944,10 +3288,15 @@ document.head.appendChild(manifestLink);
         localStorage.setItem(FOIL_KEY, JSON.stringify(foilOwned));
       }
 
-      saveCollection();
-      savePacks();
-      saveTimeline();
+      // Persist without re-triggering sync push
+      localStorage.setItem(COLLECTION_KEY, JSON.stringify({ owned: [...ownedSet] }));
+      localStorage.setItem(PACKS_KEY, JSON.stringify({ packs: boosterPacks }));
+      localStorage.setItem(TIMELINE_KEY, JSON.stringify({ events: timelineEvents }));
+      applyConfigToTabs();
       renderAll();
+      if (document.getElementById('tab-settings').classList.contains('active')) renderSettings();
+      // Fetch variants if collector scope was enabled in pulled config
+      if (binderConfig.scope?.collectorBinder && variantCards.length === 0) fetchVariants();
       updateSyncDot('connected');
       return true;
     } catch (err) {
@@ -2962,7 +3311,6 @@ document.head.appendChild(manifestLink);
   function scheduleSyncPush() {
     if (!gistConfig.token) return;
     clearTimeout(syncTimer);
-    updateSyncDot('syncing');
     syncTimer = setTimeout(gistPush, 5000);
   }
 
@@ -3022,9 +3370,12 @@ document.head.appendChild(manifestLink);
         const btn = e.target;
         btn.textContent = 'Pushing...';
         btn.disabled = true;
-        await gistPush();
-        btn.textContent = 'Pushed!';
-        setTimeout(closeSyncModal, 1000);
+        const ok = await gistPush();
+        btn.textContent = ok ? 'Pushed!' : 'Failed';
+        setTimeout(() => {
+          if (ok) closeSyncModal();
+          else { btn.textContent = 'Push Local to Cloud'; btn.disabled = false; }
+        }, 1000);
       });
       document.getElementById('sync-disconnect-btn').addEventListener('click', (e) => {
         e.stopPropagation();
@@ -3080,10 +3431,17 @@ document.head.appendChild(manifestLink);
     }
 
     saveGistConfig();
-    await gistPush();
+    const ok = await gistPush();
     renderSyncModalBody();
     const body = document.getElementById('sync-modal-body');
-    body.insertAdjacentHTML('beforeend', '<div class="sync-status-msg" style="color:var(--owned-border)">Synced successfully!</div>');
+    if (ok) {
+      body.insertAdjacentHTML('beforeend', '<div class="sync-status-msg" style="color:var(--owned-border)">Synced successfully!</div>');
+    } else {
+      body.insertAdjacentHTML('beforeend', '<div class="sync-status-msg" style="color:var(--accent)">Sync failed — check your token and try again.</div>');
+      gistConfig = { token: '', gistId: '' };
+      saveGistConfig();
+      updateSyncDot('');
+    }
   });
 
   document.getElementById('sync-close-btn').addEventListener('click', closeSyncModal);
@@ -3113,7 +3471,7 @@ document.head.appendChild(manifestLink);
     let hasMore = true;
     while (hasMore) {
       const resp = await fetch(
-        `https://api.scryfall.com/cards/search?q=set:fin+is:booster+game:paper&page=${page}`
+        `https://api.scryfall.com/cards/search?q=set:fin+is:booster+game:paper+lang:en&unique=prints&order=collector_number&page=${page}`
       );
       if (!resp.ok) throw new Error(`Scryfall API error: ${resp.status}`);
       const data = await resp.json();
@@ -3135,6 +3493,7 @@ document.head.appendChild(manifestLink);
           oracle_id:  c.oracle_id  || '',
           foil_only:  Array.isArray(c.finishes) && c.finishes.every(f => f !== 'nonfoil'),
           frame_effects: c.frame_effects || [],
+          promo_types:   c.promo_types  || [],
         });
       }
       hasMore = data.has_more;
@@ -3219,34 +3578,76 @@ document.head.appendChild(manifestLink);
   }
 
   function isSurgeFoil(card) {
-    return (card.frame_effects || []).includes('surge')
-        || (card.finishes || []).includes('surge_foil');
+    return (card.promo_types || []).includes('surgefoil');
+  }
+
+  function isChocoboTrack(card) {
+    return (card.promo_types || []).includes('chocobotrackfoil');
+  }
+
+  function isShowcase(card) {
+    return (card.frame_effects || []).includes('inverted');
   }
 
   // Returns uppercase badge label for foil toast and variant chips
   function getFoilVariantLabel(card) {
     if (!card) return 'FOIL';
     const fe = card.frame_effects || [];
-    const pt = card.promo_types  || [];
     if (isSurgeFoil(card))           return 'SURGE FOIL';
-    if (pt.includes('neon_ink') || (card.name || '').toLowerCase().includes('chocobo')) return 'NEON INK FOIL';
-    if (fe.includes('serialized'))   return 'SERIALIZED';
-    if (fe.includes('showcase'))     return 'SHOWCASE';
+    if (isChocoboTrack(card))        return 'CHOCOBO TRACK FOIL';
     if (fe.includes('extendedart'))  return 'EXTENDED ART';
+    if (isShowcase(card))            return 'SHOWCASE';
     if ((card.finishes || []).includes('foil') && (card.finishes || []).every(f => f !== 'nonfoil')) return 'COLLECTOR FOIL';
-    return 'TRADITIONAL FOIL';
+    return 'FOIL';
   }
 
   // Returns CSS variant class for foil slot shimmer overlay
   function getFoilSlotClass(card) {
     if (!card) return '';
-    const fe = card.frame_effects || [];
-    const pt = card.promo_types  || [];
     if (isSurgeFoil(card))                                              return 'foil-variant-surge';
-    if (pt.includes('neon_ink') || (card.name || '').toLowerCase().includes('chocobo')) return 'foil-variant-neon';
-    if (fe.includes('serialized'))                                      return 'foil-variant-serialized';
+    if (isChocoboTrack(card))                                           return 'foil-variant-neon';
     if ((card.finishes || []).every(f => f !== 'nonfoil'))              return 'foil-variant-collector';
     return '';
+  }
+
+  // Returns { label, cssClass, short } for autocomplete badge rendering
+  function getCardVariantInfo(card) {
+    if (!card) return { label: '', cssClass: 'vb-normal', short: '' };
+    const isVariant = !allCards.includes(card);
+    const fe = card.frame_effects || [];
+    if (isSurgeFoil(card))          return { label: 'SURGE FOIL', cssClass: 'vb-surge', short: 'Surge' };
+    if (isChocoboTrack(card))       return { label: 'CHOCOBO TRACK', cssClass: 'vb-chocobo', short: 'Chocobo' };
+    if (fe.includes('extendedart')) return { label: 'EXTENDED ART', cssClass: 'vb-extended', short: 'Ext. Art' };
+    if (isShowcase(card))           return { label: 'SHOWCASE', cssClass: 'vb-showcase', short: 'Showcase' };
+    if (isVariant) {
+      if ((card.finishes || []).every(f => f !== 'nonfoil'))
+        return { label: 'COLLECTOR FOIL', cssClass: 'vb-collector', short: 'Collector' };
+      return { label: 'VARIANT', cssClass: 'vb-collector', short: 'Variant' };
+    }
+    return { label: '', cssClass: 'vb-normal', short: '' };
+  }
+
+  function acVariantBadgeHTML(card) {
+    const info = getCardVariantInfo(card);
+    if (!info.label) return '';
+    return `<span class="ac-variant-badge ${info.cssClass}">${info.label}</span>`;
+  }
+
+  // Returns card name with variant suffix for stats context
+  // e.g. "Cloud Strife" → "Cloud Strife" (main set) or "Cloud Strife (Extended Art)"
+  function displayName(card) {
+    if (!card) return '';
+    const info = getCardVariantInfo(card);
+    const tag = info.label ? info.short : 'Main';
+    return card.name + ' <span style="font-weight:400;font-size:0.75em;color:var(--text-muted)">(' + tag + ')</span>';
+  }
+
+  // Plain text version (no HTML) for alt/title attributes
+  function displayNameText(card) {
+    if (!card) return '';
+    const info = getCardVariantInfo(card);
+    const tag = info.label ? info.short : 'Main';
+    return card.name + ' (' + tag + ')';
   }
 
   // ── Celebration: Rarity-Tiered Fanfare ──
@@ -3454,8 +3855,8 @@ document.head.appendChild(manifestLink);
     const rarityLabels = { mythic: 'MYTHIC RARE', rare: 'RARE', uncommon: 'UNCOMMON', common: 'COMMON' };
     toast.innerHTML = `
       <div class="toast-rarity-badge ${card.rarity}">${rarityLabels[card.rarity] || card.rarity}</div>
-      <img src="${card.image_normal || card.image_small}" alt="${card.name}">
-      <div class="toast-name">#${card.collector_number} ${card.name}</div>
+      <img src="${card.image_normal || card.image_small}" alt="${displayNameText(card)}">
+      <div class="toast-name">#${card.collector_number} ${displayName(card)}</div>
       <div class="toast-msg ${card.rarity}">${msg}</div>
       <div class="toast-placement">Page ${p.page}, Slot ${p.slot}${card.price_usd > 0 ? ` \u00B7 $${card.price_usd.toFixed(2)}` : ''}</div>
     `;
@@ -3487,8 +3888,8 @@ document.head.appendChild(manifestLink);
     toast.style.setProperty('--toast-glow', 'rgba(199,125,255,0.4)');
     toast.innerHTML = `
       <div class="toast-foil-badge">${label}</div>
-      <img src="${card.image_normal || card.image_small}" alt="${card.name}">
-      <div class="toast-name">#${card.collector_number} ${card.name}</div>
+      <img src="${card.image_normal || card.image_small}" alt="${displayNameText(card)}">
+      <div class="toast-name">#${card.collector_number} ${displayName(card)}</div>
       <div class="toast-foil-msg">${msg}</div>
       ${p.page !== '?' ? `<div class="toast-placement">Page ${p.page}, Slot ${p.slot}${priceStr}</div>` : priceStr ? `<div class="toast-placement">${priceStr.trim()}</div>` : ''}
     `;
@@ -3554,8 +3955,7 @@ document.head.appendChild(manifestLink);
     if (document.getElementById('tab-dashboard').classList.contains('active')) renderDashboard();
     if (document.getElementById('tab-portfolio').classList.contains('active')) renderPortfolio();
     if (document.getElementById('tab-timeline').classList.contains('active')) renderTimeline();
-    if (document.getElementById('tab-foil')?.classList.contains('active')) renderFoilBinder();
-    if (document.getElementById('tab-variants')?.classList.contains('active')) renderVariantBinder();
+    if (document.getElementById('tab-collector')?.classList.contains('active')) renderCollectorTab();
   }
 
   function removeCard(cn) {
@@ -3569,8 +3969,7 @@ document.head.appendChild(manifestLink);
     if (document.getElementById('tab-dashboard').classList.contains('active')) renderDashboard();
     if (document.getElementById('tab-portfolio').classList.contains('active')) renderPortfolio();
     if (document.getElementById('tab-timeline').classList.contains('active')) renderTimeline();
-    if (document.getElementById('tab-foil')?.classList.contains('active')) renderFoilBinder();
-    if (document.getElementById('tab-variants')?.classList.contains('active')) renderVariantBinder();
+    if (document.getElementById('tab-collector')?.classList.contains('active')) renderCollectorTab();
   }
 
   // ── FAB (Floating Action Button) ──
@@ -3630,16 +4029,15 @@ document.head.appendChild(manifestLink);
     acList.innerHTML = matches.map((c, i) => {
       const isOwned = ownedSet.has(c.collector_number);
       const isFoilOwned = hasFoil(c.collector_number);
-      const canBeFoil = (c.finishes || []).includes('foil');
       return `<div class="ac-item" data-cn="${c.collector_number}" data-index="${i}" style="display:flex;align-items:center;justify-content:space-between;gap:8px">
         <span style="display:flex;align-items:center;gap:6px;min-width:0;flex:1">
+          <span class="ac-rarity-dot ${c.rarity}"></span>
           <span class="card-name" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.name}</span>
-          <span class="card-num" style="flex-shrink:0"> #${c.collector_number}</span>
+          <span class="card-num" style="flex-shrink:0">#${c.collector_number}</span>
         </span>
-        <span style="display:flex;align-items:center;gap:5px;flex-shrink:0">
-          ${isOwned ? '<span class="owned-tag">owned</span>' : ''}
-          ${isFoilOwned ? '<span style="color:#ffd93d;font-size:0.8rem;font-weight:700">✦</span>' : ''}
-          ${canBeFoil ? `<button class="ac-foil-btn" data-cn="${c.collector_number}" style="background:none;border:1px solid ${isFoilOwned ? 'var(--accent)' : 'var(--surface2)'};border-radius:12px;padding:1px 7px;font-size:0.72rem;cursor:pointer;color:${isFoilOwned ? '#ffd93d' : 'var(--text-muted)'};line-height:1.5;transition:all 0.15s" title="${isFoilOwned ? 'Remove foil' : 'Add foil'}">${isFoilOwned ? '✦ foil' : '✦'}</button>` : ''}
+        <span style="display:flex;align-items:center;gap:4px;flex-shrink:0">
+          ${acVariantBadgeHTML(c)}
+          ${isOwned || isFoilOwned ? '<span class="owned-tag">' + (isFoilOwned ? '✦ ' : '') + 'owned</span>' : ''}
         </span>
       </div>`;
     }).join('');
@@ -3670,30 +4068,23 @@ document.head.appendChild(manifestLink);
   }
 
   acList.addEventListener('click', (e) => {
-    // Handle foil button click
-    const foilBtn = e.target.closest('.ac-foil-btn');
-    if (foilBtn) {
-      e.stopPropagation();
-      const cn = foilBtn.dataset.cn;
-      if (hasFoil(cn)) removeFoil(cn);
-      else addFoil(cn);
-      // Re-render the autocomplete to update the foil indicator
-      searchInput.dispatchEvent(new Event('input'));
-      return;
-    }
-
-    // Handle regular card item click (existing logic)
     const item = e.target.closest('.ac-item');
     if (!item) return;
     const cn = item.dataset.cn;
     if (fabMode === 'pack' && currentPack) {
-      addCardToPack(cn);
+      // Pack mode: open modal for inspection, add via modal buttons
+      const card = getCardByNumber(cn);
+      searchInput.value = '';
+      acList.classList.remove('show');
+      if (card) { _packModeAdding = true; openModal(card); }
     } else {
-      addCard(cn);
+      // Quick Add: open the modal so user can choose add/foil/variant
+      const card = getCardByNumber(cn);
+      searchInput.value = '';
+      acList.classList.remove('show');
+      closeFab();
+      if (card) openModal(card);
     }
-    searchInput.value = '';
-    acList.classList.remove('show');
-    searchInput.focus();
   });
 
   // ── FAB Recent List ──
@@ -3715,11 +4106,13 @@ document.head.appendChild(manifestLink);
         const card = getCardByNumber(cn);
         if (!card) return '';
         const p = getPlacement(card);
+        const vInfo = getCardVariantInfo(card);
+        const isFoilOwned = hasFoil(cn);
         return `<div class="fab-recent-item">
           <img src="${card.image_small}" alt="${card.name}" loading="lazy">
           <div class="info">
-            <div class="name">#${card.collector_number} ${card.name}</div>
-            <div class="placement">Page ${p.page}, Slot ${p.slot}</div>
+            <div class="name">#${card.collector_number} ${card.name}${isFoilOwned ? ' <span style="color:var(--foil-color);font-size:0.75rem">✦</span>' : ''}</div>
+            <div class="placement">${vInfo.label ? `<span class="ac-variant-badge ${vInfo.cssClass}" style="font-size:0.68rem;margin-right:4px">${vInfo.label}</span>` : ''}Page ${p.page}, Slot ${p.slot}</div>
           </div>
           <button class="remove-btn" data-cn="${cn}" title="Remove">\u2715</button>
         </div>`;
@@ -3809,7 +4202,7 @@ document.head.appendChild(manifestLink);
       </div>
       <div class="pack-card-list" id="pack-card-list"></div>
       <div class="pack-done-row">
-        <button class="pack-done-btn" id="pack-done-btn">Done \u2014 Save Pack</button>
+        <button class="pack-done-btn" id="pack-done-btn">Done Adding \u2014 Save Pack</button>
         <button class="pack-cancel-btn" id="pack-cancel-btn">Cancel</button>
       </div>
     `;
@@ -3824,20 +4217,26 @@ document.head.appendChild(manifestLink);
     packSearchInput.addEventListener('input', () => {
       const q = packSearchInput.value.trim().toLowerCase();
       if (q.length < 1) { packAcList.classList.remove('show'); return; }
-      const matches = allCards.filter(c =>
+      const allSearchable = [...allCards, ...variantCards];
+      const matches = allSearchable.filter(c =>
         c.name.toLowerCase().includes(q) || c.collector_number === q
       ).slice(0, 15);
       packAcHl = -1;
       if (matches.length === 0) { packAcList.classList.remove('show'); return; }
       packAcList.innerHTML = matches.map((c, i) => {
         const isOwned = ownedSet.has(c.collector_number);
-        const inPack = currentPack.cards.includes(c.collector_number);
-        return `<div class="ac-item" data-cn="${c.collector_number}">
-          <span>
-            <span class="card-name">${c.name}</span>
-            <span class="card-num"> #${c.collector_number}</span>
+        const isFoilOwned = hasFoil(c.collector_number);
+        const inPack = currentPack.cards.some(e => e === c.collector_number);
+        return `<div class="ac-item" data-cn="${c.collector_number}" style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+          <span style="display:flex;align-items:center;gap:6px;min-width:0;flex:1">
+            <span class="ac-rarity-dot ${c.rarity}"></span>
+            <span class="card-name" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.name}</span>
+            <span class="card-num" style="flex-shrink:0">#${c.collector_number}</span>
           </span>
-          ${inPack ? '<span class="owned-tag">in pack</span>' : isOwned ? '<span class="owned-tag">owned</span>' : ''}
+          <span style="display:flex;align-items:center;gap:4px;flex-shrink:0">
+            ${acVariantBadgeHTML(c)}
+            ${inPack ? '<span class="owned-tag">in pack</span>' : (isOwned || isFoilOwned) ? '<span class="owned-tag">' + (isFoilOwned ? '✦ ' : '') + 'owned</span>' : ''}
+          </span>
         </div>`;
       }).join('');
       packAcList.classList.add('show');
@@ -3855,10 +4254,11 @@ document.head.appendChild(manifestLink);
     packAcList.addEventListener('click', (e) => {
       const item = e.target.closest('.ac-item');
       if (!item) return;
-      addCardToPack(item.dataset.cn);
+      const cn = item.dataset.cn;
+      const card = getCardByNumber(cn);
       packSearchInput.value = '';
       packAcList.classList.remove('show');
-      packSearchInput.focus();
+      if (card) { _packModeAdding = true; openModal(card); }
     });
 
     document.getElementById('pack-done-btn').addEventListener('click', (e) => {
@@ -3899,10 +4299,13 @@ document.head.appendChild(manifestLink);
     container.innerHTML = currentPack.cards.map((cn, i) => {
       const card = getCardByNumber(cn);
       if (!card) return '';
+      const isFoilOwned = hasFoil(cn);
       return `<div class="pack-card-entry" style="animation-delay:${i * 0.05}s">
         <div class="pack-num">${i + 1}</div>
         <img src="${card.image_small}" alt="${card.name}">
-        <span class="pack-card-name">${card.name}</span>
+        <span class="pack-card-name">${displayName(card)}</span>
+        ${acVariantBadgeHTML(card)}
+        ${isFoilOwned ? '<span style="color:var(--foil-color);font-size:0.7rem;font-weight:700">✦</span>' : ''}
         <span class="pack-card-rarity ${card.rarity}">${card.rarity}</span>
       </div>`;
     }).join('');
@@ -4088,8 +4491,8 @@ document.head.appendChild(manifestLink);
             <div class="dash-sub" style="margin-top:10px;color:var(--text-muted);font-size:0.78rem;margin-bottom:4px">Top owned foils:</div>
             ${topFoils.map(c => `
               <div class="foil-top-row" data-foil-cn="${c.collector_number}" style="display:flex;justify-content:space-between;align-items:center;font-size:0.8rem;padding:3px 0;border-radius:6px;transition:background 0.15s">
-                <span style="color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:70%">${c.name}</span>
-                <span style="color:#ffd93d;flex-shrink:0;margin-left:8px">$${(c.price_usd_foil || 0).toFixed(2)}</span>
+                <span style="color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:70%">${displayName(c)}</span>
+                <span style="color:var(--foil-color);flex-shrink:0;margin-left:8px">$${(c.price_usd_foil || 0).toFixed(2)}</span>
               </div>
             `).join('')}
           ` : `<div class="dash-sub" style="margin-top:16px;opacity:0.55">No foils collected yet</div>`}
@@ -4126,8 +4529,8 @@ document.head.appendChild(manifestLink);
               const card = getCardByNumber(cn);
               if (!card) return '';
               return `<div class="recent-item">
-                <img src="${card.image_small}" alt="${card.name}" loading="lazy">
-                <span class="rname">${card.name}</span>
+                <img src="${card.image_small}" alt="${displayNameText(card)}" loading="lazy">
+                <span class="rname">${displayName(card)}</span>
                 <span class="rnum">#${card.collector_number}</span>
               </div>`;
             }).join('')}
@@ -4139,7 +4542,7 @@ document.head.appendChild(manifestLink);
             ${allCards.map(c => {
               const isOwned = ownedSet.has(c.collector_number);
               return `<div class="fill-cell ${c.rarity} ${isOwned ? 'owned' : ''}"
-                title="#${c.collector_number} ${c.name}${isOwned ? ' (owned)' : ''}"></div>`;
+                title="#${c.collector_number} ${displayNameText(c)}${isOwned ? ' (owned)' : ''}"></div>`;
             }).join('')}
           </div>
         </div>
@@ -4176,12 +4579,15 @@ document.head.appendChild(manifestLink);
     const foilOwnedCards = allCards.filter(c => hasFoil(c.collector_number) && c.price_usd_foil > 0);
     const foilCollectionValueUSD = foilOwnedCards.reduce((s, c) => s + c.price_usd_foil, 0);
 
-    // Variant stats for portfolio cards
-    const variantOwned = variantCards.filter(c => ownedSet.has(c.collector_number));
+    // Variant stats for portfolio cards (tracked via foil ownership or nonfoil ownedSet)
+    const variantOwned = variantCards.filter(c => hasFoil(c.collector_number) || ownedSet.has(c.collector_number));
     const variantOwnedCount = variantOwned.length;
     const variantTotalCount = variantCards.length;
     const variantOwnedPct = variantTotalCount > 0 ? (variantOwnedCount / variantTotalCount * 100) : 0;
-    const variantOwnedValueUSD = variantOwned.reduce((s, c) => s + Math.max(c.price_usd || 0, c.price_usd_foil || 0), 0);
+    const variantOwnedValueUSD = variantOwned.reduce((s, c) => {
+      if (hasFoil(c.collector_number)) return s + (c.price_usd_foil || c.price_usd || 0);
+      return s + (c.price_usd || 0);
+    }, 0);
     const topOwnedVariants = [...variantOwned].sort((a, b) => Math.max(b.price_usd||0,b.price_usd_foil||0) - Math.max(a.price_usd||0,a.price_usd_foil||0)).slice(0, 3);
 
     // Foil stats for portfolio card
@@ -4263,7 +4669,7 @@ document.head.appendChild(manifestLink);
           </div>
           ${foilCollectionValueUSD > 0 ? `
           <div class="dash-sub" style="margin-top:8px">
-            <span style="color:#ffd93d">\u2746 Foil collection: $${foilCollectionValueUSD.toFixed(2)} / RM ${(foilCollectionValueUSD * USD_TO_MYR).toFixed(2)}</span>
+            <span style="color:var(--foil-color)">\u2746 Foil collection: $${foilCollectionValueUSD.toFixed(2)} / RM ${(foilCollectionValueUSD * USD_TO_MYR).toFixed(2)}</span>
           </div>` : ''}
         </div>
 
@@ -4303,9 +4709,9 @@ document.head.appendChild(manifestLink);
               const effectivePrice = getEffectivePrice(c);
               return `<div class="top-card-item missing-inspect" data-cn="${c.collector_number}">
               <span class="rank">${i + 1}</span>
-              <img src="${c.image_small}" alt="${c.name}">
-              <span class="tc-name">${c.name}${isFoilOwned ? ' <span style="color:#ffd93d;font-size:0.8rem">\u2746</span>' : ''}</span>
-              <span class="tc-price">$${effectivePrice.toFixed(2)}${isFoilOwned && c.price_usd_foil > 0 && c.price_usd_foil > c.price_usd ? `<br><span style="color:#888;font-size:0.75rem;text-decoration:line-through">$${c.price_usd.toFixed(2)}</span>` : ''}</span>
+              <img src="${c.image_small}" alt="${displayNameText(c)}">
+              <span class="tc-name">${displayName(c)}${isFoilOwned ? ' <span style="color:var(--foil-color);font-size:0.8rem">\u2746</span>' : ''}</span>
+              <span class="tc-price">$${effectivePrice.toFixed(2)}${isFoilOwned && c.price_usd_foil > 0 && c.price_usd_foil > c.price_usd ? `<br><span style="color:var(--text-muted);font-size:0.75rem;text-decoration:line-through">$${c.price_usd.toFixed(2)}</span>` : ''}</span>
               <span class="inspect-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
             </div>`;
             }).join('')}
@@ -4317,8 +4723,8 @@ document.head.appendChild(manifestLink);
           ${topMissing.length > 0 ? `<div class="top-cards">
             ${topMissing.map((c, i) => `<div class="top-card-item missing-inspect" data-cn="${c.collector_number}">
               <span class="rank">${i + 1}</span>
-              <img src="${c.image_small}" alt="${c.name}">
-              <span class="tc-name">${c.name}</span>
+              <img src="${c.image_small}" alt="${displayNameText(c)}">
+              <span class="tc-name">${displayName(c)}</span>
               <span class="tc-price" style="color:var(--accent)">$${c.price_usd.toFixed(2)}</span>
               <span class="inspect-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
             </div>`).join('')}
@@ -4343,8 +4749,8 @@ document.head.appendChild(manifestLink);
             <div class="top-cards">
               ${topOwnedVariants.map((c, i) => `<div class="top-card-item missing-inspect" data-cn="${c.collector_number}" style="cursor:pointer">
                 <span class="rank">${i + 1}</span>
-                <img src="${c.image_small}" alt="${c.name}">
-                <span class="tc-name">${c.name}</span>
+                <img src="${c.image_small}" alt="${displayNameText(c)}">
+                <span class="tc-name">${displayName(c)}</span>
                 <span class="tc-price">$${Math.max(c.price_usd||0,c.price_usd_foil||0).toFixed(2)}</span>
                 <span class="inspect-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
               </div>`).join('')}
@@ -4353,7 +4759,7 @@ document.head.appendChild(manifestLink);
         </div>
         ` : ''}
 
-        ${binderConfig.scope?.foilBinder ? `
+        ${binderConfig.scope?.collectorBinder ? `
         <div class="dash-card">
           <h3>✦ Foil Collection</h3>
           <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
@@ -4362,8 +4768,8 @@ document.head.appendChild(manifestLink);
               <div class="dash-sub">${foilOwnedPct.toFixed(1)}% complete</div>
             </div>
             <div style="flex:1">
-              <div class="rarity-track"><div class="rarity-fill" style="width:${foilOwnedPct.toFixed(1)}%;background:#ffd93d"></div></div>
-              <div class="dash-sub" style="margin-top:4px">Value: <strong style="color:#ffd93d">$${foilCollectionValueUSD.toFixed(2)}</strong> / RM ${(foilCollectionValueUSD * USD_TO_MYR).toFixed(2)}</div>
+              <div class="rarity-track"><div class="rarity-fill" style="width:${foilOwnedPct.toFixed(1)}%;background:var(--foil-color)"></div></div>
+              <div class="dash-sub" style="margin-top:4px">Value: <strong style="color:var(--foil-color)">$${foilCollectionValueUSD.toFixed(2)}</strong> / RM ${(foilCollectionValueUSD * USD_TO_MYR).toFixed(2)}</div>
             </div>
           </div>
           ${topOwnedFoils.length > 0 ? `
@@ -4371,9 +4777,9 @@ document.head.appendChild(manifestLink);
             <div class="top-cards">
               ${topOwnedFoils.map((c, i) => `<div class="top-card-item missing-inspect" data-cn="${c.collector_number}" style="cursor:pointer">
                 <span class="rank">${i + 1}</span>
-                <img src="${c.image_small}" alt="${c.name}">
-                <span class="tc-name">${c.name}</span>
-                <span class="tc-price" style="color:#ffd93d">$${c.price_usd_foil.toFixed(2)}</span>
+                <img src="${c.image_small}" alt="${displayNameText(c)}">
+                <span class="tc-name">${displayName(c)}</span>
+                <span class="tc-price" style="color:var(--foil-color)">$${c.price_usd_foil.toFixed(2)}</span>
                 <span class="inspect-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
               </div>`).join('')}
             </div>
@@ -4495,8 +4901,8 @@ document.head.appendChild(manifestLink);
       const ago = timeAgo(new Date(evt.date));
       return `<div class="activity-item">
         <div class="activity-dot ${evt.type}"></div>
-        <img src="${card.image_small}" alt="${card.name}">
-        <span class="activity-name">${card.name}</span>
+        <img src="${card.image_small}" alt="${displayNameText(card)}">
+        <span class="activity-name">${displayName(card)}</span>
         <span class="activity-meta">${evt.type === 'add' ? evt.source === 'pack' ? 'pack' : 'quick' : 'removed'} \u00B7 ${ago}</span>
       </div>`;
     }).join('') : '<div class="dash-sub" style="padding:20px 0;text-align:center">No activity yet — start adding cards!</div>';
@@ -4577,6 +4983,25 @@ document.head.appendChild(manifestLink);
     return isMobile() ? totalPages : Math.ceil(totalPages / 2);
   }
 
+  // ── Binder search/filter state ──
+  let binderSearchQuery = '';
+  let binderFilterMode = 'all'; // 'all' | 'owned' | 'missing'
+
+  function getBinderFilteredCards() {
+    let cards = allCards;
+    if (binderFilterMode === 'owned') cards = cards.filter(c => ownedSet.has(c.collector_number));
+    else if (binderFilterMode === 'missing') cards = cards.filter(c => !ownedSet.has(c.collector_number));
+    if (binderSearchQuery.trim()) {
+      const q = binderSearchQuery.trim().toLowerCase();
+      cards = cards.filter(c => c.name.toLowerCase().includes(q) || c.collector_number === q);
+    }
+    return cards;
+  }
+
+  function isBinderFiltered() {
+    return binderFilterMode !== 'all' || binderSearchQuery.trim().length > 0;
+  }
+
   function renderBinder() {
     totalPages = Math.ceil(allCards.length / binderConfig.slotsPerPage);
     binderConfig.pageCount = totalPages;
@@ -4584,6 +5009,11 @@ document.head.appendChild(manifestLink);
     if (pcEl) pcEl.textContent = `${binderConfig.pageCount} Pages`;
     const preEl = document.getElementById('binder-preset-display');
     if (preEl) preEl.textContent = binderConfig.presetName || `${binderConfig.slotsPerPage}-Pocket Binder`;
+
+    // Show/hide page nav depending on filter mode
+    const pageWidget = document.getElementById('page-nav-widget');
+    if (pageWidget) pageWidget.style.display = isBinderFiltered() ? 'none' : '';
+
     renderPageSelector(getPageCount());
     renderSpread();
   }
@@ -4593,54 +5023,96 @@ document.head.appendChild(manifestLink);
     const mobile = isMobile();
     spread.innerHTML = '';
 
-    // On mobile: show 1 page (currentPage is 0-indexed page).
-    // On desktop: show 2 pages (currentPage is spread index).
-    const pageIndices = mobile
-      ? [currentPage]
-      : [currentPage * 2, currentPage * 2 + 1];
-
-    for (const pageIdx of pageIndices) {
-      const pageNum = pageIdx + 1;
-      if (pageNum > totalPages) break;
-      const startIdx = pageIdx * binderConfig.slotsPerPage;
-      const pageCards = allCards.slice(startIdx, startIdx + binderConfig.slotsPerPage);
+    if (isBinderFiltered()) {
+      // ── Filtered flat grid mode ──
+      const filtered = getBinderFilteredCards();
+      const spp = binderConfig.slotsPerPage;
+      const filteredPages = Math.max(1, Math.ceil(filtered.length / spp));
+      if (currentPage >= filteredPages) currentPage = Math.max(0, filteredPages - 1);
+      const pageCards = filtered.slice(currentPage * spp, (currentPage + 1) * spp);
 
       const pageEl = document.createElement('div');
       pageEl.className = 'binder-page';
-      pageEl.innerHTML = `<div class="page-label">Page ${pageNum}</div><div class="page-grid"></div>`;
+      pageEl.innerHTML = `<div class="page-label">${filtered.length} result${filtered.length !== 1 ? 's' : ''} \u00B7 Page ${currentPage + 1} / ${filteredPages}</div><div class="page-grid"></div>`;
       const grid = pageEl.querySelector('.page-grid');
       grid.style.gridTemplateColumns = `repeat(${binderConfig.gridCols}, 1fr)`;
 
-      for (let i = 0; i < binderConfig.slotsPerPage; i++) {
-        const card = pageCards[i];
+      for (const card of pageCards) {
         const slot = document.createElement('div');
         slot.className = 'card-slot';
-        if (!card) {
-          slot.innerHTML = '<div class="placeholder"><span class="num">\u2014</span></div>';
+        const isOwned = ownedSet.has(card.collector_number);
+        if (isOwned) slot.classList.add('owned');
+        if (isOwned) {
+          slot.innerHTML = `<img data-src="${card.image_normal || card.image_small}" alt="${card.name}">`;
         } else {
-          const isOwned = ownedSet.has(card.collector_number);
-          const justAdded = packSession.includes(card.collector_number);
-          if (isOwned) slot.classList.add('owned');
-          if (justAdded) slot.classList.add('just-added');
-          if (highlightedCN === card.collector_number) slot.classList.add('highlighted');
-          if (isOwned) {
-            slot.innerHTML = `<img data-src="${card.image_normal || card.image_small}" alt="${card.name}">`;
-          } else {
-            slot.innerHTML = `<div class="placeholder">
-              <span class="num">#${card.collector_number}</span>
-              <span class="pname">${card.name}</span>
-            </div>`;
-          }
-          slot.dataset.cn = card.collector_number;
-          slot.addEventListener('click', () => {
-            highlightedCN = card.collector_number;
-            renderSpread();
-            openModal(card);
-          });
+          slot.innerHTML = `<div class="placeholder">
+            <span class="num">#${card.collector_number}</span>
+            <span class="pname">${card.name}</span>
+          </div>`;
         }
+        slot.dataset.cn = card.collector_number;
+        slot.addEventListener('click', () => { openModal(card); });
         grid.appendChild(slot);
       }
       spread.appendChild(pageEl);
+
+      const maxPage = filteredPages;
+      document.getElementById('prev-page').disabled = currentPage === 0;
+      document.getElementById('next-page').disabled = currentPage >= maxPage - 1;
+    } else {
+      // ── Normal binder spread mode ──
+      const pageIndices = mobile
+        ? [currentPage]
+        : [currentPage * 2, currentPage * 2 + 1];
+
+      for (const pageIdx of pageIndices) {
+        const pageNum = pageIdx + 1;
+        if (pageNum > totalPages) break;
+        const startIdx = pageIdx * binderConfig.slotsPerPage;
+        const pageCards = allCards.slice(startIdx, startIdx + binderConfig.slotsPerPage);
+
+        const pageEl = document.createElement('div');
+        pageEl.className = 'binder-page';
+        pageEl.innerHTML = `<div class="page-label">Page ${pageNum}</div><div class="page-grid"></div>`;
+        const grid = pageEl.querySelector('.page-grid');
+        grid.style.gridTemplateColumns = `repeat(${binderConfig.gridCols}, 1fr)`;
+
+        for (let i = 0; i < binderConfig.slotsPerPage; i++) {
+          const card = pageCards[i];
+          const slot = document.createElement('div');
+          slot.className = 'card-slot';
+          if (!card) {
+            slot.innerHTML = '<div class="placeholder"><span class="num">\u2014</span></div>';
+          } else {
+            const isOwned = ownedSet.has(card.collector_number);
+            const justAdded = packSession.includes(card.collector_number);
+            if (isOwned) slot.classList.add('owned');
+            if (justAdded) slot.classList.add('just-added');
+            if (highlightedCN === card.collector_number) slot.classList.add('highlighted');
+            if (isOwned) {
+              slot.innerHTML = `<img data-src="${card.image_normal || card.image_small}" alt="${card.name}">`;
+            } else {
+              slot.innerHTML = `<div class="placeholder">
+                <span class="num">#${card.collector_number}</span>
+                <span class="pname">${card.name}</span>
+              </div>`;
+            }
+            slot.dataset.cn = card.collector_number;
+            slot.addEventListener('click', () => {
+              highlightedCN = card.collector_number;
+              renderSpread();
+              openModal(card);
+            });
+          }
+          grid.appendChild(slot);
+        }
+        spread.appendChild(pageEl);
+      }
+
+      const maxPage = getPageCount();
+      document.getElementById('prev-page').disabled = currentPage === 0;
+      document.getElementById('next-page').disabled = currentPage >= maxPage - 1;
+      updatePageSelectorActive();
     }
 
     // Lazy load images
@@ -4654,11 +5126,6 @@ document.head.appendChild(manifestLink);
       });
     });
     spread.querySelectorAll('img[data-src]').forEach(img => observer.observe(img));
-
-    const maxPage = getPageCount();
-    document.getElementById('prev-page').disabled = currentPage === 0;
-    document.getElementById('next-page').disabled = currentPage >= maxPage - 1;
-    updatePageSelectorActive();
   }
 
   // Build a single binder page element for a given 0-indexed page number (no DOM side effects)
@@ -4698,97 +5165,44 @@ document.head.appendChild(manifestLink);
     return pageEl;
   }
 
-  function flipAndRender(direction) {
-    const wrapper = document.querySelector('.binder-spread-wrapper');
-    const spread = document.getElementById('binder-spread');
-    const pages = spread.querySelectorAll('.binder-page');
 
-    // Which page flips: forward = right page, backward = left page
-    const pageToFlip = direction === 'left' ? pages[pages.length - 1] : pages[0];
-    if (!pageToFlip) { renderSpread(); return; }
-
-    const rect = pageToFlip.getBoundingClientRect();
-    const wrapRect = wrapper.getBoundingClientRect();
-
-    // Build the two-sided overlay, positioned exactly over the source page
-    const overlay = document.createElement('div');
-    overlay.className = 'page-flip-overlay ' + (direction === 'left' ? 'flip-forward' : 'flip-backward');
-    overlay.style.top = (rect.top - wrapRect.top) + 'px';
-    overlay.style.left = (rect.left - wrapRect.left) + 'px';
-    overlay.style.width = rect.width + 'px';
-    overlay.style.height = rect.height + 'px';
-
-    // Front side: clone of the old page
-    const front = document.createElement('div');
-    front.className = 'flip-front';
-    const clonedPage = pageToFlip.cloneNode(true);
-    clonedPage.querySelectorAll('img[data-src]').forEach(img => {
-      img.src = img.dataset.src;
-    });
-    front.appendChild(clonedPage);
-
-    // Replace the original page content with card silhouettes
-    pageToFlip.querySelectorAll('.card-slot').forEach(slot => {
-      slot.innerHTML = '';
-      slot.className = 'card-slot';
-      slot.style.background = 'var(--surface2)';
-      slot.style.opacity = '0.5';
-      slot.style.borderColor = 'transparent';
-      slot.style.boxShadow = 'inset 0 0 8px rgba(0,0,0,0.15)';
-    });
-
-    // Back side: silhouette grid matching the binder page layout
-    const back = document.createElement('div');
-    back.className = 'flip-back';
-    const backPage = document.createElement('div');
-    backPage.className = 'binder-page';
-    backPage.innerHTML = '<div class="page-label">&nbsp;</div><div class="page-grid"></div>';
-    const backGrid = backPage.querySelector('.page-grid');
-    backGrid.style.gridTemplateColumns = `repeat(${binderConfig.gridCols}, 1fr)`;
-    for (let i = 0; i < binderConfig.slotsPerPage; i++) {
-      const slot = document.createElement('div');
-      slot.className = 'card-slot';
-      slot.style.background = 'var(--surface2)';
-      slot.style.opacity = '0.5';
-      slot.style.boxShadow = 'inset 0 0 8px rgba(0,0,0,0.15)';
-      backGrid.appendChild(slot);
-    }
-    back.appendChild(backPage);
-
-    overlay.appendChild(front);
-    overlay.appendChild(back);
-
-    // Add a subtle shadow on the underlying spread
-    const shadow = document.createElement('div');
-    shadow.className = 'page-flip-shadow ' + (direction === 'left' ? 'forward' : 'backward');
-    shadow.style.top = (rect.top - wrapRect.top) + 'px';
-    shadow.style.height = rect.height + 'px';
-
-    wrapper.appendChild(overlay);
-    wrapper.appendChild(shadow);
-
-    // When animation ends, swap to the new content
-    overlay.addEventListener('animationend', () => {
-      overlay.remove();
-      shadow.remove();
-      renderSpread();
-    }, { once: true });
-  }
 
   document.getElementById('prev-page').addEventListener('click', () => {
     if (currentPage > 0) {
       currentPage--;
       if (isMobile()) mobileSlide('right');
-      else flipAndRender('right');
+      else renderSpread();
     }
   });
   document.getElementById('next-page').addEventListener('click', () => {
+    if (isBinderFiltered()) {
+      const filtered = getBinderFilteredCards();
+      const maxPage = Math.max(1, Math.ceil(filtered.length / binderConfig.slotsPerPage));
+      if (currentPage < maxPage - 1) { currentPage++; renderSpread(); }
+      return;
+    }
     const maxPage = getPageCount();
     if (currentPage < maxPage - 1) {
       currentPage++;
       if (isMobile()) mobileSlide('left');
-      else flipAndRender('left');
+      else renderSpread();
     }
+  });
+
+  // ── Binder search + filter wiring ──
+  document.getElementById('binder-search-input').addEventListener('input', function() {
+    binderSearchQuery = this.value;
+    currentPage = 0;
+    renderBinder();
+  });
+  document.querySelectorAll('.binder-fpill').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.binder-fpill').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      binderFilterMode = btn.dataset.filter;
+      currentPage = 0;
+      renderBinder();
+    });
   });
 
   function mobileSlide(direction) {
@@ -4863,7 +5277,7 @@ document.head.appendChild(manifestLink);
     const dir = newPage > currentPage ? 'left' : 'right';
     currentPage = newPage;
     if (isMobile()) mobileSlide(dir);
-    else flipAndRender(dir);
+    else renderSpread();
   }
 
   // Click on track to jump
@@ -4945,45 +5359,10 @@ document.head.appendChild(manifestLink);
     }
   });
 
-  // ── Card Visualizer (3D rotation) ──
-  const vizEl = document.getElementById('card-visualizer');
+  // ── Card Visualizer (modal — no drag, just flip/reset) ──
   const card3d = document.getElementById('card-3d');
   const shineEl = document.getElementById('card-shine');
-  let isDragging = false;
-  let startX, startY, rotX = 0, rotY = 0;
-  let isFlipped = false;
-
-  vizEl.addEventListener('mousedown', (e) => {
-    isDragging = true; startX = e.clientX; startY = e.clientY; e.preventDefault();
-    card3d.style.transition = 'none';
-    vizEl.classList.add('interacted');
-  });
-  document.addEventListener('mousemove', (e) => {
-    if (!isDragging) return;
-    rotY += (e.clientX - startX) * 0.5;
-    rotX -= (e.clientY - startY) * 0.5;
-    rotX = Math.max(-60, Math.min(60, rotX));
-    startX = e.clientX; startY = e.clientY;
-    updateCardTransform();
-  });
-  document.addEventListener('mouseup', () => { isDragging = false; });
-
-  vizEl.addEventListener('touchstart', (e) => {
-    if (e.touches.length !== 1) return;
-    isDragging = true; startX = e.touches[0].clientX; startY = e.touches[0].clientY;
-    card3d.style.transition = 'none';
-    vizEl.classList.add('interacted');
-  }, { passive: false });
-  vizEl.addEventListener('touchmove', (e) => {
-    if (!isDragging || e.touches.length !== 1) return;
-    e.preventDefault();
-    rotY += (e.touches[0].clientX - startX) * 0.5;
-    rotX -= (e.touches[0].clientY - startY) * 0.5;
-    rotX = Math.max(-60, Math.min(60, rotX));
-    startX = e.touches[0].clientX; startY = e.touches[0].clientY;
-    updateCardTransform();
-  }, { passive: false });
-  document.addEventListener('touchend', () => { isDragging = false; });
+  let rotX = 0, rotY = 0, isFlipped = false;
 
   function updateCardTransform() {
     requestAnimationFrame(() => {
@@ -5006,33 +5385,170 @@ document.head.appendChild(manifestLink);
     setTimeout(() => { card3d.style.transition = 'none'; }, 600);
   });
 
+  // ── Full-screen Inspect View ──
+  const inspectOverlay = document.getElementById('inspect-overlay');
+  const inspect3d = document.getElementById('inspect-3d');
+  const inspectShine = document.getElementById('inspect-shine');
+  const inspectWrap = document.querySelector('.inspect-card-wrap');
+  let inspDragging = false, inspStartX, inspStartY, inspRotX = 0, inspRotY = 0, inspFlipped = false;
+
+  function updateInspectTransform() {
+    requestAnimationFrame(() => {
+      inspect3d.style.transform = `rotateX(${inspRotX}deg) rotateY(${inspRotY}deg)`;
+      inspectShine.style.background = `radial-gradient(circle at ${50 + inspRotY * 0.5}% ${50 - inspRotX * 0.5}%, rgba(255,255,255,0.22) 0%, transparent 60%)`;
+    });
+  }
+
+  let _inspectCard = null;
+  function openInspect(card) {
+    _inspectCard = card;
+    inspRotX = 0; inspRotY = 0; inspFlipped = false;
+    inspect3d.style.transition = 'none';
+    updateInspectTransform();
+
+    document.getElementById('inspect-img').src = card.image_normal || card.image_small;
+    document.getElementById('inspect-back-img').src = card.image_back_normal || card.image_back_small || MTG_CARD_BACK;
+
+    // Foil classes
+    inspect3d.classList.toggle('foil-owned', hasFoil(card.collector_number));
+    inspect3d.classList.remove('foil-variant-surge', 'foil-variant-neon', 'foil-variant-collector');
+    const slotClass = getFoilSlotClass(card);
+    if (slotClass && hasFoil(card.collector_number)) inspect3d.classList.add(slotClass);
+
+    document.getElementById('inspect-hint').style.display = '';
+    inspectOverlay.classList.add('visible');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeInspect() {
+    inspectOverlay.classList.remove('visible');
+    document.body.style.overflow = '';
+    _inspectCard = null;
+  }
+
+  // Drag to rotate — inspect overlay only
+  inspectWrap.addEventListener('mousedown', (e) => {
+    inspDragging = true; inspStartX = e.clientX; inspStartY = e.clientY; e.preventDefault();
+    inspect3d.style.transition = 'none';
+    document.getElementById('inspect-hint').style.display = 'none';
+  });
+  document.addEventListener('mousemove', (e) => {
+    if (!inspDragging) return;
+    inspRotY += (e.clientX - inspStartX) * 0.5;
+    inspRotX -= (e.clientY - inspStartY) * 0.5;
+    inspRotX = Math.max(-60, Math.min(60, inspRotX));
+    inspStartX = e.clientX; inspStartY = e.clientY;
+    updateInspectTransform();
+  });
+  document.addEventListener('mouseup', () => { inspDragging = false; });
+
+  inspectWrap.addEventListener('touchstart', (e) => {
+    if (e.touches.length !== 1) return;
+    inspDragging = true; inspStartX = e.touches[0].clientX; inspStartY = e.touches[0].clientY;
+    inspect3d.style.transition = 'none';
+    document.getElementById('inspect-hint').style.display = 'none';
+  }, { passive: false });
+  inspectWrap.addEventListener('touchmove', (e) => {
+    if (!inspDragging || e.touches.length !== 1) return;
+    e.preventDefault();
+    inspRotY += (e.touches[0].clientX - inspStartX) * 0.5;
+    inspRotX -= (e.touches[0].clientY - inspStartY) * 0.5;
+    inspRotX = Math.max(-60, Math.min(60, inspRotX));
+    inspStartX = e.touches[0].clientX; inspStartY = e.touches[0].clientY;
+    updateInspectTransform();
+  }, { passive: false });
+  document.addEventListener('touchend', () => { inspDragging = false; });
+
+  document.getElementById('inspect-reset').addEventListener('click', () => {
+    inspRotX = 0; inspRotY = 0; inspFlipped = false;
+    inspect3d.style.transition = 'transform 0.5s ease';
+    updateInspectTransform();
+    setTimeout(() => { inspect3d.style.transition = 'none'; }, 500);
+  });
+  document.getElementById('inspect-flip').addEventListener('click', () => {
+    inspFlipped = !inspFlipped;
+    inspRotY = inspFlipped ? 180 : 0; inspRotX = 0;
+    inspect3d.style.transition = 'transform 0.6s ease';
+    updateInspectTransform();
+    setTimeout(() => { inspect3d.style.transition = 'none'; }, 600);
+  });
+  document.getElementById('inspect-close').addEventListener('click', closeInspect);
+  inspectOverlay.addEventListener('click', (e) => {
+    if (e.target === inspectOverlay) closeInspect();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && inspectOverlay.classList.contains('visible')) closeInspect();
+  });
+
+  // Wire Inspect — button and card image both open full-screen
+  document.getElementById('btn-inspect-card').addEventListener('click', () => {
+    if (_currentModalCard) openInspect(_currentModalCard);
+  });
+  document.getElementById('card-visualizer').addEventListener('click', () => {
+    if (_currentModalCard) openInspect(_currentModalCard);
+  });
+
   // ── Modal helpers ──
   function getVariantLabel(v) {
     var fe = v.frame_effects || [];
-    var pt = v.promo_types || [];
-    if (fe.includes('surge')) return 'Surge Foil';
-    if (pt.includes('neon_ink')) return 'Neon Ink Foil';
-    if (v.name && v.name.includes('Traveling Chocobo')) return 'Neon Ink Foil';
-    if (fe.includes('serialized')) return 'Serialized (' + v.collector_number + '/77)';
-    return 'Collector Foil';
+    if (isSurgeFoil(v)) return 'Surge Foil';
+    if (isChocoboTrack(v)) return 'Chocobo Track Foil';
+    if (fe.includes('extendedart')) return 'Extended Art';
+    if (isShowcase(v)) return 'Showcase';
+    if (allCards.includes(v)) return 'Foil';
+    return 'Collector Variant';
   }
 
   function buildFoilInfoHTML(card) {
     var chips = [];
     var cn = card.collector_number;
+    var isVariantCard = !allCards.includes(card);
+    var isSpecialVariant = isVariantCard && (isSurgeFoil(card) || isChocoboTrack(card) || isShowcase(card) || (card.frame_effects || []).includes('extendedart'));
+    var collEnabled = binderConfig.scope && binderConfig.scope.collectorBinder;
+    var arrow = collEnabled ? ' <span class="chip-arrow">\u203A</span>' : '';
+    var navAttrs = function(targetCN) {
+      return collEnabled ? ' data-nav-cn="' + targetCN + '" data-nav-tab="collector" title="View in Collector tab"' : '';
+    };
 
-    // Traditional foil
-    if ((card.finishes || []).includes('foil')) {
+    // Foil — only for main set cards, not special variants
+    if ((card.finishes || []).includes('foil') && !isSpecialVariant) {
       var tOwned = hasFoil(cn);
+      var foilLabel = isVariantCard ? getVariantLabel(card) : 'Foil';
       chips.push(
-        '<span class="foil-chip ' + (tOwned ? 'owned' : 'unowned') + '">' +
-        '\u2726 Traditional Foil' + (tOwned ? ' \u00B7 Owned' : '') +
+        '<span class="foil-chip ' + (tOwned ? 'owned' : 'unowned') + '"' + navAttrs(cn) + '>' +
+        '\u2726 ' + foilLabel + (tOwned ? ' \u00B7 Owned' : '') + arrow +
         '</span>'
       );
     }
 
+    // Special variant card — show its own type as the foil chip
+    if (isSpecialVariant) {
+      var sOwned = hasFoil(cn);
+      chips.push(
+        '<span class="foil-chip ' + (sOwned ? 'owned' : 'unowned') + '"' + navAttrs(cn) + '>' +
+        '\u2726 ' + getVariantLabel(card) + (sOwned ? ' \u00B7 Owned' : '') + arrow +
+        '</span>'
+      );
+    }
+
+    // If viewing a variant card, show the main set card as "Foil" linking to Binder
+    if (isVariantCard && card.oracle_id) {
+      var mainCard = allCards.find(function(c) { return c.oracle_id === card.oracle_id; });
+      if (mainCard) {
+        var mfOwned = hasFoil(mainCard.collector_number);
+        var binderArrow = ' <span class="chip-arrow">\u203A</span>';
+        chips.push(
+          '<span class="foil-chip ' + (mfOwned ? 'owned' : 'unowned') + '" data-nav-cn="' + mainCard.collector_number + '" data-nav-tab="binder" title="View Foil in Binder">' +
+          '\u2726 Foil' + (mfOwned ? ' \u00B7 Owned' : '') + binderArrow +
+          '</span>'
+        );
+      }
+    }
+
     // Special variants — look for linked variant cards
     var linkedVariants = variantCards.filter(function(v) {
+      // Don't list ourselves as a linked variant
+      if (v.collector_number === cn) return false;
       return v.variant_of === cn || (card.oracle_id && v.oracle_id === card.oracle_id);
     });
 
@@ -5041,12 +5557,12 @@ document.head.appendChild(manifestLink);
         var vOwned = hasFoil(v.collector_number);
         var label = getVariantLabel(v);
         chips.push(
-          '<span class="foil-chip ' + (vOwned ? 'owned' : 'unowned') + '">' +
-          '\u2726 ' + label + (vOwned ? ' \u00B7 Owned' : '') +
+          '<span class="foil-chip ' + (vOwned ? 'owned' : 'unowned') + '"' + navAttrs(v.collector_number) + '>' +
+          '\u2726 ' + label + (vOwned ? ' \u00B7 Owned' : '') + arrow +
           '</span>'
         );
       });
-    } else if (!binderConfig.scope.collectorVariants) {
+    } else if (!binderConfig.scope.collectorBinder) {
       chips.push(
         '<span class="foil-chip unavailable">' +
         'Surge &amp; special foil variants are Collector Booster exclusives \u2014 ' +
@@ -5060,22 +5576,88 @@ document.head.appendChild(manifestLink);
   }
 
   // ── Modal ──
+  let _currentModalCard = null;
+  let _packModeAdding = false;
   function openModal(card) {
+    _currentModalCard = card;
     const isOwned = ownedSet.has(card.collector_number);
+    const isVariant = !allCards.includes(card);
     const p = getPlacement(card);
 
     rotX = 0; rotY = 0; isFlipped = false;
     card3d.style.transition = 'none';
     updateCardTransform();
-    vizEl.classList.remove('interacted');
-    setTimeout(() => { card3d.style.transition = 'transform 0.1s ease-out'; }, 50);
 
     document.getElementById('modal-img').src = card.image_normal || card.image_small;
     document.getElementById('modal-back-img').src = card.image_back_normal || card.image_back_small || MTG_CARD_BACK;
-    document.getElementById('modal-name').textContent = `#${card.collector_number} ${card.name}`;
-    const priceStr = card.price_usd > 0 ? ` \u00B7 $${card.price_usd.toFixed(2)} / RM ${(card.price_usd * USD_TO_MYR).toFixed(2)} (Scryfall)` : '';
+    document.getElementById('modal-name').innerHTML = `#${card.collector_number} ${displayName(card)}`;
+    const placementStr = isVariant ? 'Collector Variant' : `Page ${p.page}, Slot ${p.slot}`;
     document.getElementById('modal-detail').textContent =
-      `${card.type_line} \u00B7 ${card.rarity} \u00B7 Page ${p.page}, Slot ${p.slot}${priceStr}`;
+      `${card.type_line} \u00B7 ${card.rarity} \u00B7 ${placementStr}`;
+
+    // ── Price panel ──
+    const pricesEl = document.getElementById('modal-prices');
+    const vInfo = getCardVariantInfo(card);
+    const variantTag = vInfo.label ? vInfo.short : 'Main';
+
+    function priceChip(label, usd, myr, cls) {
+      return `<div class="modal-price-chip">
+        <div class="price-label">${label}</div>
+        <div class="price-val ${cls}">$${usd.toFixed(2)}</div>
+        <div class="price-sub">RM ${myr.toFixed(2)}</div>
+      </div>`;
+    }
+
+    let chips = [];
+    // This card's prices
+    if (card.price_usd > 0)
+      chips.push(priceChip(variantTag, card.price_usd, card.price_usd * USD_TO_MYR, 'usd'));
+    if (card.price_usd_foil > 0)
+      chips.push(priceChip(variantTag + ' \u2726', card.price_usd_foil, card.price_usd_foil * USD_TO_MYR, 'foil'));
+
+    // Linked variant prices
+    if (card.oracle_id) {
+      const linked = isVariant
+        ? allCards.filter(c => c.oracle_id === card.oracle_id)
+        : variantCards.filter(c => c.oracle_id === card.oracle_id);
+      for (const v of linked) {
+        const vTag = getCardVariantInfo(v);
+        const vLabel = vTag.label ? vTag.short : 'Main';
+        if (v.price_usd > 0)
+          chips.push(priceChip(vLabel, v.price_usd, v.price_usd * USD_TO_MYR, 'usd'));
+        if (v.price_usd_foil > 0 && !(v.price_usd > 0 && v.price_usd_foil === v.price_usd))
+          chips.push(priceChip(vLabel + ' \u2726', v.price_usd_foil, v.price_usd_foil * USD_TO_MYR, 'foil'));
+      }
+    }
+    if (chips.length === 0)
+      chips.push('<div class="modal-price-chip no-price"><span class="price-sub">No price data</span></div>');
+
+    const hasAnyPrice = chips.length > 0 && !chips[0].includes('no-price');
+    const priceTimestamp = dataFetchedAt
+      ? `<div class="modal-price-ts">Scryfall \u00B7 ${timeAgo(new Date(dataFetchedAt))} <button class="modal-price-refresh" id="modal-refresh-prices" title="Refresh prices">\u21BB</button></div>`
+      : (!hasAnyPrice ? '' : `<div class="modal-price-ts"><button class="modal-price-refresh" id="modal-refresh-prices" title="Refresh prices">\u21BB Refresh</button></div>`);
+    pricesEl.className = 'modal-prices' + (chips.length === 1 ? ' single-col' : '');
+    pricesEl.innerHTML = chips.join('') + priceTimestamp;
+
+    // Wire refresh button
+    const modalRefreshBtn = document.getElementById('modal-refresh-prices');
+    if (modalRefreshBtn) {
+      modalRefreshBtn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        modalRefreshBtn.classList.add('spinning');
+        modalRefreshBtn.disabled = true;
+        try {
+          localStorage.removeItem(CACHE_KEY);
+          allCards = await loadCards();
+          // Re-open the modal with fresh data
+          const freshCard = getCardByNumber(card.collector_number);
+          if (freshCard) openModal(freshCard);
+        } finally {
+          modalRefreshBtn.classList.remove('spinning');
+          modalRefreshBtn.disabled = false;
+        }
+      });
+    }
 
     const scryfallLink = document.getElementById('scryfall-link');
     if (card.scryfall_uri) {
@@ -5085,45 +5667,121 @@ document.head.appendChild(manifestLink);
       scryfallLink.style.display = 'none';
     }
 
+    // ── Collection toggle button ──
     const toggleBtn = document.getElementById('modal-toggle');
-    toggleBtn.textContent = isOwned ? 'Remove from Collection' : 'Add to Collection';
-    toggleBtn.className = isOwned ? 'btn btn-danger' : 'btn btn-primary';
-    toggleBtn.onclick = () => {
-      if (isOwned) removeCard(card.collector_number);
-      else addCard(card.collector_number);
+    const hasNonfoil = (card.finishes || []).includes('nonfoil');
+    const variantType = isVariant ? getVariantLabel(card) : '';
+    const isPack = _packModeAdding && currentPack;
+
+    function addToPackAndReturn(cn, asFoil) {
+      addCardToPack(cn);
+      if (asFoil) addFoil(cn);
+      _packModeAdding = false;
+      // Check if the added card has same-name siblings (variants)
+      const addedCard = getCardByNumber(cn);
+      const cardName = addedCard ? addedCard.name : '';
+      const allSearchable = [...allCards, ...variantCards];
+      const sameNameCount = cardName ? allSearchable.filter(c => c.name === cardName).length : 0;
       closeModal();
-    };
+      setTimeout(() => {
+        openFab(); renderPackStep2();
+        // If multiple variants share this name, restore search so user can pick another
+        if (sameNameCount > 1) {
+          const psi = document.getElementById('pack-search-input');
+          if (psi) { psi.value = cardName; psi.dispatchEvent(new Event('input')); psi.focus(); }
+        }
+      }, 300);
+    }
+
+    const isFoilOwned = hasFoil(card.collector_number);
+
+    if (isVariant && !hasNonfoil && !isPack) {
+      toggleBtn.style.display = 'none';
+    } else if (isPack) {
+      toggleBtn.style.display = '';
+      if (isOwned) {
+        toggleBtn.textContent = 'Already Owned';
+        toggleBtn.className = 'btn btn-secondary';
+        toggleBtn.disabled = true;
+        toggleBtn.onclick = null;
+      } else {
+        toggleBtn.textContent = 'Add to Pack';
+        toggleBtn.className = 'btn btn-primary';
+        toggleBtn.disabled = false;
+        toggleBtn.onclick = () => addToPackAndReturn(card.collector_number, false);
+      }
+    } else {
+      toggleBtn.style.display = '';
+      toggleBtn.disabled = false;
+      if (isVariant) {
+        toggleBtn.textContent = isOwned ? `Remove ${variantType}` : `Add ${variantType}`;
+        toggleBtn.className = isOwned ? 'btn btn-danger' : 'btn btn-primary';
+      } else {
+        toggleBtn.textContent = isOwned ? 'Remove from Binder' : 'Add to Binder';
+        toggleBtn.className = isOwned ? 'btn btn-danger' : 'btn btn-primary';
+      }
+      toggleBtn.onclick = () => {
+        if (isOwned) removeCard(card.collector_number);
+        else addCard(card.collector_number);
+        closeModal();
+        if (document.getElementById('tab-collector')?.classList.contains('active')) renderCollectorTab();
+      };
+    }
+
     // ── Foil toggle button ──
     const foilToggleBtn = document.getElementById('modal-foil-toggle');
     if (foilToggleBtn) {
       const canBeFoil = (card.finishes || []).includes('foil');
-      if (canBeFoil) {
+      if (isPack && canBeFoil) {
         foilToggleBtn.style.display = '';
-        const isFoilOwned = hasFoil(card.collector_number);
-        foilToggleBtn.textContent = isFoilOwned ? 'Remove Foil' : 'Add Foil ✦';
-        foilToggleBtn.className = isFoilOwned ? 'btn btn-secondary' : 'btn btn-foil';
+        if (isFoilOwned) {
+          foilToggleBtn.textContent = 'Foil Already Owned \u2726';
+          foilToggleBtn.className = 'btn btn-secondary';
+          foilToggleBtn.disabled = true;
+          foilToggleBtn.onclick = null;
+        } else {
+          foilToggleBtn.textContent = 'Add as Foil \u2726';
+          foilToggleBtn.className = 'btn btn-foil';
+          foilToggleBtn.disabled = false;
+          foilToggleBtn.onclick = () => addToPackAndReturn(card.collector_number, true);
+        }
+      } else if (canBeFoil && !isPack) {
+        foilToggleBtn.style.display = '';
+        foilToggleBtn.disabled = false;
+        const typeAlreadyFoil = isVariant && variantType.toLowerCase().includes('foil');
+        const foilLabel = isVariant ? (typeAlreadyFoil ? variantType : `${variantType} Foil`) : 'Foil';
+        if (isFoilOwned) {
+          foilToggleBtn.textContent = `Remove ${foilLabel}`;
+          foilToggleBtn.className = 'btn btn-secondary';
+        } else {
+          foilToggleBtn.textContent = `Add ${foilLabel} \u2726`;
+          foilToggleBtn.className = 'btn btn-foil';
+        }
         foilToggleBtn.onclick = () => {
           if (isFoilOwned) removeFoil(card.collector_number);
           else addFoil(card.collector_number);
-          // Update shimmer and info panel immediately before close
           const _c3d = document.getElementById('card-3d');
           if (_c3d) _c3d.classList.toggle('foil-owned', !isFoilOwned);
           const _fi = document.getElementById('modal-foil-info');
           if (_fi) _fi.innerHTML = buildFoilInfoHTML(card);
           closeModal();
-          if (document.getElementById('tab-foil').classList.contains('active')) {
-            renderFoilBinder();
+          if (document.getElementById('tab-collector')?.classList.contains('active')) {
+            renderCollectorTab();
           }
         };
       } else {
         foilToggleBtn.style.display = 'none';
+        foilToggleBtn.disabled = false;
       }
     }
 
-    // Foil shimmer overlay
+    // Foil shimmer overlay — apply variant-specific class for distinct effects
     const card3dEl = document.getElementById('card-3d');
     if (card3dEl) {
       card3dEl.classList.toggle('foil-owned', hasFoil(card.collector_number));
+      card3dEl.classList.remove('foil-variant-surge', 'foil-variant-neon', 'foil-variant-collector');
+      const slotClass = getFoilSlotClass(card);
+      if (slotClass && hasFoil(card.collector_number)) card3dEl.classList.add(slotClass);
     }
 
     // Foil type info panel
@@ -5138,6 +5796,9 @@ document.head.appendChild(manifestLink);
   }
 
   function closeModal() {
+    const wasPackMode = _packModeAdding;
+    _currentModalCard = null;
+    _packModeAdding = false;
     const overlay = document.getElementById('modal-overlay');
     overlay.classList.add('closing');
     highlightedCN = null;
@@ -5146,12 +5807,44 @@ document.head.appendChild(manifestLink);
     setTimeout(() => {
       overlay.classList.remove('visible', 'closing');
       if (document.getElementById('tab-binder').classList.contains('active')) renderSpread();
+      // Return to FAB pack view if we were adding from pack mode
+      if (wasPackMode && currentPack) openFab();
     }, 280);
   }
 
   document.getElementById('modal-close').addEventListener('click', closeModal);
   document.getElementById('modal-overlay').addEventListener('click', (e) => {
     if (e.target === e.currentTarget) closeModal();
+  });
+
+  // ── Foil chip navigation — click to jump to relevant tab ──
+  document.getElementById('modal-foil-info').addEventListener('click', (e) => {
+    const chip = e.target.closest('.foil-chip[data-nav-tab]');
+    if (!chip) return;
+    const targetTab = chip.dataset.navTab;
+    const targetCN = chip.dataset.navCn;
+    if (targetTab === 'collector' && !binderConfig.scope?.collectorBinder) return;
+    closeModal();
+    setTimeout(() => {
+      if (targetTab === 'binder' && targetCN) {
+        // Navigate binder to the correct page for this card
+        const targetCard = allCards.find(c => c.collector_number === targetCN);
+        if (targetCard) {
+          const idx = allCards.indexOf(targetCard);
+          const pageIdx = Math.floor(idx / binderConfig.slotsPerPage);
+          currentPage = isMobile() ? pageIdx : Math.floor(pageIdx / 2);
+          highlightedCN = targetCN;
+        }
+        switchTab('binder');
+        if (targetCard) setTimeout(() => openModal(targetCard), 120);
+      } else {
+        switchTab(targetTab);
+        if (targetCN) {
+          const targetCard = getCardByNumber(targetCN);
+          if (targetCard) setTimeout(() => openModal(targetCard), 120);
+        }
+      }
+    }, 300);
   });
 
   document.getElementById('sheet-backdrop').addEventListener('click', closeSheet);
@@ -5190,8 +5883,7 @@ document.head.appendChild(manifestLink);
     if (tabName === 'portfolio') renderPortfolio();
     if (tabName === 'timeline') renderTimeline();
     if (tabName === 'settings') renderSettings();
-    if (tabName === 'foil') renderFoilBinder();
-    if (tabName === 'variants') renderVariantBinder();
+    if (tabName === 'collector') renderCollectorTab();
   }
 
   document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -5205,13 +5897,15 @@ document.head.appendChild(manifestLink);
 
   // ── Export / Import / Reset ──
   document.getElementById('export-btn').addEventListener('click', () => {
-    const data = JSON.stringify({ owned: [...ownedSet] }, null, 2);
-    const blob = new Blob([data], { type: 'application/json' });
+    const payload = buildSyncPayload();
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = 'fin-collection.json';
+    const dateStr = new Date().toISOString().slice(0, 10);
+    a.download = `fin-collection-${dateStr}.json`;
     a.click();
     URL.revokeObjectURL(a.href);
+    showToast('Collection exported.');
   });
 
   document.getElementById('import-btn').addEventListener('click', () => {
@@ -5225,13 +5919,39 @@ document.head.appendChild(manifestLink);
     reader.onload = () => {
       try {
         const data = JSON.parse(reader.result);
-        if (Array.isArray(data.owned)) {
+
+        // Support new full-payload format (same as Gist sync)
+        if (data.collection?.owned) {
+          ownedSet = new Set(data.collection.owned);
+        } else if (Array.isArray(data.owned)) {
+          // Legacy format — owned array only
           ownedSet = new Set(data.owned);
-          saveCollection();
-          renderAll();
-          alert(`Imported ${ownedSet.size} cards.`);
+        } else {
+          showToast('Invalid file format.'); return;
         }
-      } catch { alert('Invalid file format.'); }
+
+        if (data.packs?.packs) boosterPacks = data.packs.packs;
+        if (data.timeline?.events) timelineEvents = data.timeline.events;
+        if (data.binderConfig) {
+          binderConfig = data.binderConfig;
+          localStorage.setItem(BINDER_CONFIG_KEY, JSON.stringify(binderConfig));
+        }
+        if (data.foil) {
+          foilOwned = data.foil;
+          localStorage.setItem(FOIL_KEY, JSON.stringify(foilOwned));
+        }
+
+        saveCollection();
+        savePacks();
+        saveTimeline();
+        applyConfigToTabs();
+        renderAll();
+
+        const parts = [ownedSet.size + ' cards'];
+        if (Object.keys(foilOwned).length > 0) parts.push(Object.keys(foilOwned).length + ' foils');
+        if (boosterPacks.length > 0) parts.push(boosterPacks.length + ' packs');
+        showToast('Imported: ' + parts.join(', '));
+      } catch { showToast('Invalid file format.'); }
     };
     reader.readAsText(file);
     e.target.value = '';
@@ -5241,14 +5961,16 @@ document.head.appendChild(manifestLink);
     e.stopPropagation();
     showConfirmDialog(
       'Reset Everything?',
-      'This will delete your entire collection, booster pack history, and timeline data. This cannot be undone.',
+      'This will delete your entire collection, foil collection, booster pack history, and timeline data. This cannot be undone.',
       () => {
         ownedSet = new Set();
+        foilOwned = {};
         packSession = [];
         boosterPacks = [];
         currentPack = null;
         timelineEvents = [];
         saveCollection();
+        saveFoil();
         savePacks();
         saveTimeline();
         renderAll();
@@ -5291,8 +6013,7 @@ document.head.appendChild(manifestLink);
     if (document.getElementById('tab-dashboard').classList.contains('active')) renderDashboard();
     if (document.getElementById('tab-portfolio').classList.contains('active')) renderPortfolio();
     if (document.getElementById('tab-timeline').classList.contains('active')) renderTimeline();
-    if (document.getElementById('tab-foil')?.classList.contains('active')) renderFoilBinder();
-    if (document.getElementById('tab-variants')?.classList.contains('active')) renderVariantBinder();
+    if (document.getElementById('tab-collector')?.classList.contains('active')) renderCollectorTab();
   }
 
   // ── Init ──
@@ -5308,10 +6029,7 @@ document.head.appendChild(manifestLink);
               const main = allCards.find(c => c.oracle_id === variant.oracle_id);
               if (main) variant.variant_of = main.collector_number;
             }
-            if (document.getElementById('tab-foil')?.classList.contains('active')) {
-              renderFoilBinder();
-            }
-            if (document.getElementById('tab-variants')?.classList.contains('active')) renderVariantBinder();
+            if (document.getElementById('tab-collector')?.classList.contains('active')) renderCollectorTab();
             return;
           }
         } catch {}
@@ -5322,7 +6040,7 @@ document.head.appendChild(manifestLink);
       let hasMore = true;
       while (hasMore) {
         const resp = await fetch(
-          `https://api.scryfall.com/cards/search?q=set:fin+game:paper+-is:booster&order=collector_number&page=${page}`
+          `https://api.scryfall.com/cards/search?q=set:fin+game:paper+-is:booster+lang:en&unique=prints&order=collector_number&page=${page}`
         );
         if (!resp.ok) throw new Error(`Scryfall variant API error: ${resp.status}`);
         const data = await resp.json();
@@ -5332,8 +6050,11 @@ document.head.appendChild(manifestLink);
             name:             c.name,
             collector_number: c.collector_number,
             rarity:           c.rarity,
+            type_line:        c.type_line || '',
             image_small:      c.image_uris?.small  || c.card_faces?.[0]?.image_uris?.small  || '',
             image_normal:     c.image_uris?.normal || c.card_faces?.[0]?.image_uris?.normal || '',
+            image_back_small:  c.card_faces?.[1]?.image_uris?.small  || '',
+            image_back_normal: c.card_faces?.[1]?.image_uris?.normal || '',
             price_usd:        parseFloat(c.prices?.usd)      || 0,
             price_usd_foil:   parseFloat(c.prices?.usd_foil) || 0,
             scryfall_uri:     c.scryfall_uri || '',
@@ -5361,45 +6082,44 @@ document.head.appendChild(manifestLink);
 
       variantCards = cards;
 
-      if (document.getElementById('tab-foil')?.classList.contains('active')) {
-        renderFoilBinder();
-      }
-      if (document.getElementById('tab-variants')?.classList.contains('active')) renderVariantBinder();
+      if (document.getElementById('tab-collector')?.classList.contains('active')) renderCollectorTab();
     } catch (err) {
       console.warn('fetchVariants failed:', err);
     }
   }
 
-  function renderFoilBinder() {
-    const el = document.getElementById('tab-foil');
+  function renderCollectorTab() {
+    const el = document.getElementById('tab-collector');
     if (!el) return;
 
     // ── Filter state (closure-local) ──
-    let activeFilter = el._foilFilter || 'All';
-    let activeRarity = el._foilRarity || '';
-    let searchQuery  = el._foilSearch || '';
-    let foilPage     = el._foilPage  || 0;
+    let activeFilter = el._collFilter || 'All';
+    let activeRarity = el._collRarity || '';
+    let searchQuery  = el._collSearch || '';
+    let collPage     = el._collPage   || 0;
 
     function persist() {
-      el._foilFilter = activeFilter;
-      el._foilRarity = activeRarity;
-      el._foilSearch = searchQuery;
-      el._foilPage   = foilPage;
+      el._collFilter = activeFilter;
+      el._collRarity = activeRarity;
+      el._collSearch = searchQuery;
+      el._collPage   = collPage;
     }
-    function resetPage() { foilPage = 0; el._foilPage = 0; }
+    function resetPage() { collPage = 0; el._collPage = 0; }
 
     // ── Computed stats ──
-    const ownedFoilCount = allCards.filter(c => hasFoil(c.collector_number)).length;
-    const ownedVariantFoilCount = variantCards.filter(c => hasFoil(c.collector_number)).length;
-    const foilValue = [
-      ...allCards.filter(c => hasFoil(c.collector_number)),
-      ...variantCards.filter(c => hasFoil(c.collector_number))
-    ].reduce((s, c) => s + (c.price_usd_foil || 0), 0);
-
-    const mainTotal    = allCards.length;
-    const variantTotal = variantCards.length;
-    const mainPct      = mainTotal > 0    ? (ownedFoilCount / mainTotal * 100)         : 0;
-    const variantPct   = variantTotal > 0 ? (ownedVariantFoilCount / variantTotal * 100) : 0;
+    const allPool = [...allCards, ...variantCards];
+    const ownedFoilCount = allPool.filter(c => hasFoil(c.collector_number)).length;
+    const ownedVariantNonfoil = variantCards.filter(c => ownedSet.has(c.collector_number) && !hasFoil(c.collector_number)).length;
+    const totalOwned = ownedFoilCount + ownedVariantNonfoil;
+    const totalCards = allPool.length;
+    const ownedPct = totalCards > 0 ? (totalOwned / totalCards * 100) : 0;
+    const collValue = allPool
+      .filter(c => hasFoil(c.collector_number) || ownedSet.has(c.collector_number))
+      .reduce((s, c) => {
+        if (hasFoil(c.collector_number)) return s + (c.price_usd_foil || c.price_usd || 0);
+        if (ownedSet.has(c.collector_number)) return s + (c.price_usd || 0);
+        return s;
+      }, 0);
 
     // ── Helper: progress donut ──
     function donutSVG(pct, color) {
@@ -5420,72 +6140,64 @@ document.head.appendChild(manifestLink);
     const statsHTML = `
       <div class="dash-grid" style="margin-bottom:18px">
         <div class="dash-card" style="display:flex;align-items:center;gap:16px">
-          ${donutSVG(mainPct, '#ffd93d')}
+          ${donutSVG(ownedPct, 'var(--foil-color)')}
           <div>
-            <h3>Traditional Foils</h3>
-            <div class="dash-big-num" style="font-size:1.4rem">${ownedFoilCount} / ${mainTotal}</div>
-            <div class="dash-sub">${mainPct.toFixed(1)}% complete</div>
-          </div>
-        </div>
-        <div class="dash-card" style="display:flex;align-items:center;gap:16px">
-          ${donutSVG(variantPct, '#c77dff')}
-          <div>
-            <h3>Variant Foils</h3>
-            <div class="dash-big-num" style="font-size:1.4rem">${ownedVariantFoilCount} / ${variantTotal}</div>
-            <div class="dash-sub">${variantTotal === 0 ? 'No variants loaded' : variantPct.toFixed(1) + '% complete'}</div>
+            <h3>Collection</h3>
+            <div class="dash-big-num" style="font-size:1.4rem">${totalOwned} / ${totalCards}</div>
+            <div class="dash-sub">${ownedPct.toFixed(1)}% collected</div>
           </div>
         </div>
         <div class="dash-card">
-          <h3>Foil Value</h3>
-          <div class="dash-big-num" style="font-size:1.4rem">$${foilValue.toFixed(2)}</div>
-          <div class="dash-sub">RM ${(foilValue * USD_TO_MYR).toFixed(2)} (est.)</div>
+          <h3>✦ Foils Owned</h3>
+          <div class="dash-big-num" style="font-size:1.4rem">${ownedFoilCount}</div>
+          <div class="dash-sub">across main set &amp; variants</div>
+        </div>
+        <div class="dash-card">
+          <h3>Total Value</h3>
+          <div class="dash-big-num" style="font-size:1.4rem">$${collValue.toFixed(2)}</div>
+          <div class="dash-sub">RM ${(collValue * USD_TO_MYR).toFixed(2)} (est.)</div>
         </div>
       </div>`;
 
     // ── Filter bar HTML ──
-    const filterTypes = ['All', 'Owned', 'Traditional', 'Surge', 'Neon Ink', 'Chocobo Track'];
+    const filterTypes = ['All', 'Owned', 'Foil', 'Extended Art', 'Showcase', 'Surge Foil', 'Chocobo Track'];
     const rarities = ['C', 'U', 'R', 'M'];
     const rarityMap = { C: 'common', U: 'uncommon', R: 'rare', M: 'mythic' };
-    const variantFilterTypes = ['Surge', 'Neon Ink', 'Chocobo Track'];
-    const variantsLoaded = variantCards.length > 0;
 
     const filterBarHTML = `
       <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:14px">
         <div style="display:flex;gap:6px;flex-wrap:wrap">
-          ${filterTypes.map(f => {
-            const isVariantBtn = variantFilterTypes.includes(f);
-            const disabledAttr = (isVariantBtn && !variantsLoaded) ? 'disabled title="Enable Collector Variants in Settings to load these"' : '';
-            const disabledStyle = (isVariantBtn && !variantsLoaded) ? 'opacity:0.4;cursor:not-allowed;' : '';
-            return `<button class="btn ${activeFilter === f ? 'btn-primary' : 'btn-secondary'} foil-filter-type" data-type="${f}" style="padding:4px 12px;font-size:0.82rem;${disabledStyle}" ${disabledAttr}>${f}</button>`;
-          }).join('')}
+          ${filterTypes.map(f => `<button class="btn ${activeFilter === f ? 'btn-primary' : 'btn-secondary'} coll-filter-type" data-type="${f}" style="padding:4px 12px;font-size:0.82rem">${f}</button>`).join('')}
         </div>
         <div style="display:flex;gap:5px">
-          ${rarities.map(r => `<button class="btn ${activeRarity === r ? 'btn-primary' : 'btn-secondary'} foil-filter-rarity" data-rarity="${r}" style="padding:4px 10px;font-size:0.8rem;font-weight:700">${r}</button>`).join('')}
+          ${rarities.map(r => `<button class="btn ${activeRarity === r ? 'btn-primary' : 'btn-secondary'} coll-filter-rarity" data-rarity="${r}" style="padding:4px 10px;font-size:0.8rem;font-weight:700">${r}</button>`).join('')}
         </div>
-        <input type="text" class="foil-search-input" placeholder="Search card name…" value="${searchQuery.replace(/"/g, '&quot;')}"
+        <input type="text" class="coll-search-input" placeholder="Search card name\u2026" value="${searchQuery.replace(/"/g, '&quot;')}"
           style="padding:5px 10px;border-radius:8px;border:1px solid var(--surface3);background:var(--surface2);color:var(--text);font-size:0.85rem;min-width:160px">
       </div>`;
 
-    // ── Determine which cards to show and render grid ──
+    // ── Determine which cards to show ──
     function buildGrid() {
       const spp = binderConfig.slotsPerPage;
       let cards;
 
       if (activeFilter === 'Owned') {
-        cards = [...allCards, ...variantCards]
-          .filter(c => hasFoil(c.collector_number))
+        cards = allPool
+          .filter(c => hasFoil(c.collector_number) || ownedSet.has(c.collector_number))
           .sort((a, b) => compareCollector(a.collector_number, b.collector_number));
-      } else if (activeFilter === 'Surge') {
-        cards = variantCards.filter(c => isSurgeFoil(c));
-      } else if (activeFilter === 'Neon Ink') {
-        cards = variantCards.filter(c => (c.promo_types || []).includes('neon_ink'));
-      } else if (activeFilter === 'Chocobo Track') {
-        cards = variantCards.filter(c => (c.name || '').toLowerCase().includes('chocobo'));
-      } else if (activeFilter === 'Traditional') {
+      } else if (activeFilter === 'Foil') {
         cards = allCards.slice().sort((a, b) => compareCollector(a.collector_number, b.collector_number));
+      } else if (activeFilter === 'Extended Art') {
+        cards = variantCards.filter(c => (c.frame_effects || []).includes('extendedart'));
+      } else if (activeFilter === 'Showcase') {
+        cards = variantCards.filter(c => isShowcase(c));
+      } else if (activeFilter === 'Surge Foil') {
+        cards = variantCards.filter(c => isSurgeFoil(c));
+      } else if (activeFilter === 'Chocobo Track') {
+        cards = variantCards.filter(c => isChocoboTrack(c));
       } else {
-        // All
-        cards = [...allCards].sort((a, b) => compareCollector(a.collector_number, b.collector_number));
+        // All — main set + variants
+        cards = [...allPool].sort((a, b) => compareCollector(a.collector_number, b.collector_number));
       }
 
       if (activeRarity) {
@@ -5501,58 +6213,32 @@ document.head.appendChild(manifestLink);
       }
 
       const totalPages = Math.ceil(cards.length / spp);
-      if (foilPage >= totalPages) foilPage = totalPages - 1;
-      const pageCards = cards.slice(foilPage * spp, (foilPage + 1) * spp);
+      if (collPage >= totalPages) collPage = totalPages - 1;
+      const pageCards = cards.slice(collPage * spp, (collPage + 1) * spp);
 
       const slotsHTML = pageCards.map((card, idx) => {
         const isFoilOwned = hasFoil(card.collector_number);
+        const isNonfoilOwned = ownedSet.has(card.collector_number) && !allCards.includes(card);
+        const isAnyOwned = isFoilOwned || isNonfoilOwned;
         const variantClass = isFoilOwned ? getFoilSlotClass(card) : '';
         const delayClass = isFoilOwned ? `foil-delay-${(idx % 2) + 1}` : '';
-        const slotCls = isFoilOwned ? 'slot-foil-owned' : 'slot-foil-missing';
-        const imgStyle = isFoilOwned
+        const slotCls = isFoilOwned ? 'slot-foil-owned' : (isNonfoilOwned ? 'slot-variant-owned' : 'slot-foil-missing');
+        const imgStyle = isAnyOwned
           ? 'width:100%;height:100%;object-fit:cover;border-radius:4px'
-          : 'width:100%;height:100%;object-fit:cover;border-radius:4px;filter:grayscale(1) brightness(0.25);opacity:0.5';
+          : 'width:100%;height:100%;object-fit:cover;border-radius:4px;filter:grayscale(0.6) brightness(0.7);opacity:0.65';
+        const isVariant = !allCards.includes(card);
+        const label = isVariant ? getFoilVariantLabel(card) : '';
         const imgSrc = card.image_normal || card.image_small;
-        return `<div class="card-slot foil-slot ${slotCls} ${variantClass} ${delayClass}" data-cn="${card.collector_number}" style="position:relative">
-      <img data-src="${imgSrc}" alt="${card.name}" style="${imgStyle}">
-      ${isFoilOwned ? '<span class="foil-badge">\u2726</span>' : ''}
-    </div>`;
+        return `<div class="card-slot foil-slot ${slotCls} ${variantClass} ${delayClass}" data-cn="${card.collector_number}" style="position:relative;cursor:pointer">
+          <img data-src="${imgSrc}" alt="${card.name}" style="${imgStyle}">
+          ${isFoilOwned ? '<span class="foil-badge">\u2726</span>' : ''}
+          ${isNonfoilOwned && !isFoilOwned ? '<span style="position:absolute;top:2px;right:3px;font-size:0.7rem;color:#6bcb77;text-shadow:0 0 6px rgba(107,203,119,0.9);pointer-events:none">\u2713</span>' : ''}
+          ${label ? `<span style="position:absolute;bottom:3px;left:50%;transform:translateX(-50%);font-size:0.68rem;font-weight:700;letter-spacing:0.03em;color:#fff;background:rgba(0,0,0,0.7);border-radius:4px;padding:2px 5px;pointer-events:none;white-space:nowrap;max-width:90%;overflow:hidden;text-overflow:ellipsis">${label}</span>` : ''}
+        </div>`;
       }).join('');
 
       return { html: `<div class="page-grid foil-card-grid" style="grid-template-columns:repeat(${binderConfig.gridCols},1fr);gap:6px">${slotsHTML}</div>`, totalPages };
     }
-
-    // ── Top valuable foils ──
-    const ownedFoilCards  = allCards.filter(c => hasFoil(c.collector_number) && c.price_usd_foil > 0)
-                                     .sort((a, b) => b.price_usd_foil - a.price_usd_foil).slice(0, 5);
-    const missingFoilCards = allCards.filter(c => !hasFoil(c.collector_number) && c.price_usd_foil > 0)
-                                      .sort((a, b) => b.price_usd_foil - a.price_usd_foil).slice(0, 5);
-
-    function topFoilItem(c, i, missing) {
-      return `<div class="top-card-item missing-inspect" data-cn="${c.collector_number}" style="cursor:pointer">
-        <span class="rank">${i + 1}</span>
-        <img src="${c.image_small}" alt="${c.name}">
-        <span class="tc-name">${c.name}</span>
-        <span class="tc-price" style="color:${missing ? 'var(--accent)' : 'var(--owned-border)'};white-space:nowrap">$${c.price_usd_foil.toFixed(2)}</span>
-        <span class="inspect-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
-      </div>`;
-    }
-
-    const topValueHTML = `
-      <div class="dash-grid" style="margin-top:24px">
-        <div class="dash-card">
-          <h3>Most Valuable Foil (Owned)</h3>
-          ${ownedFoilCards.length > 0
-            ? `<div class="top-cards">${ownedFoilCards.map((c, i) => topFoilItem(c, i, false)).join('')}</div>`
-            : `<div class="dash-sub" style="padding:20px 0">No owned foils yet</div>`}
-        </div>
-        <div class="dash-card">
-          <h3>Most Valuable Foil (Missing)</h3>
-          ${missingFoilCards.length > 0
-            ? `<div class="top-cards">${missingFoilCards.map((c, i) => topFoilItem(c, i, true)).join('')}</div>`
-            : `<div class="dash-sub" style="padding:20px 0">All foils owned!</div>`}
-        </div>
-      </div>`;
 
     // ── Assemble full tab ──
     const gridResult = buildGrid();
@@ -5561,296 +6247,67 @@ document.head.appendChild(manifestLink);
         ${statsHTML}
         ${filterBarHTML}
         <div class="binder-layout">
-          <button class="binder-nav" id="foil-prev-page" ${foilPage === 0 ? 'disabled' : ''}>&lsaquo;</button>
+          <button class="binder-nav" id="coll-prev-page" ${collPage === 0 ? 'disabled' : ''}>&lsaquo;</button>
           <div style="flex:1;min-width:0">
-            <div id="foil-grid-container">${gridResult.html}</div>
-            <div style="text-align:center;font-size:0.8rem;color:var(--text-muted);margin-top:6px">Page ${foilPage + 1} of ${gridResult.totalPages}</div>
+            <div id="coll-grid-container">${gridResult.html}</div>
+            <div style="text-align:center;font-size:0.8rem;color:var(--text-muted);margin-top:6px">Page ${collPage + 1} of ${gridResult.totalPages}</div>
           </div>
-          <button class="binder-nav" id="foil-next-page" ${foilPage >= gridResult.totalPages - 1 ? 'disabled' : ''}>&rsaquo;</button>
+          <button class="binder-nav" id="coll-next-page" ${collPage >= gridResult.totalPages - 1 ? 'disabled' : ''}>&rsaquo;</button>
         </div>
-        ${topValueHTML}
       </div>`;
 
-    // Mark as rendered so subsequent re-renders skip animation
-    el.dataset.foilRendered = '1';
-
     // ── Lazy load images ──
-    function lazyLoadFoilImages() {
-      const observer = new IntersectionObserver(entries => {
-        entries.forEach(e => {
-          if (e.isIntersecting) {
-            const img = e.target;
-            if (img.dataset.src) { img.src = img.dataset.src; delete img.dataset.src; }
-            observer.unobserve(img);
-          }
-        });
-      });
-      el.querySelectorAll('img[data-src]').forEach(img => observer.observe(img));
-    }
-    lazyLoadFoilImages();
-
-    // ── Wire initial foil slot clicks ──
-    function wireFoilSlotClicks(root) {
-      root.querySelectorAll('.foil-slot').forEach(slot => {
-        slot.addEventListener('click', () => {
-          const cn = slot.dataset.cn;
-          const card = allCards.find(c => c.collector_number === cn)
-                    || variantCards.find(c => c.collector_number === cn);
-          if (card) openModal(card);
-        });
-      });
-    }
-    wireFoilSlotClicks(el);
-
-    // ── Filter button wiring ──
-    function reRenderGrid() {
-      persist();
-      renderFoilBinder();
-    }
-
-    el.querySelectorAll('.foil-filter-type').forEach(btn => {
-      btn.addEventListener('click', () => {
-        activeFilter = btn.dataset.type;
-        resetPage();
-        reRenderGrid();
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (e.isIntersecting) { e.target.src = e.target.dataset.src; observer.unobserve(e.target); }
       });
     });
+    el.querySelectorAll('img[data-src]').forEach(img => observer.observe(img));
 
-    el.querySelectorAll('.foil-filter-rarity').forEach(btn => {
-      btn.addEventListener('click', () => {
-        activeRarity = activeRarity === btn.dataset.rarity ? '' : btn.dataset.rarity;
-        resetPage();
-        reRenderGrid();
-      });
-    });
-
-    el.querySelector('.foil-search-input').addEventListener('input', e => {
-      searchQuery = e.target.value;
-      resetPage();
-      reRenderGrid();
-    });
-
-    // ── Pagination button wiring (event delegation on container) ──
-    if (el._onFoilPaginate) el.removeEventListener('click', el._onFoilPaginate);
-    el._onFoilPaginate = function(e) {
-      if (e.target.closest('#foil-prev-page')) {
-        foilPage = Math.max(0, foilPage - 1);
-        persist();
-        renderFoilBinder();
-        return;
+    // ── Event delegation ──
+    if (el._onCollEvent) el.removeEventListener('click', el._onCollEvent);
+    el._onCollEvent = function(e) {
+      if (e.target.closest('#coll-prev-page')) {
+        collPage = Math.max(0, collPage - 1); persist(); renderCollectorTab(); return;
       }
-      if (e.target.closest('#foil-next-page')) {
-        foilPage++;
-        persist();
-        renderFoilBinder();
+      if (e.target.closest('#coll-next-page')) {
+        collPage++; persist(); renderCollectorTab(); return;
+      }
+      const typeBtn = e.target.closest('.coll-filter-type');
+      if (typeBtn) {
+        activeFilter = typeBtn.dataset.type; resetPage(); persist(); renderCollectorTab(); return;
+      }
+      const rarBtn = e.target.closest('.coll-filter-rarity');
+      if (rarBtn) {
+        activeRarity = activeRarity === rarBtn.dataset.rarity ? '' : rarBtn.dataset.rarity;
+        resetPage(); persist(); renderCollectorTab(); return;
+      }
+      const slot = e.target.closest('.card-slot[data-cn]');
+      if (slot) {
+        const cn = slot.dataset.cn;
+        const card = allCards.find(c => c.collector_number === cn)
+                  || variantCards.find(c => c.collector_number === cn);
+        if (card) openModal(card);
         return;
       }
     };
-    el.addEventListener('click', el._onFoilPaginate);
+    el.addEventListener('click', el._onCollEvent);
+
+    const searchEl = el.querySelector('.coll-search-input');
+    if (searchEl) {
+      searchEl.addEventListener('input', function() {
+        searchQuery = this.value; resetPage(); persist(); renderCollectorTab();
+        const newSearch = el.querySelector('.coll-search-input');
+        if (newSearch) { newSearch.focus(); newSearch.selectionStart = newSearch.selectionEnd = newSearch.value.length; }
+      });
+    }
   }
-
-  function renderVariantBinder() {
-  const el = document.getElementById('tab-variants');
-  if (!el) return;
-
-  // ── Filter state ──
-  let activeFilter = el._variantFilter || 'All';
-  let activeRarity = el._variantRarity || '';
-  let searchQuery  = el._variantSearch || '';
-  let variantPage  = el._variantPage  || 0;
-
-  function persist() {
-    el._variantFilter = activeFilter;
-    el._variantRarity = activeRarity;
-    el._variantSearch = searchQuery;
-    el._variantPage   = variantPage;
-  }
-  function resetPage() { variantPage = 0; el._variantPage = 0; }
-
-  // ── Stats ──
-  const ownedVariantCount = variantCards.filter(c => ownedSet.has(c.collector_number)).length;
-  const variantTotal = variantCards.length;
-  const ownedPct = variantTotal > 0 ? (ownedVariantCount / variantTotal * 100) : 0;
-  const ownedFoilCount = variantCards.filter(c => hasFoil(c.collector_number)).length;
-  const variantValue = variantCards
-    .filter(c => ownedSet.has(c.collector_number))
-    .reduce((s, c) => s + Math.max(c.price_usd || 0, c.price_usd_foil || 0), 0);
-
-  const statsHTML = `
-    <div class="dash-grid" style="margin-bottom:18px">
-      <div class="dash-card">
-        <h3>Variants Owned</h3>
-        <div class="dash-big-num" style="font-size:1.4rem">${ownedVariantCount} / ${variantTotal}</div>
-        <div class="dash-sub">${ownedPct.toFixed(1)}% complete</div>
-        <div class="rarity-track" style="margin:8px 0 4px">
-          <div class="rarity-fill rare" style="width:${ownedPct.toFixed(1)}%"></div>
-        </div>
-      </div>
-      <div class="dash-card">
-        <h3>✦ Foils Owned</h3>
-        <div class="dash-big-num" style="font-size:1.4rem">${ownedFoilCount}</div>
-        <div class="dash-sub">of ${variantTotal} variant cards</div>
-      </div>
-      <div class="dash-card">
-        <h3>Variant Value</h3>
-        <div class="dash-big-num" style="font-size:1.4rem">$${variantValue.toFixed(2)}</div>
-        <div class="dash-sub">RM ${(variantValue * USD_TO_MYR).toFixed(2)} (est.)</div>
-      </div>
-    </div>`;
-
-  if (variantCards.length === 0) {
-    el.innerHTML = `<div style="padding:48px;text-align:center;color:var(--text-muted)">
-      <div style="font-size:2rem;margin-bottom:12px">◈</div>
-      <div>No variant cards loaded.</div>
-      <div style="margin-top:8px;font-size:0.85rem">Collector Variants must be enabled in Settings.</div>
-    </div>`;
-    return;
-  }
-
-  // ── Filter bar ──
-  const filterTypes = ['All', 'Foil Owned', 'Showcase', 'Extended Art', 'Surge Foil', 'Neon Ink', 'Chocobo Track', 'Serialized'];
-  const rarities = ['C', 'U', 'R', 'M'];
-  const rarityMap = { C: 'common', U: 'uncommon', R: 'rare', M: 'mythic' };
-
-  const filterBarHTML = `
-    <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:14px">
-      <div style="display:flex;gap:6px;flex-wrap:wrap">
-        ${filterTypes.map(f => `<button class="btn ${activeFilter === f ? 'btn-primary' : 'btn-secondary'} variant-filter-type" data-type="${f}" style="padding:4px 12px;font-size:0.82rem">${f}</button>`).join('')}
-      </div>
-      <div style="display:flex;gap:5px">
-        ${rarities.map(r => `<button class="btn ${activeRarity === r ? 'btn-primary' : 'btn-secondary'} variant-filter-rarity" data-rarity="${r}" style="padding:4px 10px;font-size:0.8rem;font-weight:700">${r}</button>`).join('')}
-      </div>
-      <input type="text" class="variant-search-input" placeholder="Search card name…" value="${searchQuery.replace(/"/g, '&quot;')}"
-        style="padding:5px 10px;border-radius:8px;border:1px solid var(--surface3);background:var(--surface2);color:var(--text);font-size:0.85rem;min-width:160px">
-    </div>`;
-
-  // ── Grid builder ──
-  function buildVariantGrid() {
-    const spp = binderConfig.slotsPerPage;
-    let cards;
-
-    if (activeFilter === 'Foil Owned') {
-      cards = variantCards.filter(c => hasFoil(c.collector_number));
-    } else if (activeFilter === 'Showcase') {
-      cards = variantCards.filter(c => (c.frame_effects || []).includes('showcase'));
-    } else if (activeFilter === 'Extended Art') {
-      cards = variantCards.filter(c => (c.frame_effects || []).includes('extendedart'));
-    } else if (activeFilter === 'Surge Foil') {
-      cards = variantCards.filter(c => isSurgeFoil(c));
-    } else if (activeFilter === 'Neon Ink') {
-      cards = variantCards.filter(c => (c.promo_types || []).includes('neon_ink'));
-    } else if (activeFilter === 'Chocobo Track') {
-      cards = variantCards.filter(c => (c.name || '').toLowerCase().includes('chocobo'));
-    } else if (activeFilter === 'Serialized') {
-      cards = variantCards.filter(c => (c.frame_effects || []).includes('serialized'));
-    } else {
-      cards = variantCards.slice();
-    }
-
-    if (activeRarity) {
-      cards = cards.filter(c => c.rarity === rarityMap[activeRarity]);
-    }
-    if (searchQuery.trim()) {
-      const q = searchQuery.trim().toLowerCase();
-      cards = cards.filter(c => c.name.toLowerCase().includes(q));
-    }
-
-    if (cards.length === 0) {
-      return { html: `<div style="padding:32px;text-align:center;color:var(--text-muted)">No cards match the current filters.</div>`, totalPages: 1 };
-    }
-
-    const totalPages = Math.ceil(cards.length / spp);
-    if (variantPage >= totalPages) { variantPage = totalPages - 1; persist(); }
-    const pageCards = cards.slice(variantPage * spp, (variantPage + 1) * spp);
-
-    const slotsHTML = pageCards.map((card, idx) => {
-      const isOwned = ownedSet.has(card.collector_number);
-      const isFoilOwned = hasFoil(card.collector_number);
-      const variantClass = isFoilOwned ? getFoilSlotClass(card) : '';
-      const delayClass = isFoilOwned ? `foil-delay-${(idx % 2) + 1}` : '';
-      const foilSlotCls = isFoilOwned ? 'slot-foil-owned' : 'slot-foil-missing';
-      const imgStyle = isOwned
-        ? 'width:100%;height:100%;object-fit:cover;border-radius:4px'
-        : 'width:100%;height:100%;object-fit:cover;border-radius:4px;filter:grayscale(1) brightness(0.25);opacity:0.5';
-      const label = getFoilVariantLabel(card);
-      const imgSrc = card.image_normal || card.image_small;
-      return `<div class="card-slot foil-slot ${foilSlotCls} ${variantClass} ${delayClass}" data-cn="${card.collector_number}" style="position:relative;cursor:pointer">
-        <img data-src="${imgSrc}" alt="${card.name}" style="${imgStyle}">
-        ${isFoilOwned ? '<span class="foil-badge">\u2726</span>' : ''}
-        ${label ? `<span style="position:absolute;bottom:3px;left:50%;transform:translateX(-50%);font-size:0.58rem;font-weight:700;letter-spacing:0.03em;color:#fff;background:rgba(0,0,0,0.7);border-radius:4px;padding:2px 5px;pointer-events:none;white-space:nowrap;max-width:90%;overflow:hidden;text-overflow:ellipsis">${label}</span>` : ''}
-      </div>`;
-    }).join('');
-
-    return { html: `<div class="page-grid foil-card-grid" style="grid-template-columns:repeat(${binderConfig.gridCols},1fr);gap:6px">${slotsHTML}</div>`, totalPages };
-  }
-
-  // ── Render ──
-  const variantGridResult = buildVariantGrid();
-  el.innerHTML = statsHTML + filterBarHTML + `
-    <div class="binder-layout">
-      <button class="binder-nav" id="variant-prev-page" ${variantPage === 0 ? 'disabled' : ''}>&lsaquo;</button>
-      <div style="flex:1;min-width:0">
-        <div id="variant-grid-wrap">${variantGridResult.html}</div>
-        <div style="text-align:center;font-size:0.8rem;color:var(--text-muted);margin-top:6px">Page ${variantPage + 1} of ${variantGridResult.totalPages}</div>
-      </div>
-      <button class="binder-nav" id="variant-next-page" ${variantPage >= variantGridResult.totalPages - 1 ? 'disabled' : ''}>&rsaquo;</button>
-    </div>`;
-
-  // ── Lazy load images ──
-  const observer = new IntersectionObserver(entries => {
-    entries.forEach(e => {
-      if (e.isIntersecting) { e.target.src = e.target.dataset.src; observer.unobserve(e.target); }
-    });
-  });
-  el.querySelectorAll('img[data-src]').forEach(img => observer.observe(img));
-
-  // ── Event delegation — pagination ──
-  if (el._onVariantPaginate) el.removeEventListener('click', el._onVariantPaginate);
-  el._onVariantPaginate = function(e) {
-    if (e.target.closest('#variant-prev-page')) {
-      variantPage = Math.max(0, variantPage - 1); persist();
-      renderVariantBinder(); return;
-    }
-    if (e.target.closest('#variant-next-page')) {
-      variantPage++; persist();
-      renderVariantBinder(); return;
-    }
-    // Filter type buttons
-    const typeBtn = e.target.closest('.variant-filter-type');
-    if (typeBtn) {
-      activeFilter = typeBtn.dataset.type; resetPage(); persist(); renderVariantBinder(); return;
-    }
-    // Rarity pills
-    const rarBtn = e.target.closest('.variant-filter-rarity');
-    if (rarBtn) {
-      activeRarity = activeRarity === rarBtn.dataset.rarity ? '' : rarBtn.dataset.rarity;
-      resetPage(); persist(); renderVariantBinder(); return;
-    }
-    // Slot click — open inspection modal
-    const slot = e.target.closest('.card-slot[data-cn]');
-    if (slot) {
-      const cn = slot.dataset.cn;
-      const card = variantCards.find(c => c.collector_number === cn);
-      if (card) openModal(card);
-      return;
-    }
-  };
-  el.addEventListener('click', el._onVariantPaginate);
-
-  // Search input
-  const searchEl = el.querySelector('.variant-search-input');
-  if (searchEl) {
-    searchEl.addEventListener('input', function() {
-      searchQuery = this.value; resetPage(); persist(); renderVariantBinder();
-    });
-  }
-}
 
   async function init() {
     try {
       await loadFxRate();
       allCards = await loadCards();
-      if (binderConfig.scope?.collectorVariants) fetchVariants();
+      if (binderConfig.scope?.collectorBinder) fetchVariants();
       ownedSet = loadCollection();
       loadFoil();
       boosterPacks = loadPacks();
