@@ -1082,11 +1082,18 @@
     transition: all 0.2s ease;
     text-decoration: none;
   }
-  .foil-chip[data-nav-tab] { cursor: pointer; }
-  .foil-chip .chip-arrow {
-    font-size: 0.65rem; opacity: 0.5; transition: opacity 0.2s, transform 0.2s;
+  .foil-chip[data-switch-cn] { cursor: pointer; }
+  .foil-chip.active {
+    border-color: var(--accent) !important;
+    background: rgba(91,127,199,0.18) !important;
+    color: var(--text) !important;
+    box-shadow: 0 0 8px var(--ff-glow);
+    font-weight: 700;
   }
-  .foil-chip:hover .chip-arrow { opacity: 1; transform: translateX(2px); }
+  [data-theme="light"] .foil-chip.active {
+    background: rgba(200,140,40,0.15) !important;
+    border-color: var(--accent) !important;
+  }
   .foil-chip.owned {
     border-color: rgba(255,217,61,0.6);
     color: var(--foil-color);
@@ -1425,7 +1432,7 @@
     .fab-util-btn { width: 34px; height: 34px; min-height: 34px; min-width: 34px; }
 
     /* FAB — centered right edge, well above bottom nav */
-    .fab-search { bottom: calc(90px + env(safe-area-inset-bottom, 0px)); }
+    .fab-search { bottom: calc(110px + env(safe-area-inset-bottom, 0px)); }
     .fab-panel { bottom: 60px; }
 
     /* Modal — bottom sheet style on mobile */
@@ -2356,50 +2363,103 @@ manifestLink.rel = 'manifest';
 manifestLink.href = URL.createObjectURL(manifestBlob);
 document.head.appendChild(manifestLink);
 
-// Generate app icon via canvas
+// Generate app icon via canvas — loads official FIN set symbol from Scryfall
 (function generateIcon() {
-  const sizes = [180, 192, 512];
-  sizes.forEach(size => {
-    const c = document.createElement('canvas');
-    c.width = size; c.height = size;
-    const ctx = c.getContext('2d');
-    // Background
-    ctx.fillStyle = '#080818';
-    ctx.fillRect(0, 0, size, size);
-    // Border accent
-    const grad = ctx.createLinearGradient(0, 0, size, size);
-    grad.addColorStop(0, '#5b7fc7');
-    grad.addColorStop(1, '#d4a850');
-    ctx.strokeStyle = grad;
-    ctx.lineWidth = size * 0.04;
-    ctx.strokeRect(size * 0.08, size * 0.08, size * 0.84, size * 0.84);
-    // "FIN" text
-    const textGrad = ctx.createLinearGradient(0, size * 0.3, 0, size * 0.7);
-    textGrad.addColorStop(0, '#d4a850');
-    textGrad.addColorStop(1, '#5b7fc7');
-    ctx.fillStyle = textGrad;
-    ctx.font = `900 ${size * 0.32}px -apple-system, sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('FIN', size / 2, size * 0.45);
-    // Subtitle
-    ctx.fillStyle = '#a6adc8';
-    ctx.font = `600 ${size * 0.1}px -apple-system, sans-serif`;
-    ctx.fillText('BINDER', size / 2, size * 0.72);
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.onload = function() {
+    const sizes = [180, 192, 512];
+    sizes.forEach(size => {
+      const c = document.createElement('canvas');
+      c.width = size; c.height = size;
+      const ctx = c.getContext('2d');
 
-    const url = c.toDataURL('image/png');
-    if (size === 180) {
-      const link = document.createElement('link');
-      link.rel = 'apple-touch-icon';
-      link.sizes = '180x180';
-      link.href = url;
-      document.head.appendChild(link);
-    }
-    pwaManifest.icons.push({ src: url, sizes: `${size}x${size}`, type: 'image/png' });
-  });
-  // Update manifest with icons
-  const newBlob = new Blob([JSON.stringify(pwaManifest)], { type: 'application/json' });
-  manifestLink.href = URL.createObjectURL(newBlob);
+      // Solid background — iOS applies its own rounded-rect mask
+      ctx.fillStyle = '#0a0e1a';
+      ctx.fillRect(0, 0, size, size);
+
+      // Subtle inner border glow
+      const borderInset = size * 0.06;
+      const borderGrad = ctx.createLinearGradient(0, 0, size, size);
+      borderGrad.addColorStop(0, 'rgba(91,127,199,0.25)');
+      borderGrad.addColorStop(0.5, 'rgba(212,168,80,0.3)');
+      borderGrad.addColorStop(1, 'rgba(91,127,199,0.25)');
+      ctx.strokeStyle = borderGrad;
+      ctx.lineWidth = Math.max(2, size * 0.015);
+      const r = size * 0.18; // corner radius for inner border
+      const x1 = borderInset, y1 = borderInset, w1 = size - borderInset * 2, h1 = size - borderInset * 2;
+      ctx.beginPath();
+      ctx.moveTo(x1 + r, y1);
+      ctx.lineTo(x1 + w1 - r, y1); ctx.quadraticCurveTo(x1 + w1, y1, x1 + w1, y1 + r);
+      ctx.lineTo(x1 + w1, y1 + h1 - r); ctx.quadraticCurveTo(x1 + w1, y1 + h1, x1 + w1 - r, y1 + h1);
+      ctx.lineTo(x1 + r, y1 + h1); ctx.quadraticCurveTo(x1, y1 + h1, x1, y1 + h1 - r);
+      ctx.lineTo(x1, y1 + r); ctx.quadraticCurveTo(x1, y1, x1 + r, y1);
+      ctx.closePath();
+      ctx.stroke();
+
+      // Draw the FIN set symbol centered, golden tint
+      const iconSize = size * 0.52;
+      const ix = (size - iconSize) / 2;
+      const iy = (size - iconSize) / 2 - size * 0.04;
+      ctx.drawImage(img, ix, iy, iconSize, iconSize);
+      // Gold tint overlay via multiply-like blend
+      ctx.globalCompositeOperation = 'source-atop';
+      const goldGrad = ctx.createLinearGradient(ix, iy, ix + iconSize, iy + iconSize);
+      goldGrad.addColorStop(0, '#d4a850');
+      goldGrad.addColorStop(1, '#c49a40');
+      ctx.fillStyle = goldGrad;
+      ctx.fillRect(0, 0, size, size);
+      ctx.globalCompositeOperation = 'source-over';
+
+      // "FIN" label below the icon
+      ctx.fillStyle = '#8a90a8';
+      ctx.font = `700 ${size * 0.1}px -apple-system, "Helvetica Neue", sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.letterSpacing = `${size * 0.02}px`;
+      ctx.fillText('FIN', size / 2, size * 0.82);
+
+      const url = c.toDataURL('image/png');
+      if (size === 180) {
+        const link = document.createElement('link');
+        link.rel = 'apple-touch-icon';
+        link.sizes = '180x180';
+        link.href = url;
+        document.head.appendChild(link);
+      }
+      pwaManifest.icons.push({ src: url, sizes: `${size}x${size}`, type: 'image/png', purpose: 'any' });
+    });
+    // Update manifest with icons
+    const newBlob = new Blob([JSON.stringify(pwaManifest)], { type: 'application/json' });
+    manifestLink.href = URL.createObjectURL(newBlob);
+  };
+  img.onerror = function() {
+    // Fallback: text-only icon if SVG fails to load
+    const sizes = [180, 192, 512];
+    sizes.forEach(size => {
+      const c = document.createElement('canvas');
+      c.width = size; c.height = size;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#0a0e1a';
+      ctx.fillRect(0, 0, size, size);
+      ctx.fillStyle = '#d4a850';
+      ctx.font = `800 ${size * 0.35}px -apple-system, sans-serif`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('FIN', size / 2, size / 2);
+      const url = c.toDataURL('image/png');
+      if (size === 180) {
+        const link = document.createElement('link');
+        link.rel = 'apple-touch-icon';
+        link.sizes = '180x180';
+        link.href = url;
+        document.head.appendChild(link);
+      }
+      pwaManifest.icons.push({ src: url, sizes: `${size}x${size}`, type: 'image/png', purpose: 'any' });
+    });
+    const newBlob = new Blob([JSON.stringify(pwaManifest)], { type: 'application/json' });
+    manifestLink.href = URL.createObjectURL(newBlob);
+  };
+  img.src = 'https://svgs.scryfall.io/sets/fin.svg';
 })();
 </script>
 </head>
@@ -5663,66 +5723,54 @@ document.head.appendChild(manifestLink);
     var chips = [];
     var cn = card.collector_number;
     var isVariantCard = !allCards.includes(card);
-    var isSpecialVariant = isVariantCard && (isSurgeFoil(card) || isChocoboTrack(card) || isShowcase(card) || (card.frame_effects || []).includes('extendedart'));
     var collEnabled = binderConfig.scope && binderConfig.scope.collectorBinder;
-    var arrow = collEnabled ? ' <span class="chip-arrow">\u203A</span>' : '';
-    var navAttrs = function(targetCN) {
-      return collEnabled ? ' data-nav-cn="' + targetCN + '" data-nav-tab="collector" title="View in Collector tab"' : '';
-    };
 
-    // Foil — only for main set cards, not special variants
-    if ((card.finishes || []).includes('foil') && !isSpecialVariant) {
-      var tOwned = hasFoil(cn);
-      var foilLabel = isVariantCard ? getVariantLabel(card) : 'Foil';
+    // Find the card family: main card + all variants sharing oracle_id
+    var mainCard = isVariantCard
+      ? allCards.find(function(c) { return card.oracle_id && c.oracle_id === card.oracle_id; })
+      : card;
+    var familyOracleId = mainCard ? mainCard.oracle_id : (card.oracle_id || null);
+    var variants = familyOracleId ? variantCards.filter(function(v) {
+      return v.oracle_id === familyOracleId;
+    }) : [];
+
+    // 1. Regular pill (main card) — switchable
+    if (mainCard) {
+      var mOwned = ownedSet.has(mainCard.collector_number);
+      var isActive = cn === mainCard.collector_number;
       chips.push(
-        '<span class="foil-chip ' + (tOwned ? 'owned' : 'unowned') + '"' + navAttrs(cn) + '>' +
-        '\u2726 ' + foilLabel + (tOwned ? ' \u00B7 Owned' : '') + arrow +
+        '<span class="foil-chip ' + (mOwned ? 'owned' : 'unowned') + (isActive ? ' active' : '') + '" data-switch-cn="' + mainCard.collector_number + '">' +
+        'Regular' + (mOwned ? ' \u00B7 Owned' : '') +
         '</span>'
       );
     }
 
-    // Special variant card — show its own type as the foil chip
-    if (isSpecialVariant) {
-      var sOwned = hasFoil(cn);
-      chips.push(
-        '<span class="foil-chip ' + (sOwned ? 'owned' : 'unowned') + '"' + navAttrs(cn) + '>' +
-        '\u2726 ' + getVariantLabel(card) + (sOwned ? ' \u00B7 Owned' : '') + arrow +
-        '</span>'
-      );
-    }
-
-    // If viewing a variant card, show the main set card as "Foil" linking to Binder
-    if (isVariantCard && card.oracle_id) {
-      var mainCard = allCards.find(function(c) { return c.oracle_id === card.oracle_id; });
-      if (mainCard) {
-        var mfOwned = hasFoil(mainCard.collector_number);
-        var binderArrow = ' <span class="chip-arrow">\u203A</span>';
+    // 2. Foil pill for main card (ownership indicator, not switchable)
+    if (mainCard && (mainCard.finishes || []).includes('foil')) {
+      var isMainSpecial = isSurgeFoil(mainCard) || isChocoboTrack(mainCard) || isShowcase(mainCard) || (mainCard.frame_effects || []).includes('extendedart');
+      if (!isMainSpecial) {
+        var fOwned = hasFoil(mainCard.collector_number);
         chips.push(
-          '<span class="foil-chip ' + (mfOwned ? 'owned' : 'unowned') + '" data-nav-cn="' + mainCard.collector_number + '" data-nav-tab="binder" title="View Foil in Binder">' +
-          '\u2726 Foil' + (mfOwned ? ' \u00B7 Owned' : '') + binderArrow +
+          '<span class="foil-chip ' + (fOwned ? 'owned' : 'unowned') + '">' +
+          '\u2726 Foil' + (fOwned ? ' \u00B7 Owned' : '') +
           '</span>'
         );
       }
     }
 
-    // Special variants — look for linked variant cards
-    var linkedVariants = variantCards.filter(function(v) {
-      // Don't list ourselves as a linked variant
-      if (v.collector_number === cn) return false;
-      return v.variant_of === cn || (card.oracle_id && v.oracle_id === card.oracle_id);
-    });
-
-    if (linkedVariants.length > 0) {
-      linkedVariants.forEach(function(v) {
+    // 3. Variant pills — switchable
+    if (variants.length > 0) {
+      variants.forEach(function(v) {
         var vOwned = hasFoil(v.collector_number);
         var label = getVariantLabel(v);
+        var isActive = cn === v.collector_number;
         chips.push(
-          '<span class="foil-chip ' + (vOwned ? 'owned' : 'unowned') + '"' + navAttrs(v.collector_number) + '>' +
-          '\u2726 ' + label + (vOwned ? ' \u00B7 Owned' : '') + arrow +
+          '<span class="foil-chip ' + (vOwned ? 'owned' : 'unowned') + (isActive ? ' active' : '') + '" data-switch-cn="' + v.collector_number + '">' +
+          '\u2726 ' + label + (vOwned ? ' \u00B7 Owned' : '') +
           '</span>'
         );
       });
-    } else if (!binderConfig.scope.collectorBinder) {
+    } else if (!collEnabled) {
       chips.push(
         '<span class="foil-chip unavailable">' +
         'Surge &amp; special foil variants are Collector Booster exclusives \u2014 ' +
@@ -5980,34 +6028,17 @@ document.head.appendChild(manifestLink);
     if (e.target === e.currentTarget) closeModal();
   });
 
-  // ── Foil chip navigation — click to jump to relevant tab ──
+  // ── Foil chip switching — click to switch modal to variant in-place ──
   document.getElementById('modal-foil-info').addEventListener('click', (e) => {
-    const chip = e.target.closest('.foil-chip[data-nav-tab]');
+    const chip = e.target.closest('.foil-chip[data-switch-cn]');
     if (!chip) return;
-    const targetTab = chip.dataset.navTab;
-    const targetCN = chip.dataset.navCn;
-    if (targetTab === 'collector' && !binderConfig.scope?.collectorBinder) return;
-    closeModal();
-    setTimeout(() => {
-      if (targetTab === 'binder' && targetCN) {
-        // Navigate binder to the correct page for this card
-        const targetCard = allCards.find(c => c.collector_number === targetCN);
-        if (targetCard) {
-          const idx = allCards.indexOf(targetCard);
-          const pageIdx = Math.floor(idx / binderConfig.slotsPerPage);
-          currentPage = isMobile() ? pageIdx : Math.floor(pageIdx / 2);
-          highlightedCN = targetCN;
-        }
-        switchTab('binder');
-        if (targetCard) setTimeout(() => openModal(targetCard), 120);
-      } else {
-        switchTab(targetTab);
-        if (targetCN) {
-          const targetCard = getCardByNumber(targetCN);
-          if (targetCard) setTimeout(() => openModal(targetCard), 120);
-        }
-      }
-    }, 300);
+    const targetCN = chip.dataset.switchCn;
+    if (!targetCN) return;
+    // Don't switch if already viewing this card
+    if (_currentModalCard && _currentModalCard.collector_number === targetCN) return;
+    const targetCard = getCardByNumber(targetCN);
+    if (!targetCard) return;
+    openModal(targetCard);
   });
 
   document.getElementById('sheet-backdrop').addEventListener('click', closeSheet);
