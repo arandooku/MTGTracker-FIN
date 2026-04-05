@@ -1323,7 +1323,7 @@
     #app {
       padding: 10px;
       padding-top: max(10px, env(safe-area-inset-top, 0px));
-      padding-bottom: max(180px, calc(180px + env(safe-area-inset-bottom, 0px)));
+      padding-bottom: max(140px, calc(140px + env(safe-area-inset-bottom, 0px)));
     }
     header { padding: 14px 0 12px; }
     .tab-btn { flex-shrink: 0; }
@@ -1334,25 +1334,51 @@
     .binder-layout { gap: 6px; }
     .page-nav-widget { min-width: 160px; }
 
-    /* FAB & utilities */
+    /* FAB — sit above bottom nav */
     .fab-util-btn { min-height: 44px; min-width: 44px; }
+    .fab-search { bottom: calc(72px + env(safe-area-inset-bottom, 0px)); }
+    .fab-utilities { bottom: calc(136px + env(safe-area-inset-bottom, 0px)); }
+    .fab-panel { bottom: 62px; }
 
-    /* Modal */
-    .modal { padding: 16px; max-width: 92vw; }
-    .modal h3 { font-size: 0.95rem; }
-    .modal .btn { min-height: 44px; }
-    .modal-header-row {
-      flex-direction: column; align-items: center; gap: 10px; text-align: center;
+    /* Modal — bottom sheet style on mobile */
+    .modal-handle {
+      display: block; width: 36px; height: 4px; border-radius: 2px;
+      background: var(--surface3); margin: 0 auto 12px; flex-shrink: 0;
     }
-    .modal-card-col { width: 140px; }
-    .modal-info-col { align-items: center; }
-    .modal-info-col h3 { text-align: center; }
-    .modal-info-col .detail { text-align: center; }
-    .modal-info-col .modal-foil-info { justify-content: center; }
-    .modal-info-col .modal-actions { justify-content: center; }
-    .viz-icon-btn { width: 40px; height: 40px; }
-    .viz-icon-btn svg { width: 16px; height: 16px; }
-    .modal-price-refresh { width: 36px; height: 36px; min-width: 36px; font-size: 0.9rem; }
+    .modal-overlay { align-items: flex-end; }
+    .modal {
+      padding: 16px 16px calc(16px + env(safe-area-inset-bottom, 0px));
+      max-width: 100%; width: 100%;
+      max-height: 88vh; max-height: 88dvh;
+      border-radius: 20px 20px 0 0;
+    }
+    .modal-overlay.visible .modal { animation: modal-slide-up 0.35s ease both; }
+    .modal-overlay.closing .modal { animation: modal-slide-down 0.25s ease both; }
+    @keyframes modal-slide-up {
+      from { transform: translateY(100%); opacity: 0; }
+      to   { transform: translateY(0); opacity: 1; }
+    }
+    @keyframes modal-slide-down {
+      from { transform: translateY(0); opacity: 1; }
+      to   { transform: translateY(60%); opacity: 0; }
+    }
+    .modal-header-row {
+      flex-direction: row; align-items: flex-start; gap: 14px; text-align: left;
+    }
+    .modal-card-col { width: 120px; flex-shrink: 0; }
+    .modal-info-col { align-items: flex-start; }
+    .modal-info-col h3 { text-align: left; font-size: 0.95rem; }
+    .modal-info-col .detail { text-align: left; }
+    .modal-info-col .modal-foil-info { justify-content: flex-start; }
+    .modal-info-col .modal-actions { justify-content: flex-start; }
+    .modal-info-col .modal-actions .btn { min-height: 40px; font-size: 0.78rem; padding: 6px 12px; }
+    .modal .btn { min-height: 44px; }
+    .viz-icon-btn { width: 36px; height: 36px; }
+    .viz-icon-btn svg { width: 15px; height: 15px; }
+    .modal-price-refresh { width: 34px; height: 34px; min-width: 34px; font-size: 0.85rem; }
+    .modal-prices { gap: 6px; }
+    .modal-footer { margin-top: 10px; padding-top: 10px; }
+    .modal-footer .btn { min-height: 44px; flex: 1; }
     .page-grid { gap: 8px; }
     .sync-modal { padding: 18px; max-width: 92vw; }
 
@@ -1464,6 +1490,9 @@
     max-height: 90vh; max-height: 90dvh;
     overflow-y: auto; overflow-x: hidden;
     text-align: center; position: relative;
+  }
+  .modal-handle {
+    display: none; /* shown only on mobile */
   }
   /* Header: card image left, info right on desktop */
   .modal-header-row {
@@ -1739,6 +1768,7 @@
     bottom: calc(24px + env(safe-area-inset-bottom, 0px));
     right: calc(24px + env(safe-area-inset-right, 0px));
     z-index: 900;
+    transition: bottom 0.2s ease;
   }
 
   .fab-btn {
@@ -2444,6 +2474,7 @@ document.head.appendChild(manifestLink);
 <!-- Card Visualizer Modal -->
 <div class="modal-overlay" id="modal-overlay">
   <div class="modal" id="modal">
+    <div class="modal-handle"></div>
     <!-- Top: image + name + detail side by side on desktop, stacked on mobile -->
     <div class="modal-header-row">
       <div class="modal-card-col">
