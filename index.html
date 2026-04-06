@@ -2417,59 +2417,59 @@ document.head.appendChild(manifestLink);
 
 // Generate app icon via canvas — loads official FIN set symbol from Scryfall
 (function generateIcon() {
-  const img = new Image();
-  img.crossOrigin = 'anonymous';
-  img.onload = function() {
+  function buildIcons(img) {
     const sizes = [180, 192, 512];
     sizes.forEach(size => {
       const c = document.createElement('canvas');
       c.width = size; c.height = size;
       const ctx = c.getContext('2d');
 
-      // Solid background — iOS applies its own rounded-rect mask
-      ctx.fillStyle = '#0a0e1a';
+      // Rich dark background with subtle radial gradient
+      const bg = ctx.createRadialGradient(size / 2, size * 0.42, 0, size / 2, size / 2, size * 0.72);
+      bg.addColorStop(0, '#141828');
+      bg.addColorStop(1, '#080810');
+      ctx.fillStyle = bg;
       ctx.fillRect(0, 0, size, size);
 
-      // Subtle inner border glow
-      const borderInset = size * 0.06;
-      const borderGrad = ctx.createLinearGradient(0, 0, size, size);
-      borderGrad.addColorStop(0, 'rgba(91,127,199,0.25)');
-      borderGrad.addColorStop(0.5, 'rgba(212,168,80,0.3)');
-      borderGrad.addColorStop(1, 'rgba(91,127,199,0.25)');
-      ctx.strokeStyle = borderGrad;
-      ctx.lineWidth = Math.max(2, size * 0.015);
-      const r = size * 0.18; // corner radius for inner border
-      const x1 = borderInset, y1 = borderInset, w1 = size - borderInset * 2, h1 = size - borderInset * 2;
-      ctx.beginPath();
-      ctx.moveTo(x1 + r, y1);
-      ctx.lineTo(x1 + w1 - r, y1); ctx.quadraticCurveTo(x1 + w1, y1, x1 + w1, y1 + r);
-      ctx.lineTo(x1 + w1, y1 + h1 - r); ctx.quadraticCurveTo(x1 + w1, y1 + h1, x1 + w1 - r, y1 + h1);
-      ctx.lineTo(x1 + r, y1 + h1); ctx.quadraticCurveTo(x1, y1 + h1, x1, y1 + h1 - r);
-      ctx.lineTo(x1, y1 + r); ctx.quadraticCurveTo(x1, y1, x1 + r, y1);
-      ctx.closePath();
-      ctx.stroke();
+      if (img) {
+        // Tint the symbol on a separate canvas so we don't destroy the background
+        const tmp = document.createElement('canvas');
+        tmp.width = size; tmp.height = size;
+        const tctx = tmp.getContext('2d');
 
-      // Draw the FIN set symbol centered, golden tint
-      const iconSize = size * 0.52;
-      const ix = (size - iconSize) / 2;
-      const iy = (size - iconSize) / 2 - size * 0.04;
-      ctx.drawImage(img, ix, iy, iconSize, iconSize);
-      // Gold tint overlay via multiply-like blend
-      ctx.globalCompositeOperation = 'source-atop';
-      const goldGrad = ctx.createLinearGradient(ix, iy, ix + iconSize, iy + iconSize);
-      goldGrad.addColorStop(0, '#d4a850');
-      goldGrad.addColorStop(1, '#c49a40');
-      ctx.fillStyle = goldGrad;
-      ctx.fillRect(0, 0, size, size);
-      ctx.globalCompositeOperation = 'source-over';
+        const iconSize = size * 0.54;
+        const ix = (size - iconSize) / 2;
+        const iy = (size - iconSize) / 2 - size * 0.06;
 
-      // "FIN" label below the icon
-      ctx.fillStyle = '#8a90a8';
-      ctx.font = `700 ${size * 0.1}px -apple-system, "Helvetica Neue", sans-serif`;
+        // Draw symbol onto temp canvas
+        tctx.drawImage(img, ix, iy, iconSize, iconSize);
+        // Gold tint — source-in keeps only pixels where the symbol was drawn
+        tctx.globalCompositeOperation = 'source-in';
+        const goldGrad = tctx.createLinearGradient(ix, iy, ix + iconSize, iy + iconSize);
+        goldGrad.addColorStop(0, '#e8c35a');
+        goldGrad.addColorStop(0.45, '#d4a850');
+        goldGrad.addColorStop(1, '#b8892e');
+        tctx.fillStyle = goldGrad;
+        tctx.fillRect(0, 0, size, size);
+
+        // Soft glow behind the symbol
+        ctx.save();
+        ctx.filter = `blur(${size * 0.06}px)`;
+        ctx.globalAlpha = 0.35;
+        ctx.drawImage(tmp, 0, 0);
+        ctx.restore();
+
+        // Draw crisp symbol on top
+        ctx.drawImage(tmp, 0, 0);
+      }
+
+      // "FIN" label — wide-tracked, understated
+      ctx.fillStyle = 'rgba(160,168,195,0.7)';
+      ctx.font = `700 ${size * 0.11}px -apple-system, "Helvetica Neue", sans-serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.letterSpacing = `${size * 0.02}px`;
-      ctx.fillText('FIN', size / 2, size * 0.82);
+      ctx.letterSpacing = `${size * 0.035}px`;
+      ctx.fillText('FIN', size / 2, size * 0.84);
 
       const url = c.toDataURL('image/png');
       if (size === 180) {
@@ -2481,36 +2481,14 @@ document.head.appendChild(manifestLink);
       }
       pwaManifest.icons.push({ src: url, sizes: `${size}x${size}`, type: 'image/png', purpose: 'any' });
     });
-    // Update manifest with icons
     const newBlob = new Blob([JSON.stringify(pwaManifest)], { type: 'application/json' });
     manifestLink.href = URL.createObjectURL(newBlob);
-  };
-  img.onerror = function() {
-    // Fallback: text-only icon if SVG fails to load
-    const sizes = [180, 192, 512];
-    sizes.forEach(size => {
-      const c = document.createElement('canvas');
-      c.width = size; c.height = size;
-      const ctx = c.getContext('2d');
-      ctx.fillStyle = '#0a0e1a';
-      ctx.fillRect(0, 0, size, size);
-      ctx.fillStyle = '#d4a850';
-      ctx.font = `800 ${size * 0.35}px -apple-system, sans-serif`;
-      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText('FIN', size / 2, size / 2);
-      const url = c.toDataURL('image/png');
-      if (size === 180) {
-        const link = document.createElement('link');
-        link.rel = 'apple-touch-icon';
-        link.sizes = '180x180';
-        link.href = url;
-        document.head.appendChild(link);
-      }
-      pwaManifest.icons.push({ src: url, sizes: `${size}x${size}`, type: 'image/png', purpose: 'any' });
-    });
-    const newBlob = new Blob([JSON.stringify(pwaManifest)], { type: 'application/json' });
-    manifestLink.href = URL.createObjectURL(newBlob);
-  };
+  }
+
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.onload = function() { buildIcons(img); };
+  img.onerror = function() { buildIcons(null); };
   img.src = 'https://svgs.scryfall.io/sets/fin.svg';
 })();
 </script>
