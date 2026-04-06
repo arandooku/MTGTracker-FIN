@@ -4949,229 +4949,183 @@ document.head.appendChild(manifestLink);
     const el = document.getElementById('portfolio');
     const total = allCards.length;
     const owned = ownedSet.size;
+    const rarities = ['mythic', 'rare', 'uncommon', 'common'];
+    const rarityColors = { mythic: '#e8702a', rare: '#c9a14e', uncommon: '#72b5b5', common: '#777' };
 
     const ownedCards = allCards.filter(c => ownedSet.has(c.collector_number));
     const collectionValueUSD = ownedCards.reduce((s, c) => s + c.price_usd, 0);
     const collectionValueMYR = collectionValueUSD * USD_TO_MYR;
-    const fullSetValueUSD = allCards.reduce((s, c) => s + c.price_usd, 0);
-    const fullSetValueMYR = fullSetValueUSD * USD_TO_MYR;
-    const missingValueUSD = fullSetValueUSD - collectionValueUSD;
+    const missingValueUSD = allCards.reduce((s, c) => s + c.price_usd, 0) - collectionValueUSD;
     const totalSpentPacks = boosterPacks.reduce((s, p) => s + (p.price || 0), 0);
 
-    // Foil value totals
+    // Foil + variant values
     const foilOwnedCards = allCards.filter(c => hasFoil(c.collector_number) && c.price_usd_foil > 0);
-    const foilCollectionValueUSD = foilOwnedCards.reduce((s, c) => s + c.price_usd_foil, 0);
-
-    // Variant stats for portfolio cards (tracked via foil ownership or nonfoil ownedSet)
+    const foilValueUSD = foilOwnedCards.reduce((s, c) => s + c.price_usd_foil, 0);
+    const foilCount = allCards.filter(c => hasFoil(c.collector_number)).length;
     const variantOwned = variantCards.filter(c => hasFoil(c.collector_number) || ownedSet.has(c.collector_number));
-    const variantOwnedCount = variantOwned.length;
-    const variantTotalCount = variantCards.length;
-    const variantOwnedPct = variantTotalCount > 0 ? (variantOwnedCount / variantTotalCount * 100) : 0;
-    const variantOwnedValueUSD = variantOwned.reduce((s, c) => {
+    const variantValueUSD = variantOwned.reduce((s, c) => {
       if (hasFoil(c.collector_number)) return s + (c.price_usd_foil || c.price_usd || 0);
       return s + (c.price_usd || 0);
     }, 0);
-    const topOwnedVariants = [...variantOwned].sort((a, b) => Math.max(b.price_usd||0,b.price_usd_foil||0) - Math.max(a.price_usd||0,a.price_usd_foil||0)).slice(0, 3);
 
-    // Foil stats for portfolio card
-    const foilCapableCards = allCards.filter(c => (c.finishes || []).includes('foil'));
-    const foilCapableCount = foilCapableCards.length;
-    const foilOwnedPortfolioCount = foilCapableCards.filter(c => hasFoil(c.collector_number)).length;
-    const foilOwnedPct = foilCapableCount > 0 ? (foilOwnedPortfolioCount / foilCapableCount * 100) : 0;
-    const topOwnedFoils = [...allCards].filter(c => hasFoil(c.collector_number) && c.price_usd_foil > 0)
-      .sort((a, b) => b.price_usd_foil - a.price_usd_foil).slice(0, 3);
-
-    // Top 5 most valuable owned (effective price = higher of regular or foil)
-    const getEffectivePrice = (c) => {
-      const regular = c.price_usd || 0;
-      const foil = hasFoil(c.collector_number) ? (c.price_usd_foil || 0) : 0;
-      return Math.max(regular, foil);
-    };
-    const topOwned = [...ownedCards].sort((a, b) => getEffectivePrice(b) - getEffectivePrice(a)).slice(0, 5);
-    // Top 5 most valuable missing
-    const topMissing = allCards.filter(c => !ownedSet.has(c.collector_number))
-      .sort((a, b) => b.price_usd - a.price_usd).slice(0, 5);
-
-    // Value by rarity
-    const rarities = ['mythic', 'rare', 'uncommon', 'common'];
+    // Rarity values
     const rarityValues = {};
-    for (const r of rarities) {
-      const cards = ownedCards.filter(c => c.rarity === r);
-      rarityValues[r] = cards.reduce((s, c) => s + c.price_usd, 0);
+    for (const r of rarities) rarityValues[r] = ownedCards.filter(c => c.rarity === r).reduce((s, c) => s + c.price_usd, 0);
+    const totalRarVal = Math.max(Object.values(rarityValues).reduce((a, b) => a + b, 0), 1);
+
+    // Top owned (effective price = max of regular or foil)
+    const getEffectivePrice = (c) => Math.max(c.price_usd || 0, hasFoil(c.collector_number) ? (c.price_usd_foil || 0) : 0);
+    const topOwned = [...ownedCards].sort((a, b) => getEffectivePrice(b) - getEffectivePrice(a)).slice(0, 5);
+    const topMissing = allCards.filter(c => !ownedSet.has(c.collector_number)).sort((a, b) => b.price_usd - a.price_usd).slice(0, 5);
+
+    // Card carousel helper
+    function carouselItem(card, opts) {
+      const borderColor = rarityColors[card.rarity] || '#888';
+      const isOwned = opts.owned !== false;
+      const glow = (card.rarity === 'mythic' || card.rarity === 'rare') ? `box-shadow:0 0 8px ${borderColor}30;` : '';
+      return `<div class="card-carousel-item ${isOwned ? '' : 'unowned'}" data-cn="${esc(card.collector_number)}">
+        <img src="${esc(card.image_small)}" alt="${displayNameText(card)}"
+          style="border:1.5px solid ${isOwned ? borderColor : 'rgba(46,58,82,0.5)'};${glow}" loading="lazy">
+        <div class="cc-name">${displayName(card)}</div>
+        <div class="cc-price" style="color:${opts.priceColor || 'var(--owned-border)'}">$${(opts.price || 0).toFixed(2)}</div>
+      </div>`;
     }
 
+    // Rarity value bar
+    const rarityBar = rarities.map(r => {
+      const w = (rarityValues[r] / totalRarVal) * 100;
+      return w > 0 ? `<div style="flex:${w};text-align:center">
+        <div style="height:6px;background:${rarityColors[r]};border-radius:3px;margin-bottom:3px"></div>
+        <div style="font-size:0.55rem;color:${rarityColors[r]}">${r.charAt(0).toUpperCase() + r.slice(1)} $${rarityValues[r].toFixed(0)}</div>
+      </div>` : '';
+    }).join('');
 
+    // ROI
+    const roiAmount = collectionValueMYR - totalSpentPacks;
+    const roiPct = totalSpentPacks > 0 ? ((collectionValueMYR / totalSpentPacks) * 100).toFixed(0) : 0;
 
-    const rarityColors = { mythic: '#e8702a', rare: '#c9a14e', uncommon: '#72b5b5', common: '#777' };
+    // Growth chart
+    const addEvents = timelineEvents.filter(e => e.type === 'add');
+    const dailyValues = {};
+    const seenForChart = new Set();
+    for (const evt of addEvents) {
+      seenForChart.add(evt.cn);
+      const day = evt.date.slice(0, 10);
+      let cumVal = 0;
+      for (const cn of seenForChart) {
+        const c = getCardByNumber(cn);
+        if (c) cumVal += c.price_usd || 0;
+      }
+      dailyValues[day] = cumVal;
+    }
+    const chartDays = Object.keys(dailyValues).sort();
+    let growthChartHTML = '';
+    if (chartDays.length > 1) {
+      const cw = 300, ch = 60;
+      const maxVal = Math.max(...Object.values(dailyValues), 1);
+      const points = chartDays.map((d, i) => ({
+        x: (i / (chartDays.length - 1)) * cw,
+        y: ch - (dailyValues[d] / maxVal) * ch,
+      }));
+      const linePoints = points.map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+      const areaPoints = `0,${ch} ${linePoints} ${cw},${ch}`;
+      growthChartHTML = `<div class="dash-card">
+        <h3 style="margin-bottom:var(--sp-2)">Value Over Time</h3>
+        <svg class="value-chart" viewBox="0 0 ${cw} ${ch}" preserveAspectRatio="xMidYMid meet" style="width:100%;display:block">
+          <defs><linearGradient id="portfolio-grad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="var(--owned-border)" stop-opacity="0.3"/><stop offset="100%" stop-color="var(--owned-border)" stop-opacity="0"/>
+          </linearGradient></defs>
+          <polygon points="${areaPoints}" fill="url(#portfolio-grad)"/>
+          <polyline points="${linePoints}" fill="none" stroke="var(--owned-border)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          ${points.map((p, i) => `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="2" fill="var(--owned-border)">
+            <title>${chartDays[i]}: $${dailyValues[chartDays[i]].toFixed(2)}</title></circle>`).join('')}
+        </svg>
+        <div style="display:flex;justify-content:space-between;font-size:0.55rem;color:var(--text-muted);margin-top:2px">
+          <span>${chartDays[0]}</span><span>${chartDays[chartDays.length - 1]}</span>
+        </div>
+      </div>`;
+    }
+
+    // Refresh icon
+    const refreshIcon = `<button style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:0.85rem;padding:0 2px;transition:all 0.15s" onclick="window._refreshScryfall && window._refreshScryfall(this); window._refreshFxRate && window._refreshFxRate()" title="Refresh prices">↻</button>`;
 
     el.innerHTML = `
-      <div class="dash-grid">
-        <div class="dash-card dash-card-full">
-          <h3>Collection Valuation</h3>
-          <div class="price-sources">
-            <div class="price-source">
-              <span class="dot"></span>
-              USD via <a href="https://scryfall.com/sets/fin" target="_blank" rel="noopener">Scryfall</a>
-              / <a href="https://www.tcgplayer.com" target="_blank" rel="noopener">TCGPlayer</a>
-              ${dataFetchedAt
-                ? ` \u00B7 fetched ${new Date(dataFetchedAt).toLocaleString('en-MY', { timeZone: 'Asia/Kuala_Lumpur', year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true })} MYT \u00B7 ${timeAgo(new Date(dataFetchedAt))} \u00B7 cached 7d`
-                : ' \u00B7 not cached'}
-              <button class="price-source-refresh" id="btn-refresh-scryfall" onclick="window._refreshScryfall(this)" title="Re-fetch card prices from Scryfall">\u21BB</button>
-            </div>
-            <div class="price-source">
-              <span class="dot" style="${fxIsLive ? '' : 'background:var(--accent);'}"></span>
-              1 USD = ${USD_TO_MYR.toFixed(2)} MYR
-              ${fxIsLive
-                ? ` via <a href="https://open.er-api.com" target="_blank" rel="noopener">ExchangeRate-API</a>
-                    \u00B7 fetched ${new Date(fxFetchedAt).toLocaleString('en-MY', { timeZone: 'Asia/Kuala_Lumpur', year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true })} MYT \u00B7 ${timeAgo(new Date(fxFetchedAt))} \u00B7 cached 12h`
-                : ' \u00B7 offline (fallback rate)'}
-              <button class="price-source-refresh" id="btn-refresh-fx" onclick="window._refreshFxRate(this)" title="Re-fetch exchange rate">\u21BB</button>
-            </div>
+      <div class="dashboard">
+        <div class="dash-card" style="margin-bottom:var(--sp-3);position:relative;overflow:hidden">
+          <div style="position:absolute;top:-30px;right:-30px;width:100px;height:100px;background:radial-gradient(circle,rgba(74,173,94,0.06),transparent 70%);pointer-events:none"></div>
+          <div style="font-size:0.65rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.1em;font-weight:700;margin-bottom:4px">Collection Value</div>
+          <div style="display:flex;align-items:baseline;gap:var(--sp-2);margin-bottom:2px">
+            <div style="font-size:clamp(1.6rem,5vw,2rem);font-weight:900;color:var(--owned-border)">$${collectionValueUSD.toFixed(2)}</div>
+            <div style="font-size:1rem;font-weight:700;color:var(--accent)">RM ${collectionValueMYR.toFixed(2)}</div>
           </div>
-          <div class="value-grid">
-            <div class="value-box">
-              <div class="value-label">Owned (USD)</div>
-              <div class="value-amount usd">$${collectionValueUSD.toFixed(2)}</div>
-              <div class="value-sub">${owned} cards</div>
-            </div>
-            <div class="value-box">
-              <div class="value-label">Owned (MYR)</div>
-              <div class="value-amount myr">RM ${collectionValueMYR.toFixed(2)}</div>
-              <div class="value-sub">${fxIsLive ? 'live rate' : 'fallback rate'}</div>
-            </div>
-            <div class="value-box">
-              <div class="value-label">Main Set (USD)</div>
-              <div class="value-amount usd" style="font-size:1rem">$${fullSetValueUSD.toFixed(2)}</div>
-              <div class="value-sub">${total} main set cards</div>
-            </div>
-            <div class="value-box">
-              <div class="value-label">Still Need</div>
-              <div class="value-amount myr" style="font-size:1rem">$${missingValueUSD.toFixed(2)}</div>
-              <div class="value-sub">${total - owned} cards</div>
-            </div>
+          <div style="font-size:0.7rem;color:var(--text-muted);margin-bottom:var(--sp-3)">
+            ${owned} cards · via Scryfall/TCGPlayer · 1 USD = ${USD_TO_MYR.toFixed(2)} MYR ${refreshIcon}
           </div>
-          ${foilCollectionValueUSD > 0 ? `
-          <div class="dash-sub" style="margin-top:8px">
-            <span style="color:var(--foil-color)">\u2746 Foil collection: $${foilCollectionValueUSD.toFixed(2)} / RM ${(foilCollectionValueUSD * USD_TO_MYR).toFixed(2)}</span>
-          </div>` : ''}
+          <div style="display:flex;gap:6px">${rarityBar}</div>
         </div>
 
-        <div class="dash-card">
-          <h3>Pack ROI</h3>
-          ${totalSpentPacks > 0 ? `
-            <div class="dash-big-num">${collectionValueMYR >= totalSpentPacks ? '+' : ''}RM ${(collectionValueMYR - totalSpentPacks).toFixed(2)}</div>
-            <div class="dash-sub">Collection: RM ${collectionValueMYR.toFixed(2)}</div>
-            <div class="dash-sub">Spent: RM ${totalSpentPacks.toFixed(2)}</div>
-            <div class="dash-sub" style="margin-top:6px;font-weight:700;color:${collectionValueMYR >= totalSpentPacks ? 'var(--owned-border)' : 'var(--accent)'}">
-              ${((collectionValueMYR / totalSpentPacks) * 100).toFixed(0)}% return
-            </div>
-          ` : `<div class="dash-sub" style="padding:20px 0">Open packs to track ROI</div>`}
-        </div>
-
-        <div class="dash-card">
-          <h3>Value by Rarity</h3>
-          <div class="rarity-bars">
-            ${rarities.map(r => {
-              const val = rarityValues[r];
-              const maxRarVal = Math.max(...Object.values(rarityValues), 1);
-              const pct = (val / maxRarVal) * 100;
-              return `<div class="rarity-row">
-                <span class="rarity-label ${r}">${r}</span>
-                <div class="rarity-track"><div class="rarity-fill ${r}" style="width:${pct.toFixed(1)}%"></div></div>
-                <span class="rarity-count">$${val.toFixed(2)}</span>
-              </div>`;
-            }).join('')}
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-2);margin-bottom:var(--sp-3)">
+          <div class="dash-card">
+            <h3 style="margin-bottom:4px">Pack ROI</h3>
+            ${totalSpentPacks > 0
+              ? `<div style="font-size:1.2rem;font-weight:800;color:${roiAmount >= 0 ? 'var(--owned-border)' : 'var(--accent)'}">
+                  ${roiAmount >= 0 ? '+' : ''}RM ${roiAmount.toFixed(2)}</div>
+                <div style="font-size:0.68rem;color:var(--text-muted);margin-top:2px">Spent: RM ${totalSpentPacks.toFixed(2)} · ${roiPct}% return</div>`
+              : `<div style="font-size:0.82rem;color:var(--text-muted);padding:8px 0">Open packs to track ROI</div>`}
+          </div>
+          <div class="dash-card">
+            <h3 style="margin-bottom:4px">Still Need</h3>
+            <div style="font-size:1.2rem;font-weight:800;color:var(--accent)">$${missingValueUSD.toFixed(2)}</div>
+            <div style="font-size:0.68rem;color:var(--text-muted);margin-top:2px">${total - owned} cards remaining</div>
           </div>
         </div>
 
-        <div class="dash-card">
-          <h3>Most Valuable (Owned)</h3>
-          ${topOwned.length > 0 ? `<div class="top-cards">
-            ${topOwned.map((c, i) => {
-              const isFoilOwned = hasFoil(c.collector_number);
-              const effectivePrice = getEffectivePrice(c);
-              return `<div class="top-card-item missing-inspect" data-cn="${esc(c.collector_number)}">
-              <span class="rank">${i + 1}</span>
-              <img src="${esc(c.image_small)}" alt="${displayNameText(c)}">
-              <span class="tc-name">${displayName(c)}${isFoilOwned ? ' <span style="color:var(--foil-color);font-size:0.8rem">\u2746</span>' : ''}</span>
-              <span class="tc-price">$${effectivePrice.toFixed(2)}${isFoilOwned && c.price_usd_foil > 0 && c.price_usd_foil > c.price_usd ? `<br><span style="color:var(--text-muted);font-size:0.75rem;text-decoration:line-through">$${c.price_usd.toFixed(2)}</span>` : ''}</span>
-              <span class="inspect-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
-            </div>`;
-            }).join('')}
-          </div>` : '<div class="dash-sub" style="padding:20px 0">No cards yet</div>'}
-        </div>
-
-        <div class="dash-card">
-          <h3>Most Valuable (Missing)</h3>
-          ${topMissing.length > 0 ? `<div class="top-cards">
-            ${topMissing.map((c, i) => `<div class="top-card-item missing-inspect" data-cn="${esc(c.collector_number)}">
-              <span class="rank">${i + 1}</span>
-              <img src="${esc(c.image_small)}" alt="${displayNameText(c)}">
-              <span class="tc-name">${displayName(c)}</span>
-              <span class="tc-price" style="color:var(--accent)">$${c.price_usd.toFixed(2)}</span>
-              <span class="inspect-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
-            </div>`).join('')}
-          </div>` : '<div class="dash-sub" style="padding:20px 0">Full set complete!</div>'}
-        </div>
-
-        ${variantTotalCount > 0 ? `
-        <div class="dash-card">
-          <h3>◈ Variant Portfolio</h3>
-          <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
-            <div>
-              <div class="dash-big-num" style="font-size:1.2rem">${variantOwnedCount} / ${variantTotalCount}</div>
-              <div class="dash-sub">${variantOwnedPct.toFixed(1)}% owned</div>
-            </div>
-            <div style="flex:1">
-              <div class="rarity-track"><div class="rarity-fill rare" style="width:${variantOwnedPct.toFixed(1)}%"></div></div>
-              <div class="dash-sub" style="margin-top:4px">Value: <strong>$${variantOwnedValueUSD.toFixed(2)}</strong> / RM ${(variantOwnedValueUSD * USD_TO_MYR).toFixed(2)}</div>
-            </div>
+        <div class="dash-card" style="margin-bottom:var(--sp-3)">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--sp-2)">
+            <h3 style="margin:0">Most Valuable Owned</h3>
           </div>
-          ${topOwnedVariants.length > 0 ? `
-            <div class="dash-sub" style="margin-bottom:4px;font-size:0.75rem;color:var(--text-muted)">Top owned variants:</div>
-            <div class="top-cards">
-              ${topOwnedVariants.map((c, i) => `<div class="top-card-item missing-inspect" data-cn="${esc(c.collector_number)}" style="cursor:pointer">
-                <span class="rank">${i + 1}</span>
-                <img src="${esc(c.image_small)}" alt="${displayNameText(c)}">
-                <span class="tc-name">${displayName(c)}</span>
-                <span class="tc-price">$${Math.max(c.price_usd||0,c.price_usd_foil||0).toFixed(2)}</span>
-                <span class="inspect-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
-              </div>`).join('')}
-            </div>
-          ` : `<div class="dash-sub" style="padding:8px 0">No variants owned yet</div>`}
+          ${topOwned.length > 0
+            ? `<div class="card-carousel">${topOwned.map(c => carouselItem(c, {
+                owned: true, price: getEffectivePrice(c), priceColor: 'var(--owned-border)'
+              })).join('')}</div>`
+            : `<div style="text-align:center;padding:16px 0;color:var(--text-muted);font-size:0.82rem">Start collecting to track your portfolio value</div>`}
         </div>
-        ` : ''}
 
-        ${binderConfig.scope?.collectorBinder ? `
-        <div class="dash-card">
-          <h3>✦ Foil Collection</h3>
-          <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
-            <div>
-              <div class="dash-big-num" style="font-size:1.2rem">${foilOwnedPortfolioCount} / ${foilCapableCount}</div>
-              <div class="dash-sub">${foilOwnedPct.toFixed(1)}% complete</div>
-            </div>
-            <div style="flex:1">
-              <div class="rarity-track"><div class="rarity-fill" style="width:${foilOwnedPct.toFixed(1)}%;background:var(--foil-color)"></div></div>
-              <div class="dash-sub" style="margin-top:4px">Value: <strong style="color:var(--foil-color)">$${foilCollectionValueUSD.toFixed(2)}</strong> / RM ${(foilCollectionValueUSD * USD_TO_MYR).toFixed(2)}</div>
-            </div>
+        <div class="dash-card" style="margin-bottom:var(--sp-3)">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--sp-2)">
+            <h3 style="margin:0">Most Wanted (Missing)</h3>
           </div>
-          ${topOwnedFoils.length > 0 ? `
-            <div class="dash-sub" style="margin-bottom:4px;font-size:0.75rem;color:var(--text-muted)">Top owned foils:</div>
-            <div class="top-cards">
-              ${topOwnedFoils.map((c, i) => `<div class="top-card-item missing-inspect" data-cn="${esc(c.collector_number)}" style="cursor:pointer">
-                <span class="rank">${i + 1}</span>
-                <img src="${esc(c.image_small)}" alt="${displayNameText(c)}">
-                <span class="tc-name">${displayName(c)}</span>
-                <span class="tc-price" style="color:var(--foil-color)">$${c.price_usd_foil.toFixed(2)}</span>
-                <span class="inspect-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
-              </div>`).join('')}
-            </div>
-          ` : `<div class="dash-sub" style="padding:8px 0">No foils collected yet</div>`}
+          ${topMissing.length > 0
+            ? `<div class="card-carousel">${topMissing.map(c => carouselItem(c, {
+                owned: false, price: c.price_usd, priceColor: 'var(--accent)'
+              })).join('')}</div>`
+            : `<div style="text-align:center;padding:16px 0;color:var(--text-muted);font-size:0.82rem">Full set complete!</div>`}
         </div>
-        ` : ''}
 
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-2);margin-bottom:var(--sp-3)">
+          <div class="dash-card">
+            <div style="font-size:0.62rem;color:var(--gold);text-transform:uppercase;letter-spacing:0.06em;font-weight:700;margin-bottom:4px">✦ Foil Value</div>
+            <div style="font-size:1rem;font-weight:800;color:var(--gold)">$${foilValueUSD.toFixed(2)}</div>
+            <div style="font-size:0.62rem;color:var(--text-muted)">${foilCount} foils owned</div>
+          </div>
+          <div class="dash-card">
+            <div style="font-size:0.62rem;color:var(--accent);text-transform:uppercase;letter-spacing:0.06em;font-weight:700;margin-bottom:4px">◈ Variants</div>
+            <div style="font-size:1rem;font-weight:800;color:var(--accent)">$${variantValueUSD.toFixed(2)}</div>
+            <div style="font-size:0.62rem;color:var(--text-muted)">${variantOwned.length} / ${variantCards.length} owned</div>
+          </div>
+        </div>
+
+        ${growthChartHTML}
       </div>
     `;
+
+    // Wire carousel clicks
+    el.querySelectorAll('.card-carousel-item[data-cn]').forEach(item => {
+      item.addEventListener('click', () => {
+        const card = getCardByNumber(item.dataset.cn);
+        if (card) openModal(card);
+      });
+    });
   }
 
   // ── Rendering: Timeline ──
