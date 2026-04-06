@@ -1728,6 +1728,76 @@
     display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
   }
 
+  /* ── Binder Stats Banner ── */
+  .binder-stats-banner {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: var(--sp-3) var(--sp-4);
+    background: var(--ff-panel); border-radius: var(--sp-3);
+    border: 1px solid var(--ff-border); margin-bottom: var(--sp-2);
+    gap: var(--sp-3); flex-wrap: wrap;
+  }
+  .binder-stats-banner .bsb-pages {
+    font-size: 1.1rem; font-weight: 800; color: var(--gold);
+  }
+  .binder-stats-banner .bsb-pages .bsb-of {
+    font-size: 0.72rem; color: var(--text-muted); font-weight: 500;
+  }
+  .binder-stats-banner .bsb-spread-stats {
+    display: flex; align-items: center; gap: var(--sp-2);
+  }
+  .binder-stats-banner .bsb-spread-count {
+    font-size: 0.78rem; font-weight: 700; color: var(--text);
+  }
+  .binder-stats-banner .bsb-spread-label {
+    font-size: 0.62rem; color: var(--text-muted);
+  }
+  .binder-search-slim {
+    display: flex; align-items: center; gap: var(--sp-2);
+    margin-bottom: var(--sp-3);
+  }
+  .binder-search-slim input {
+    flex: 1; min-width: 120px; padding: 7px 12px;
+    border-radius: 8px; border: 1px solid var(--surface3);
+    background: var(--surface2); color: var(--text);
+    font-size: 0.85rem; outline: none; transition: border-color 0.2s;
+  }
+  .binder-search-slim input:focus { border-color: var(--accent); }
+  .binder-search-slim .match-count {
+    font-size: 0.75rem; color: var(--text-muted); white-space: nowrap;
+  }
+  /* Slim page scrubber */
+  .page-scrubber {
+    display: flex; align-items: center; gap: var(--sp-2);
+    padding: 0 36px; margin-top: var(--sp-3);
+  }
+  .page-scrubber .scrub-label {
+    font-size: 0.62rem; color: var(--text-muted); flex-shrink: 0;
+  }
+  .page-scrubber .scrub-track {
+    flex: 1; height: 6px; background: var(--surface2);
+    border-radius: 3px; position: relative; cursor: pointer;
+  }
+  .page-scrubber .scrub-fill {
+    height: 100%; border-radius: 3px;
+    background: linear-gradient(90deg, var(--accent2), var(--accent));
+    position: absolute; top: 0; left: 0;
+    transition: width 0.3s ease;
+  }
+  .page-scrubber .scrub-thumb {
+    width: 12px; height: 12px; border-radius: 50%;
+    background: var(--accent); border: 2px solid var(--bg);
+    box-shadow: 0 0 6px rgba(91,127,199,0.4);
+    position: absolute; top: 50%; transform: translate(-50%, -50%);
+    cursor: grab; z-index: 2;
+    transition: left 0.3s ease;
+  }
+  .page-scrubber .scrub-thumb:active { cursor: grabbing; }
+  @media (max-width: 700px) {
+    .binder-stats-banner { flex-direction: column; align-items: stretch; text-align: center; }
+    .binder-stats-banner .bsb-spread-stats { justify-content: center; }
+    .page-scrubber .scrub-thumb { width: 16px; height: 16px; }
+  }
+
   /* ── Card Visualizer Modal ── */
   .modal-overlay {
     display: none; position: fixed; inset: 0;
@@ -2800,33 +2870,15 @@ document.head.appendChild(manifestLink);
     </div>
 
     <div id="tab-binder" class="tab-content">
-      <div class="binder-top-controls">
-        <div class="binder-search-bar">
-          <input type="text" id="binder-search-input" placeholder="Search by name or #..." autocomplete="off">
-          <div class="binder-filter-pills">
-            <button class="binder-fpill active" data-filter="all">All</button>
-            <button class="binder-fpill" data-filter="owned">Owned</button>
-            <button class="binder-fpill" data-filter="missing">Missing</button>
-          </div>
-        </div>
-        <div class="page-nav-widget" id="page-nav-widget">
-          <div class="page-nav-label" id="page-nav-label">Pages <span>1–2</span></div>
-          <div class="page-slider-wrap">
-            <div class="page-slider-track" id="page-slider-track">
-              <div class="page-slider-fill" id="page-slider-fill"></div>
-              <div class="page-slider-thumb" id="page-slider-thumb"></div>
-            </div>
-          </div>
-          <div class="page-slider-dots" id="page-slider-dots"></div>
-        </div>
-      </div>
+      <div id="binder-controls"></div>
       <div class="binder-layout">
-        <button class="binder-nav" id="prev-page">&lsaquo;</button>
+        <button class="binder-nav" id="prev-page" style="width:28px;height:28px;font-size:1rem">&lsaquo;</button>
         <div class="binder-spread-wrapper">
           <div class="binder-spread" id="binder-spread"></div>
         </div>
-        <button class="binder-nav" id="next-page">&rsaquo;</button>
+        <button class="binder-nav" id="next-page" style="width:28px;height:28px;font-size:1rem">&rsaquo;</button>
       </div>
+      <div id="binder-scrubber"></div>
     </div>
 
     <div class="tab-content" id="tab-collector"></div>
@@ -5386,6 +5438,21 @@ document.head.appendChild(manifestLink);
     return binderFilterMode !== 'all' || binderSearchQuery.trim().length > 0;
   }
 
+  function spreadCompletionRing(ownedOnSpread, totalOnSpread) {
+    const pct = totalOnSpread > 0 ? (ownedOnSpread / totalOnSpread * 100) : 0;
+    const r = 14, cx = 18, cy = 18, circ = 2 * Math.PI * r;
+    const dash = (pct / 100) * circ;
+    return `<svg width="36" height="36" style="display:block">
+      <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--surface2)" stroke-width="3"/>
+      <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--accent)"
+        stroke-width="3" stroke-dasharray="${dash.toFixed(1)} ${circ.toFixed(1)}"
+        stroke-dashoffset="${(circ * 0.25).toFixed(1)}" stroke-linecap="round"
+        transform="rotate(-90 ${cx} ${cy})"/>
+      <text x="${cx}" y="${cy}" text-anchor="middle" dominant-baseline="central"
+        style="font-size:8px;font-weight:700;fill:var(--text)">${pct.toFixed(0)}%</text>
+    </svg>`;
+  }
+
   function renderBinder() {
     totalPages = Math.ceil(allCards.length / binderConfig.slotsPerPage);
     binderConfig.pageCount = totalPages;
@@ -5394,12 +5461,193 @@ document.head.appendChild(manifestLink);
     const preEl = document.getElementById('binder-preset-display');
     if (preEl) preEl.textContent = binderConfig.presetName || `${binderConfig.slotsPerPage}-Pocket Binder`;
 
-    // Show/hide page nav depending on filter mode
-    const pageWidget = document.getElementById('page-nav-widget');
-    if (pageWidget) pageWidget.style.display = isBinderFiltered() ? 'none' : '';
+    const mobile = isMobile();
+    const maxPage = getPageCount();
+    const filtered = isBinderFiltered();
 
-    renderPageSelector(getPageCount());
+    // Calculate spread ownership stats
+    let spreadCards, ownedOnSpread, totalOnSpread;
+    if (filtered) {
+      const fc = getBinderFilteredCards();
+      const spp = binderConfig.slotsPerPage;
+      spreadCards = fc.slice(currentPage * spp, (currentPage + 1) * spp);
+    } else {
+      const pageIndices = mobile ? [currentPage] : [currentPage * 2, currentPage * 2 + 1];
+      spreadCards = [];
+      for (const pi of pageIndices) {
+        if (pi + 1 > totalPages) break;
+        const start = pi * binderConfig.slotsPerPage;
+        spreadCards.push(...allCards.slice(start, start + binderConfig.slotsPerPage));
+      }
+    }
+    totalOnSpread = spreadCards.length;
+    ownedOnSpread = spreadCards.filter(c => ownedSet.has(c.collector_number)).length;
+
+    // Page label
+    let pageLabel;
+    if (filtered) {
+      const fc = getBinderFilteredCards();
+      const filteredPages = Math.max(1, Math.ceil(fc.length / binderConfig.slotsPerPage));
+      pageLabel = `<span class="bsb-pages">${currentPage + 1} <span class="bsb-of">of ${filteredPages}</span></span>`;
+    } else if (mobile) {
+      pageLabel = `<span class="bsb-pages">${currentPage + 1} <span class="bsb-of">of ${totalPages}</span></span>`;
+    } else {
+      const p1 = currentPage * 2 + 1;
+      const p2 = Math.min(currentPage * 2 + 2, totalPages);
+      pageLabel = p1 === p2
+        ? `<span class="bsb-pages">${p1} <span class="bsb-of">of ${totalPages}</span></span>`
+        : `<span class="bsb-pages">${p1}\u2013${p2} <span class="bsb-of">of ${totalPages}</span></span>`;
+    }
+
+    // Build controls HTML
+    const controlsEl = document.getElementById('binder-controls');
+    controlsEl.innerHTML = `
+      <div class="binder-stats-banner">
+        <div>${pageLabel}</div>
+        <div class="bsb-spread-stats">
+          ${spreadCompletionRing(ownedOnSpread, totalOnSpread)}
+          <div>
+            <div class="bsb-spread-count">${ownedOnSpread} / ${totalOnSpread}</div>
+            <div class="bsb-spread-label">this spread</div>
+          </div>
+        </div>
+        <div class="pill-scroll" style="gap:4px">
+          <button class="binder-fpill${binderFilterMode === 'all' ? ' active' : ''}" data-filter="all">All</button>
+          <button class="binder-fpill${binderFilterMode === 'owned' ? ' active' : ''}" data-filter="owned">Owned</button>
+          <button class="binder-fpill${binderFilterMode === 'missing' ? ' active' : ''}" data-filter="missing">Missing</button>
+        </div>
+      </div>
+      <div class="binder-search-slim">
+        <input type="text" id="binder-search-input" placeholder="Search by name or #..." autocomplete="off" value="${esc(binderSearchQuery)}">
+        ${filtered ? `<span class="match-count">${getBinderFilteredCards().length} match${getBinderFilteredCards().length !== 1 ? 'es' : ''}</span>` : ''}
+      </div>
+    `;
+
+    // Wire filter pills
+    controlsEl.querySelectorAll('.binder-fpill').forEach(btn => {
+      btn.addEventListener('click', () => {
+        controlsEl.querySelectorAll('.binder-fpill').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        binderFilterMode = btn.dataset.filter;
+        currentPage = 0;
+        renderBinder();
+      });
+    });
+
+    // Wire search input
+    const searchInput = document.getElementById('binder-search-input');
+    searchInput.addEventListener('input', function() {
+      binderSearchQuery = this.value;
+      currentPage = 0;
+      renderBinder();
+    });
+
+    // Render the spread
     renderSpread();
+
+    // Build scrubber
+    const scrubberEl = document.getElementById('binder-scrubber');
+    if (filtered) {
+      scrubberEl.innerHTML = '';
+    } else {
+      const pct = maxPage > 1 ? (currentPage / (maxPage - 1)) * 100 : 0;
+      scrubberEl.innerHTML = `
+        <div class="page-scrubber">
+          <span class="scrub-label">1</span>
+          <div class="scrub-track" id="scrub-track">
+            <div class="scrub-fill" id="scrub-fill" style="width:${pct}%"></div>
+            <div class="scrub-thumb" id="scrub-thumb" style="left:${pct}%"></div>
+          </div>
+          <span class="scrub-label">${totalPages}</span>
+        </div>
+      `;
+
+      // Wire scrubber events
+      const scrubTrack = document.getElementById('scrub-track');
+      const scrubThumb = document.getElementById('scrub-thumb');
+      const scrubFill = document.getElementById('scrub-fill');
+
+      function scrubToPosition(clientX) {
+        const rect = scrubTrack.getBoundingClientRect();
+        const pct = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+        const newPage = Math.round(pct * (maxPage - 1));
+        if (newPage !== currentPage) {
+          const dir = newPage > currentPage ? 'left' : 'right';
+          currentPage = newPage;
+          if (mobile) mobileSlide(dir);
+          else renderSpread();
+          // Update scrubber position without full re-render
+          const newPct = maxPage > 1 ? (currentPage / (maxPage - 1)) * 100 : 0;
+          scrubFill.style.width = newPct + '%';
+          scrubThumb.style.left = newPct + '%';
+          // Update banner stats
+          renderBinderBannerOnly();
+        }
+      }
+
+      scrubTrack.addEventListener('click', (e) => scrubToPosition(e.clientX));
+
+      let scrubDragging = false;
+      scrubThumb.addEventListener('mousedown', (e) => { scrubDragging = true; e.preventDefault(); });
+      document.addEventListener('mousemove', function scrubMouseMove(e) {
+        if (!scrubDragging) return;
+        scrubToPosition(e.clientX);
+      });
+      document.addEventListener('mouseup', function scrubMouseUp() {
+        scrubDragging = false;
+      });
+      scrubThumb.addEventListener('touchstart', () => { scrubDragging = true; }, { passive: true });
+      document.addEventListener('touchmove', function scrubTouchMove(e) {
+        if (!scrubDragging || !e.touches.length) return;
+        scrubToPosition(e.touches[0].clientX);
+      }, { passive: true });
+      document.addEventListener('touchend', function scrubTouchEnd() {
+        scrubDragging = false;
+      });
+    }
+  }
+
+  // Lightweight banner update (used during scrubber drag to avoid full re-render)
+  function renderBinderBannerOnly() {
+    const mobile = isMobile();
+    const pageIndices = mobile ? [currentPage] : [currentPage * 2, currentPage * 2 + 1];
+    let spreadCards = [];
+    for (const pi of pageIndices) {
+      if (pi + 1 > totalPages) break;
+      const start = pi * binderConfig.slotsPerPage;
+      spreadCards.push(...allCards.slice(start, start + binderConfig.slotsPerPage));
+    }
+    const totalOnSpread = spreadCards.length;
+    const ownedOnSpread = spreadCards.filter(c => ownedSet.has(c.collector_number)).length;
+
+    const banner = document.querySelector('.binder-stats-banner');
+    if (!banner) return;
+
+    // Update page label
+    let pageLabel;
+    if (mobile) {
+      pageLabel = `<span class="bsb-pages">${currentPage + 1} <span class="bsb-of">of ${totalPages}</span></span>`;
+    } else {
+      const p1 = currentPage * 2 + 1;
+      const p2 = Math.min(currentPage * 2 + 2, totalPages);
+      pageLabel = p1 === p2
+        ? `<span class="bsb-pages">${p1} <span class="bsb-of">of ${totalPages}</span></span>`
+        : `<span class="bsb-pages">${p1}\u2013${p2} <span class="bsb-of">of ${totalPages}</span></span>`;
+    }
+    const pageLabelEl = banner.querySelector(':scope > div:first-child');
+    if (pageLabelEl) pageLabelEl.innerHTML = pageLabel;
+
+    // Update ring + count
+    const statsEl = banner.querySelector('.bsb-spread-stats');
+    if (statsEl) {
+      statsEl.innerHTML = `
+        ${spreadCompletionRing(ownedOnSpread, totalOnSpread)}
+        <div>
+          <div class="bsb-spread-count">${ownedOnSpread} / ${totalOnSpread}</div>
+          <div class="bsb-spread-label">this spread</div>
+        </div>
+      `;
+    }
   }
 
   function renderSpread() {
@@ -5573,21 +5821,7 @@ document.head.appendChild(manifestLink);
     }
   });
 
-  // ── Binder search + filter wiring ──
-  document.getElementById('binder-search-input').addEventListener('input', function() {
-    binderSearchQuery = this.value;
-    currentPage = 0;
-    renderBinder();
-  });
-  document.querySelectorAll('.binder-fpill').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.binder-fpill').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      binderFilterMode = btn.dataset.filter;
-      currentPage = 0;
-      renderBinder();
-    });
-  });
+  // ── Binder search + filter wiring (handled dynamically in renderBinder) ──
 
   function mobileSlide(direction) {
     const spread = document.getElementById('binder-spread');
@@ -5603,57 +5837,19 @@ document.head.appendChild(manifestLink);
       }, { once: true });
     }, { once: true });
   }
-  // ── Page Slider Navigator ──
-  const sliderTrack = document.getElementById('page-slider-track');
-  const sliderFill = document.getElementById('page-slider-fill');
-  const sliderThumb = document.getElementById('page-slider-thumb');
-  const sliderDots = document.getElementById('page-slider-dots');
-  let sliderSpreadCount = 0;
-
-  function renderPageSelector(spreadCount) {
-    sliderSpreadCount = spreadCount;
-    sliderDots.innerHTML = '';
-    for (let i = 0; i < spreadCount; i++) {
-      const p1 = i * 2 + 1;
-      const p2 = Math.min(i * 2 + 2, Math.ceil(allCards.length / binderConfig.slotsPerPage));
-      const label = p1 === p2 ? `Pg ${p1}` : `Pg ${p1}\u2013${p2}`;
-
-      const startIdx = i * 2 * binderConfig.slotsPerPage;
-      const spreadCards = allCards.slice(startIdx, startIdx + 2 * binderConfig.slotsPerPage);
-      const ownedCount = spreadCards.filter(c => ownedSet.has(c.collector_number)).length;
-      const isFull = ownedCount === spreadCards.length && spreadCards.length > 0;
-
-      const dot = document.createElement('div');
-      dot.className = 'page-dot' + (i === currentPage ? ' active' : '') + (isFull ? ' filled' : '');
-      dot.dataset.index = i;
-      dot.dataset.label = label;
-      sliderDots.appendChild(dot);
-    }
-    updateSliderPosition();
-  }
-
+  // ── Page Slider Navigator (now using scrubber built dynamically in renderBinder) ──
+  function renderPageSelector(spreadCount) { /* no-op: replaced by scrubber */ }
   function updatePageSelectorActive() {
-    sliderDots.querySelectorAll('.page-dot').forEach((dot, i) => {
-      dot.classList.toggle('active', i === currentPage);
-    });
-    updateSliderPosition();
-  }
-
-  function updateSliderPosition() {
-    const max = Math.max(sliderSpreadCount - 1, 1);
-    const pct = (currentPage / max) * 100;
-    sliderFill.style.width = pct + '%';
-    sliderThumb.style.left = pct + '%';
-
-    if (isMobile()) {
-      document.getElementById('page-nav-label').innerHTML =
-        `Page <span>${currentPage + 1}</span> of ${totalPages}`;
-    } else {
-      const p1 = currentPage * 2 + 1;
-      const p2 = Math.min(currentPage * 2 + 2, totalPages);
-      document.getElementById('page-nav-label').innerHTML =
-        p1 === p2 ? `Page <span>${p1}</span> of ${totalPages}` : `Pages <span>${p1}\u2013${p2}</span> of ${totalPages}`;
+    // Update scrubber position if it exists
+    const maxPage = getPageCount();
+    const scrubFill = document.getElementById('scrub-fill');
+    const scrubThumb = document.getElementById('scrub-thumb');
+    if (scrubFill && scrubThumb) {
+      const pct = maxPage > 1 ? (currentPage / (maxPage - 1)) * 100 : 0;
+      scrubFill.style.width = pct + '%';
+      scrubThumb.style.left = pct + '%';
     }
+    renderBinderBannerOnly();
   }
 
   function navigateToPage(newPage) {
@@ -5663,69 +5859,6 @@ document.head.appendChild(manifestLink);
     if (isMobile()) mobileSlide(dir);
     else renderSpread();
   }
-
-  // Click on track to jump
-  sliderTrack.addEventListener('click', (e) => {
-    const rect = sliderTrack.getBoundingClientRect();
-    const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-    navigateToPage(Math.round(pct * (sliderSpreadCount - 1)));
-  });
-
-  // Click on dots to jump
-  sliderDots.addEventListener('click', (e) => {
-    const dot = e.target.closest('.page-dot');
-    if (!dot) return;
-    navigateToPage(parseInt(dot.dataset.index));
-  });
-
-  // Drag the thumb
-  let sliderDragging = false;
-  sliderThumb.addEventListener('mousedown', (e) => {
-    sliderDragging = true;
-    sliderThumb.classList.add('dragging');
-    e.preventDefault();
-  });
-  document.addEventListener('mousemove', (e) => {
-    if (!sliderDragging) return;
-    const rect = sliderTrack.getBoundingClientRect();
-    const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-    const newPage = Math.round(pct * (sliderSpreadCount - 1));
-    if (newPage !== currentPage) {
-      const dir = newPage > currentPage ? 'left' : 'right';
-      currentPage = newPage;
-      updatePageSelectorActive();
-      renderSpread();
-    }
-  });
-  document.addEventListener('mouseup', () => {
-    if (sliderDragging) {
-      sliderDragging = false;
-      sliderThumb.classList.remove('dragging');
-    }
-  });
-
-  // Touch drag
-  sliderThumb.addEventListener('touchstart', (e) => {
-    sliderDragging = true;
-    sliderThumb.classList.add('dragging');
-  }, { passive: true });
-  document.addEventListener('touchmove', (e) => {
-    if (!sliderDragging || !e.touches.length) return;
-    const rect = sliderTrack.getBoundingClientRect();
-    const pct = Math.max(0, Math.min(1, (e.touches[0].clientX - rect.left) / rect.width));
-    const newPage = Math.round(pct * (sliderSpreadCount - 1));
-    if (newPage !== currentPage) {
-      currentPage = newPage;
-      updatePageSelectorActive();
-      renderSpread();
-    }
-  }, { passive: true });
-  document.addEventListener('touchend', () => {
-    if (sliderDragging) {
-      sliderDragging = false;
-      sliderThumb.classList.remove('dragging');
-    }
-  });
 
   // Re-render binder on resize (mobile <-> desktop switch)
   let lastMobile = isMobile();
