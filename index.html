@@ -2782,6 +2782,23 @@
     min-width: 44px;
     padding: 10px 16px;
   }
+
+  /* ── Discovery Pulses ── */
+  .discover-pulse {
+    position: relative;
+  }
+  .discover-pulse::after {
+    content: '';
+    position: absolute; top: -2px; right: -2px;
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--accent);
+    animation: discover-pulse-anim 1.5s ease-in-out infinite;
+    pointer-events: none; z-index: 10;
+  }
+  @keyframes discover-pulse-anim {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(91,127,199,0.4); }
+    50% { box-shadow: 0 0 0 6px rgba(91,127,199,0); }
+  }
 </style>
 <script>
 // Generate PWA manifest inline
@@ -4017,6 +4034,42 @@ document.head.appendChild(manifestLink);
   let syncTimer = null;
   let isSyncing = false;
 
+  // ── Feature Discovery ──
+  const DISCOVER_KEY = 'fin-discovered-features';
+  function loadDiscovered() {
+    try { return JSON.parse(localStorage.getItem(DISCOVER_KEY) || '{}'); }
+    catch { return {}; }
+  }
+  function markDiscovered(feature) {
+    const d = loadDiscovered();
+    d[feature] = true;
+    localStorage.setItem(DISCOVER_KEY, JSON.stringify(d));
+    document.querySelectorAll(`[data-discover="${feature}"]`).forEach(el => {
+      el.classList.remove('discover-pulse');
+      el.removeAttribute('data-discover');
+    });
+  }
+  function applyDiscoverPulses() {
+    const d = loadDiscovered();
+    const features = [
+      { id: 'fab', selector: '#fab-btn' },
+      { id: 'sync', selector: '#sync-btn' },
+      { id: 'theme', selector: '#theme-toggle' },
+    ];
+    if (binderConfig.scope?.collectorBinder) {
+      features.push({ id: 'collector', selector: '#tab-btn-collector' });
+      features.push({ id: 'collector-bnav', selector: '#bnav-btn-collector' });
+    }
+    for (const f of features) {
+      if (d[f.id]) continue;
+      const el = document.querySelector(f.selector);
+      if (el) {
+        el.classList.add('discover-pulse');
+        el.setAttribute('data-discover', f.id);
+      }
+    }
+  }
+
   // ── Theme ──
   function initTheme() {
     const saved = localStorage.getItem(THEME_KEY) || 'dark';
@@ -4024,6 +4077,7 @@ document.head.appendChild(manifestLink);
     updateThemeIcon();
   }
   function toggleTheme() {
+    markDiscovered('theme');
     const current = document.documentElement.getAttribute('data-theme');
     const next = current === 'dark' ? 'light' : 'dark';
     document.documentElement.setAttribute('data-theme', next);
@@ -4157,6 +4211,7 @@ document.head.appendChild(manifestLink);
       localStorage.setItem(TIMELINE_KEY, JSON.stringify({ events: timelineEvents }));
       applyConfigToTabs();
       renderAll();
+      applyDiscoverPulses();
       if (document.getElementById('tab-settings').classList.contains('active')) renderSettings();
       // Fetch variants if collector scope was enabled in pulled config
       if (binderConfig.scope?.collectorBinder && variantCards.length === 0) fetchVariants();
@@ -4179,6 +4234,7 @@ document.head.appendChild(manifestLink);
 
   // Sync button click
   document.getElementById('sync-btn').addEventListener('click', () => {
+    markDiscovered('sync');
     openSyncModal();
   });
 
@@ -4850,6 +4906,7 @@ document.head.appendChild(manifestLink);
   }
 
   function openFab() {
+    markDiscovered('fab');
     fabPanel.classList.add('show');
     fabBtn.classList.add('open');
     setTimeout(() => searchInput.focus(), 100);
@@ -4996,7 +5053,7 @@ document.head.appendChild(manifestLink);
     const recent = packSession.slice(-5).reverse();
 
     if (recent.length === 0) {
-      container.innerHTML = '<div class="fab-empty">No cards added this session</div>';
+      container.innerHTML = '<div class="fab-empty">Search above or open a booster pack to begin</div>';
       return;
     }
 
@@ -6582,6 +6639,7 @@ document.head.appendChild(manifestLink);
           const freshCard = getCardByNumber(card.collector_number);
           if (freshCard) openModal(freshCard);
           renderAll();
+          applyDiscoverPulses();
         } finally {
           modalRefreshBtn.classList.remove('spinning');
           modalRefreshBtn.disabled = false;
@@ -6840,6 +6898,7 @@ document.head.appendChild(manifestLink);
         tabEl.classList.add(direction === 'right' ? 'tab-slide-in-right' : 'tab-slide-in-left');
       }
     }
+    if (tabName === 'collector') { markDiscovered('collector'); markDiscovered('collector-bnav'); }
     if (tabName === 'binder') renderBinder();
     if (tabName === 'dashboard') renderDashboard();
     if (tabName === 'portfolio') renderPortfolio();
@@ -6935,6 +6994,7 @@ document.head.appendChild(manifestLink);
         saveTimeline();
         applyConfigToTabs();
         renderAll();
+        applyDiscoverPulses();
 
         const parts = [ownedSet.size + ' cards'];
         if (Object.keys(foilOwned).length > 0) parts.push(Object.keys(foilOwned).length + ' foils');
@@ -6963,6 +7023,7 @@ document.head.appendChild(manifestLink);
         savePacks();
         saveTimeline();
         renderAll();
+        applyDiscoverPulses();
       }
     );
   });
@@ -7019,6 +7080,7 @@ document.head.appendChild(manifestLink);
               if (main) variant.variant_of = main.collector_number;
             }
             renderAll(); // refresh any active tab that uses variant data
+            applyDiscoverPulses();
             return;
           }
         } catch {}
@@ -7072,6 +7134,7 @@ document.head.appendChild(manifestLink);
       variantCards = cards;
 
       renderAll(); // refresh any active tab that uses variant data
+      applyDiscoverPulses();
     } catch (err) {
       console.warn('fetchVariants failed:', err);
     }
@@ -7336,6 +7399,7 @@ document.head.appendChild(manifestLink);
       } else {
         applyConfigToTabs();
       }
+      applyDiscoverPulses();
     } catch { location.reload(); }
   };
 
@@ -7364,6 +7428,7 @@ document.head.appendChild(manifestLink);
       } else {
         applyConfigToTabs();
       }
+      applyDiscoverPulses();
     } catch (err) {
       const hasCachedData = !!localStorage.getItem(CACHE_KEY);
       const ls = document.getElementById('loading-screen');
@@ -7392,6 +7457,7 @@ document.head.appendChild(manifestLink);
       allCards = await loadCards();
       await fetchVariants();
       renderAll();
+      applyDiscoverPulses();
     } finally {
       if (btn) { btn.classList.remove('spinning'); btn.disabled = false; }
     }
@@ -7405,6 +7471,7 @@ document.head.appendChild(manifestLink);
       fxFetchedAt = null;
       await loadFxRate();
       renderAll();
+      applyDiscoverPulses();
     } finally {
       if (btn) { btn.classList.remove('spinning'); btn.disabled = false; }
     }
