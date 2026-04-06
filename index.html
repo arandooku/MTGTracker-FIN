@@ -2,6 +2,7 @@
 <html lang="en" data-theme="dark">
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src https://cards.scryfall.io https://*.scryfall.io https://gamepedia.cursecdn.com blob: data:; connect-src https://api.scryfall.com https://api.github.com https://open.er-api.com; manifest-src blob:">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>FIN Binder Tracker</title>
 <!-- iOS PWA -->
@@ -266,14 +267,14 @@
     display: block; margin-bottom: 4px; text-transform: uppercase;
     letter-spacing: 0.5px;
   }
-  .sync-modal input[type="text"] {
+  .sync-modal input[type="password"] {
     width: 100%; padding: 10px 12px; font-size: 0.9rem;
     background: var(--slot-bg); border: 2px solid var(--surface2);
     border-radius: 8px; color: var(--text); outline: none;
     margin-bottom: 12px; font-family: monospace;
     transition: border-color 0.2s;
   }
-  .sync-modal input[type="text"]:focus { border-color: var(--accent); }
+  .sync-modal input[type="password"]:focus { border-color: var(--accent); }
   .sync-modal .sync-actions {
     display: flex; gap: 8px; margin-top: 16px;
   }
@@ -539,7 +540,7 @@
 
   /* Value chart */
   .value-chart-wrap {
-    position: relative; width: 100%; height: 120px;
+    position: relative; width: 100%;
     margin-top: 10px;
   }
   .value-chart {
@@ -2317,6 +2318,54 @@
   /* ── Loading ── */
   .loading { text-align: center; padding: 60px; }
   .loading p { font-family: 'Rajdhani', sans-serif; letter-spacing: 0.08em; color: var(--text-muted); }
+
+  /* ── Error screen ── */
+  .error-screen {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    min-height: 80vh; padding: 32px 20px; text-align: center;
+  }
+  .error-icon {
+    width: 72px; height: 72px; margin-bottom: 20px;
+    background: radial-gradient(circle, rgba(220,60,60,0.6), rgba(140,30,30,0.2) 60%, transparent 70%);
+    clip-path: polygon(50% 0%, 85% 25%, 85% 75%, 50% 100%, 15% 75%, 15% 25%);
+    filter: drop-shadow(0 0 12px rgba(220,60,60,0.35));
+    animation: crystalRotate 6s linear infinite;
+  }
+  .error-screen h2 {
+    font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 1.5rem;
+    color: var(--text); margin: 0 0 8px; letter-spacing: 0.06em;
+  }
+  .error-screen .error-detail {
+    font-family: 'Rajdhani', sans-serif; font-size: 0.95rem;
+    color: var(--text-muted); margin: 0 0 6px; max-width: 420px; line-height: 1.5;
+  }
+  .error-screen .error-code {
+    font-family: monospace; font-size: 0.8rem; color: var(--accent);
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; padding: 8px 14px; margin: 12px 0 20px;
+    max-width: 420px; word-break: break-word;
+  }
+  .error-screen .error-actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+  .error-screen .error-actions .btn {
+    font-family: 'Rajdhani', sans-serif; font-weight: 600; font-size: 0.95rem;
+    padding: 10px 22px; border-radius: 8px; cursor: pointer; border: none;
+    letter-spacing: 0.04em; transition: background 0.2s, transform 0.15s;
+  }
+  .error-screen .error-actions .btn:active { transform: scale(0.97); }
+  .error-screen .btn-retry {
+    background: var(--accent); color: #fff;
+  }
+  .error-screen .btn-retry:hover { filter: brightness(1.15); }
+  .error-screen .btn-offline {
+    background: var(--surface); color: var(--text); border: 1px solid var(--border);
+  }
+  .error-screen .btn-offline:hover { background: var(--border); }
+  .error-screen .error-hint {
+    font-family: 'Rajdhani', sans-serif; font-size: 0.82rem;
+    color: var(--text-muted); margin-top: 18px; max-width: 380px; line-height: 1.5;
+  }
+  .error-screen .error-hint a { color: var(--accent); text-decoration: none; }
+  .error-screen .error-hint a:hover { text-decoration: underline; }
   .spinner {
     width: 40px; height: 40px;
     background: radial-gradient(circle, rgba(91,127,199,0.7), rgba(50,70,140,0.25) 60%, transparent 70%);
@@ -2654,7 +2703,7 @@ document.head.appendChild(manifestLink);
       <a href="https://github.com/settings/tokens/new?scopes=gist&description=FIN+Binder+Tracker" target="_blank" rel="noopener">Generate a token here</a> (select only the <strong>gist</strong> scope).
     </div>
     <label>GitHub Personal Access Token</label>
-    <input type="text" id="sync-token-input" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
+    <input type="password" id="sync-token-input" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off">
     <div id="sync-modal-body"></div>
     <div class="sync-actions">
       <button class="btn btn-primary" id="sync-save-btn">Save &amp; Sync</button>
@@ -2749,6 +2798,12 @@ document.head.appendChild(manifestLink);
 
 <script>
 (function() {
+  // ── Security: HTML escaping ──
+  function esc(str) {
+    if (typeof str !== 'string') return String(str ?? '');
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+
   // ── State ──
   const CACHE_KEY = 'fin-card-data-v6';
   const COLLECTION_KEY = 'fin-collection';
@@ -3283,7 +3338,7 @@ document.head.appendChild(manifestLink);
           actions: [
             { label: 'Cancel', className: 'btn-secondary', onClick: function() {} },
             { label: 'Delete Everything', className: 'btn-danger', onClick: function() {
-              localStorage.clear();
+              [CACHE_KEY, COLLECTION_KEY, THEME_KEY, PACKS_KEY, TIMELINE_KEY, FX_KEY, GIST_KEY, BINDER_CONFIG_KEY, FOIL_KEY, VARIANT_KEY].forEach(function(k) { localStorage.removeItem(k); });
               location.reload();
             }}
           ]
@@ -3437,8 +3492,11 @@ document.head.appendChild(manifestLink);
     };
   }
 
+  function isValidGistId(id) { return /^[a-f0-9]+$/.test(id); }
+
   async function gistPush() {
     if (!gistConfig.token || isSyncing) return false;
+    if (gistConfig.gistId && !isValidGistId(gistConfig.gistId)) { updateSyncDot('error'); return false; }
     isSyncing = true;
     updateSyncDot('syncing');
 
@@ -3485,6 +3543,7 @@ document.head.appendChild(manifestLink);
 
   async function gistPull() {
     if (!gistConfig.token || !gistConfig.gistId || isSyncing) return false;
+    if (!isValidGistId(gistConfig.gistId)) { updateSyncDot('error'); return false; }
     isSyncing = true;
     updateSyncDot('syncing');
 
@@ -3562,7 +3621,7 @@ document.head.appendChild(manifestLink);
         <div style="display:flex;align-items:center;gap:6px;margin-bottom:12px">
           <span style="width:8px;height:8px;border-radius:50%;background:var(--owned-border);flex-shrink:0"></span>
           <span style="font-size:0.82rem;font-weight:600">Connected</span>
-          <span style="font-size:0.7rem;color:var(--text-muted);margin-left:auto">Gist: ${gistConfig.gistId.slice(0, 8)}...</span>
+          <span style="font-size:0.7rem;color:var(--text-muted);margin-left:auto">Gist: ${esc(gistConfig.gistId.slice(0, 8))}...</span>
         </div>
         <div style="display:flex;flex-direction:column;gap:8px">
           <button class="btn btn-primary" id="sync-pull-btn" style="width:100%;padding:12px;font-size:0.9rem;min-height:44px">
@@ -3853,7 +3912,7 @@ document.head.appendChild(manifestLink);
   function acVariantBadgeHTML(card) {
     const info = getCardVariantInfo(card);
     if (!info.label) return '';
-    return `<span class="ac-variant-badge ${info.cssClass}">${info.label}</span>`;
+    return `<span class="ac-variant-badge ${esc(info.cssClass)}">${esc(info.label)}</span>`;
   }
 
   // Returns card name with variant suffix for stats context
@@ -3862,7 +3921,7 @@ document.head.appendChild(manifestLink);
     if (!card) return '';
     const info = getCardVariantInfo(card);
     const tag = info.label ? info.short : 'Main';
-    return card.name + ' <span style="font-weight:400;font-size:0.75em;color:var(--text-muted)">(' + tag + ')</span>';
+    return esc(card.name) + ' <span style="font-weight:400;font-size:0.75em;color:var(--text-muted)">(' + esc(tag) + ')</span>';
   }
 
   // Plain text version (no HTML) for alt/title attributes
@@ -3870,7 +3929,7 @@ document.head.appendChild(manifestLink);
     if (!card) return '';
     const info = getCardVariantInfo(card);
     const tag = info.label ? info.short : 'Main';
-    return card.name + ' (' + tag + ')';
+    return esc(card.name) + ' (' + esc(tag) + ')';
   }
 
   // ── Celebration: Rarity-Tiered Fanfare ──
@@ -4077,10 +4136,10 @@ document.head.appendChild(manifestLink);
     toast.style.setProperty('--toast-glow-color', cfg.border);
     const rarityLabels = { mythic: 'MYTHIC RARE', rare: 'RARE', uncommon: 'UNCOMMON', common: 'COMMON' };
     toast.innerHTML = `
-      <div class="toast-rarity-badge ${card.rarity}">${rarityLabels[card.rarity] || card.rarity}</div>
-      <img src="${card.image_normal || card.image_small}" alt="${displayNameText(card)}">
-      <div class="toast-name">#${card.collector_number} ${displayName(card)}</div>
-      <div class="toast-msg ${card.rarity}">${msg}</div>
+      <div class="toast-rarity-badge ${esc(card.rarity)}">${rarityLabels[card.rarity] || esc(card.rarity)}</div>
+      <img src="${esc(card.image_normal || card.image_small)}" alt="${displayNameText(card)}">
+      <div class="toast-name">#${esc(card.collector_number)} ${displayName(card)}</div>
+      <div class="toast-msg ${esc(card.rarity)}">${esc(msg)}</div>
       <div class="toast-placement">Page ${p.page}, Slot ${p.slot}${card.price_usd > 0 ? ` \u00B7 $${card.price_usd.toFixed(2)}` : ''}</div>
     `;
     container.appendChild(toast);
@@ -4110,10 +4169,10 @@ document.head.appendChild(manifestLink);
     toast.className = 'add-toast foil';
     toast.style.setProperty('--toast-glow', 'rgba(199,125,255,0.4)');
     toast.innerHTML = `
-      <div class="toast-foil-badge">${label}</div>
-      <img src="${card.image_normal || card.image_small}" alt="${displayNameText(card)}">
-      <div class="toast-name">#${card.collector_number} ${displayName(card)}</div>
-      <div class="toast-foil-msg">${msg}</div>
+      <div class="toast-foil-badge">${esc(label)}</div>
+      <img src="${esc(card.image_normal || card.image_small)}" alt="${displayNameText(card)}">
+      <div class="toast-name">#${esc(card.collector_number)} ${displayName(card)}</div>
+      <div class="toast-foil-msg">${esc(msg)}</div>
       ${p.page !== '?' ? `<div class="toast-placement">Page ${p.page}, Slot ${p.slot}${priceStr}</div>` : priceStr ? `<div class="toast-placement">${priceStr.trim()}</div>` : ''}
     `;
     container.appendChild(toast);
@@ -4252,11 +4311,11 @@ document.head.appendChild(manifestLink);
     acList.innerHTML = matches.map((c, i) => {
       const isOwned = ownedSet.has(c.collector_number);
       const isFoilOwned = hasFoil(c.collector_number);
-      return `<div class="ac-item" data-cn="${c.collector_number}" data-index="${i}" style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+      return `<div class="ac-item" data-cn="${esc(c.collector_number)}" data-index="${i}" style="display:flex;align-items:center;justify-content:space-between;gap:8px">
         <span style="display:flex;align-items:center;gap:6px;min-width:0;flex:1">
-          <span class="ac-rarity-dot ${c.rarity}"></span>
-          <span class="card-name" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.name}</span>
-          <span class="card-num" style="flex-shrink:0">#${c.collector_number}</span>
+          <span class="ac-rarity-dot ${esc(c.rarity)}"></span>
+          <span class="card-name" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(c.name)}</span>
+          <span class="card-num" style="flex-shrink:0">#${esc(c.collector_number)}</span>
         </span>
         <span style="display:flex;align-items:center;gap:4px;flex-shrink:0">
           ${acVariantBadgeHTML(c)}
@@ -4450,11 +4509,11 @@ document.head.appendChild(manifestLink);
         const isOwned = ownedSet.has(c.collector_number);
         const isFoilOwned = hasFoil(c.collector_number);
         const inPack = currentPack.cards.some(e => e === c.collector_number);
-        return `<div class="ac-item" data-cn="${c.collector_number}" style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        return `<div class="ac-item" data-cn="${esc(c.collector_number)}" style="display:flex;align-items:center;justify-content:space-between;gap:8px">
           <span style="display:flex;align-items:center;gap:6px;min-width:0;flex:1">
-            <span class="ac-rarity-dot ${c.rarity}"></span>
-            <span class="card-name" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.name}</span>
-            <span class="card-num" style="flex-shrink:0">#${c.collector_number}</span>
+            <span class="ac-rarity-dot ${esc(c.rarity)}"></span>
+            <span class="card-name" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(c.name)}</span>
+            <span class="card-num" style="flex-shrink:0">#${esc(c.collector_number)}</span>
           </span>
           <span style="display:flex;align-items:center;gap:4px;flex-shrink:0">
             ${acVariantBadgeHTML(c)}
@@ -4525,11 +4584,11 @@ document.head.appendChild(manifestLink);
       const isFoilOwned = hasFoil(cn);
       return `<div class="pack-card-entry" style="animation-delay:${i * 0.05}s">
         <div class="pack-num">${i + 1}</div>
-        <img src="${card.image_small}" alt="${card.name}">
+        <img src="${esc(card.image_small)}" alt="${displayNameText(card)}">
         <span class="pack-card-name">${displayName(card)}</span>
         ${acVariantBadgeHTML(card)}
         ${isFoilOwned ? '<span style="color:var(--foil-color);font-size:0.7rem;font-weight:700">✦</span>' : ''}
-        <span class="pack-card-rarity ${card.rarity}">${card.rarity}</span>
+        <span class="pack-card-rarity ${esc(card.rarity)}">${esc(card.rarity)}</span>
       </div>`;
     }).join('');
     // Scroll to bottom
@@ -4580,7 +4639,7 @@ document.head.appendChild(manifestLink);
 
     const cardImgs = pack.cards.map((cn, i) => {
       const card = getCardByNumber(cn);
-      return card ? `<img src="${card.image_small}" alt="${card.name}" style="animation-delay:${i * 0.08}s">` : '';
+      return card ? `<img src="${esc(card.image_small)}" alt="${displayNameText(card)}" style="animation-delay:${i * 0.08}s">` : '';
     }).join('');
 
     overlay.innerHTML = `
@@ -4713,7 +4772,7 @@ document.head.appendChild(manifestLink);
           ${topFoils.length > 0 ? `
             <div class="dash-sub" style="margin-top:10px;color:var(--text-muted);font-size:0.78rem;margin-bottom:4px">Top owned foils:</div>
             ${topFoils.map(c => `
-              <div class="foil-top-row" data-foil-cn="${c.collector_number}" style="display:flex;justify-content:space-between;align-items:center;font-size:0.8rem;padding:3px 0;border-radius:6px;transition:background 0.15s">
+              <div class="foil-top-row" data-foil-cn="${esc(c.collector_number)}" style="display:flex;justify-content:space-between;align-items:center;font-size:0.8rem;padding:3px 0;border-radius:6px;transition:background 0.15s">
                 <span style="color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:70%">${displayName(c)}</span>
                 <span style="color:var(--foil-color);flex-shrink:0;margin-left:8px">$${(c.price_usd_foil || 0).toFixed(2)}</span>
               </div>
@@ -4752,9 +4811,9 @@ document.head.appendChild(manifestLink);
               const card = getCardByNumber(cn);
               if (!card) return '';
               return `<div class="recent-item">
-                <img src="${card.image_small}" alt="${displayNameText(card)}" loading="lazy">
+                <img src="${esc(card.image_small)}" alt="${displayNameText(card)}" loading="lazy">
                 <span class="rname">${displayName(card)}</span>
-                <span class="rnum">#${card.collector_number}</span>
+                <span class="rnum">#${esc(card.collector_number)}</span>
               </div>`;
             }).join('')}
           </div>` : `<div class="dash-sub" style="padding:20px 0">No cards added this session</div>`}
@@ -4764,8 +4823,8 @@ document.head.appendChild(manifestLink);
           <div class="binder-fill-grid">
             ${allCards.map(c => {
               const isOwned = ownedSet.has(c.collector_number);
-              return `<div class="fill-cell ${c.rarity} ${isOwned ? 'owned' : ''}"
-                title="#${c.collector_number} ${displayNameText(c)}${isOwned ? ' (owned)' : ''}"></div>`;
+              return `<div class="fill-cell ${esc(c.rarity)} ${isOwned ? 'owned' : ''}"
+                title="#${esc(c.collector_number)} ${displayNameText(c)}${isOwned ? ' (owned)' : ''}"></div>`;
             }).join('')}
           </div>
         </div>
@@ -4930,9 +4989,9 @@ document.head.appendChild(manifestLink);
             ${topOwned.map((c, i) => {
               const isFoilOwned = hasFoil(c.collector_number);
               const effectivePrice = getEffectivePrice(c);
-              return `<div class="top-card-item missing-inspect" data-cn="${c.collector_number}">
+              return `<div class="top-card-item missing-inspect" data-cn="${esc(c.collector_number)}">
               <span class="rank">${i + 1}</span>
-              <img src="${c.image_small}" alt="${displayNameText(c)}">
+              <img src="${esc(c.image_small)}" alt="${displayNameText(c)}">
               <span class="tc-name">${displayName(c)}${isFoilOwned ? ' <span style="color:var(--foil-color);font-size:0.8rem">\u2746</span>' : ''}</span>
               <span class="tc-price">$${effectivePrice.toFixed(2)}${isFoilOwned && c.price_usd_foil > 0 && c.price_usd_foil > c.price_usd ? `<br><span style="color:var(--text-muted);font-size:0.75rem;text-decoration:line-through">$${c.price_usd.toFixed(2)}</span>` : ''}</span>
               <span class="inspect-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
@@ -4944,9 +5003,9 @@ document.head.appendChild(manifestLink);
         <div class="dash-card">
           <h3>Most Valuable (Missing)</h3>
           ${topMissing.length > 0 ? `<div class="top-cards">
-            ${topMissing.map((c, i) => `<div class="top-card-item missing-inspect" data-cn="${c.collector_number}">
+            ${topMissing.map((c, i) => `<div class="top-card-item missing-inspect" data-cn="${esc(c.collector_number)}">
               <span class="rank">${i + 1}</span>
-              <img src="${c.image_small}" alt="${displayNameText(c)}">
+              <img src="${esc(c.image_small)}" alt="${displayNameText(c)}">
               <span class="tc-name">${displayName(c)}</span>
               <span class="tc-price" style="color:var(--accent)">$${c.price_usd.toFixed(2)}</span>
               <span class="inspect-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
@@ -4970,9 +5029,9 @@ document.head.appendChild(manifestLink);
           ${topOwnedVariants.length > 0 ? `
             <div class="dash-sub" style="margin-bottom:4px;font-size:0.75rem;color:var(--text-muted)">Top owned variants:</div>
             <div class="top-cards">
-              ${topOwnedVariants.map((c, i) => `<div class="top-card-item missing-inspect" data-cn="${c.collector_number}" style="cursor:pointer">
+              ${topOwnedVariants.map((c, i) => `<div class="top-card-item missing-inspect" data-cn="${esc(c.collector_number)}" style="cursor:pointer">
                 <span class="rank">${i + 1}</span>
-                <img src="${c.image_small}" alt="${displayNameText(c)}">
+                <img src="${esc(c.image_small)}" alt="${displayNameText(c)}">
                 <span class="tc-name">${displayName(c)}</span>
                 <span class="tc-price">$${Math.max(c.price_usd||0,c.price_usd_foil||0).toFixed(2)}</span>
                 <span class="inspect-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
@@ -4998,9 +5057,9 @@ document.head.appendChild(manifestLink);
           ${topOwnedFoils.length > 0 ? `
             <div class="dash-sub" style="margin-bottom:4px;font-size:0.75rem;color:var(--text-muted)">Top owned foils:</div>
             <div class="top-cards">
-              ${topOwnedFoils.map((c, i) => `<div class="top-card-item missing-inspect" data-cn="${c.collector_number}" style="cursor:pointer">
+              ${topOwnedFoils.map((c, i) => `<div class="top-card-item missing-inspect" data-cn="${esc(c.collector_number)}" style="cursor:pointer">
                 <span class="rank">${i + 1}</span>
-                <img src="${c.image_small}" alt="${displayNameText(c)}">
+                <img src="${esc(c.image_small)}" alt="${displayNameText(c)}">
                 <span class="tc-name">${displayName(c)}</span>
                 <span class="tc-price" style="color:var(--foil-color)">$${c.price_usd_foil.toFixed(2)}</span>
                 <span class="inspect-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
@@ -5068,7 +5127,7 @@ document.head.appendChild(manifestLink);
 
     let growthChartSVG = '';
     if (chartDays.length > 1) {
-      const cw = 100, ch = 80;
+      const cw = 300, ch = 80;
       const points = chartDays.map((d, i) => ({
         x: (i / (chartDays.length - 1)) * cw,
         y: ch - (dailyCounts[d] / total) * ch,
@@ -5079,10 +5138,10 @@ document.head.appendChild(manifestLink);
       const mLines = milestones.map(m => {
         const y = ch - (m.target / total) * ch;
         return `<line x1="0" y1="${y}" x2="${cw}" y2="${y}" stroke="var(--surface2)" stroke-width="0.5" stroke-dasharray="2,2"/>
-          <text x="${cw - 1}" y="${y - 2}" fill="var(--text-muted)" font-size="3" text-anchor="end">${m.label}</text>`;
+          <text x="${cw - 2}" y="${y - 2}" fill="var(--text-muted)" font-size="7" text-anchor="end">${m.label}</text>`;
       }).join('');
       growthChartSVG = `
-        <svg class="value-chart" viewBox="0 0 ${cw} ${ch}" preserveAspectRatio="none">
+        <svg class="value-chart" viewBox="0 0 ${cw} ${ch}" preserveAspectRatio="xMidYMid meet">
           <defs><linearGradient id="tl-grad" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stop-color="var(--accent)"/><stop offset="100%" stop-color="transparent"/>
           </linearGradient></defs>
@@ -5123,10 +5182,10 @@ document.head.appendChild(manifestLink);
       if (!card) return '';
       const ago = timeAgo(new Date(evt.date));
       return `<div class="activity-item">
-        <div class="activity-dot ${evt.type}"></div>
-        <img src="${card.image_small}" alt="${displayNameText(card)}">
+        <div class="activity-dot ${esc(evt.type)}"></div>
+        <img src="${esc(card.image_small)}" alt="${displayNameText(card)}">
         <span class="activity-name">${displayName(card)}</span>
-        <span class="activity-meta">${evt.type === 'add' ? evt.source === 'pack' ? 'pack' : 'quick' : 'removed'} \u00B7 ${ago}</span>
+        <span class="activity-meta">${evt.type === 'add' ? evt.source === 'pack' ? 'pack' : 'quick' : 'removed'} \u00B7 ${esc(ago)}</span>
       </div>`;
     }).join('') : '<div class="dash-sub" style="padding:20px 0;text-align:center">No activity yet — start adding cards!</div>';
 
@@ -5266,11 +5325,11 @@ document.head.appendChild(manifestLink);
         const isOwned = ownedSet.has(card.collector_number);
         if (isOwned) slot.classList.add('owned');
         if (isOwned) {
-          slot.innerHTML = `<img data-src="${card.image_normal || card.image_small}" alt="${card.name}">`;
+          slot.innerHTML = `<img data-src="${esc(card.image_normal || card.image_small)}" alt="${displayNameText(card)}">`;
         } else {
           slot.innerHTML = `<div class="placeholder">
-            <span class="num">#${card.collector_number}</span>
-            <span class="pname">${card.name}</span>
+            <span class="num">#${esc(card.collector_number)}</span>
+            <span class="pname">${esc(card.name)}</span>
           </div>`;
         }
         slot.dataset.cn = card.collector_number;
@@ -5313,11 +5372,11 @@ document.head.appendChild(manifestLink);
             if (justAdded) slot.classList.add('just-added');
             if (highlightedCN === card.collector_number) slot.classList.add('highlighted');
             if (isOwned) {
-              slot.innerHTML = `<img data-src="${card.image_normal || card.image_small}" alt="${card.name}">`;
+              slot.innerHTML = `<img data-src="${esc(card.image_normal || card.image_small)}" alt="${displayNameText(card)}">`;
             } else {
               slot.innerHTML = `<div class="placeholder">
-                <span class="num">#${card.collector_number}</span>
-                <span class="pname">${card.name}</span>
+                <span class="num">#${esc(card.collector_number)}</span>
+                <span class="pname">${esc(card.name)}</span>
               </div>`;
             }
             slot.dataset.cn = card.collector_number;
@@ -5375,11 +5434,11 @@ document.head.appendChild(manifestLink);
         if (isOwned) {
           slot.classList.add('owned');
           // Use src directly (not data-src) so it shows in the overlay
-          slot.innerHTML = `<img src="${card.image_normal || card.image_small}" alt="${card.name}">`;
+          slot.innerHTML = `<img src="${esc(card.image_normal || card.image_small)}" alt="${displayNameText(card)}">`;
         } else {
           slot.innerHTML = `<div class="placeholder">
-            <span class="num">#${card.collector_number}</span>
-            <span class="pname">${card.name}</span>
+            <span class="num">#${esc(card.collector_number)}</span>
+            <span class="pname">${esc(card.name)}</span>
           </div>`;
         }
       }
@@ -5742,7 +5801,7 @@ document.head.appendChild(manifestLink);
       var mOwned = ownedSet.has(mainCard.collector_number);
       var isActive = cn === mainCard.collector_number;
       chips.push(
-        '<span class="foil-chip ' + (mOwned ? 'owned' : 'unowned') + (isActive ? ' active' : '') + '" data-switch-cn="' + mainCard.collector_number + '">' +
+        '<span class="foil-chip ' + (mOwned ? 'owned' : 'unowned') + (isActive ? ' active' : '') + '" data-switch-cn="' + esc(mainCard.collector_number) + '">' +
         'Regular' + (mOwned ? ' \u00B7 Owned' : '') +
         '</span>'
       );
@@ -5768,8 +5827,8 @@ document.head.appendChild(manifestLink);
         var label = getVariantLabel(v);
         var isActive = cn === v.collector_number;
         chips.push(
-          '<span class="foil-chip ' + (vOwned ? 'owned' : 'unowned') + (isActive ? ' active' : '') + '" data-switch-cn="' + v.collector_number + '">' +
-          '\u2726 ' + label + (vOwned ? ' \u00B7 Owned' : '') +
+          '<span class="foil-chip ' + (vOwned ? 'owned' : 'unowned') + (isActive ? ' active' : '') + '" data-switch-cn="' + esc(v.collector_number) + '">' +
+          '\u2726 ' + esc(label) + (vOwned ? ' \u00B7 Owned' : '') +
           '</span>'
         );
       });
@@ -5801,7 +5860,7 @@ document.head.appendChild(manifestLink);
 
     document.getElementById('modal-img').src = card.image_normal || card.image_small;
     document.getElementById('modal-back-img').src = card.image_back_normal || card.image_back_small || MTG_CARD_BACK;
-    document.getElementById('modal-name').innerHTML = `#${card.collector_number} ${displayName(card)}`;
+    document.getElementById('modal-name').innerHTML = `#${esc(card.collector_number)} ${displayName(card)}`;
     const placementStr = isVariant ? 'Collector Variant' : `Page ${p.page}, Slot ${p.slot}`;
     document.getElementById('modal-detail').textContent =
       `${card.type_line} \u00B7 ${card.rarity} \u00B7 ${placementStr}`;
@@ -6118,17 +6177,20 @@ document.head.appendChild(manifestLink);
         const data = JSON.parse(reader.result);
 
         // Support new full-payload format (same as Gist sync)
+        const validCN = /^\d+[a-z]?$/;
         if (data.collection?.owned) {
-          ownedSet = new Set(data.collection.owned);
+          const filtered = data.collection.owned.filter(cn => typeof cn === 'string' && validCN.test(cn));
+          ownedSet = new Set(filtered);
         } else if (Array.isArray(data.owned)) {
           // Legacy format — owned array only
-          ownedSet = new Set(data.owned);
+          const filtered = data.owned.filter(cn => typeof cn === 'string' && validCN.test(cn));
+          ownedSet = new Set(filtered);
         } else {
           showToast('Invalid file format.'); return;
         }
 
-        if (data.packs?.packs) boosterPacks = data.packs.packs;
-        if (data.timeline?.events) timelineEvents = data.timeline.events;
+        if (data.packs?.packs && Array.isArray(data.packs.packs)) boosterPacks = data.packs.packs;
+        if (data.timeline?.events && Array.isArray(data.timeline.events)) timelineEvents = data.timeline.events;
         if (data.binderConfig) {
           binderConfig = data.binderConfig;
           localStorage.setItem(BINDER_CONFIG_KEY, JSON.stringify(binderConfig));
@@ -6426,11 +6488,11 @@ document.head.appendChild(manifestLink);
         const isVariant = !allCards.includes(card);
         const label = isVariant ? getFoilVariantLabel(card) : '';
         const imgSrc = card.image_normal || card.image_small;
-        return `<div class="card-slot foil-slot ${slotCls} ${variantClass} ${delayClass}" data-cn="${card.collector_number}" style="position:relative;cursor:pointer">
-          <img data-src="${imgSrc}" alt="${card.name}" style="${imgStyle}">
+        return `<div class="card-slot foil-slot ${slotCls} ${esc(variantClass)} ${delayClass}" data-cn="${esc(card.collector_number)}" style="position:relative;cursor:pointer">
+          <img data-src="${esc(imgSrc)}" alt="${displayNameText(card)}" style="${imgStyle}">
           ${isFoilOwned ? '<span class="foil-badge">\u2726</span>' : ''}
           ${isNonfoilOwned && !isFoilOwned ? '<span style="position:absolute;top:2px;right:3px;font-size:0.7rem;color:#6bcb77;text-shadow:0 0 6px rgba(107,203,119,0.9);pointer-events:none">\u2713</span>' : ''}
-          ${label ? `<span style="position:absolute;bottom:3px;left:50%;transform:translateX(-50%);font-size:0.68rem;font-weight:700;letter-spacing:0.03em;color:#fff;background:rgba(0,0,0,0.7);border-radius:4px;padding:2px 5px;pointer-events:none;white-space:nowrap;max-width:90%;overflow:hidden;text-overflow:ellipsis">${label}</span>` : ''}
+          ${label ? `<span style="position:absolute;bottom:3px;left:50%;transform:translateX(-50%);font-size:0.68rem;font-weight:700;letter-spacing:0.03em;color:#fff;background:rgba(0,0,0,0.7);border-radius:4px;padding:2px 5px;pointer-events:none;white-space:nowrap;max-width:90%;overflow:hidden;text-overflow:ellipsis">${esc(label)}</span>` : ''}
         </div>`;
       }).join('');
 
@@ -6500,6 +6562,36 @@ document.head.appendChild(manifestLink);
     }
   }
 
+  // ── Boot from stale cache when API is down ──
+  window._bootFromCache = function() {
+    try {
+      const parsed = JSON.parse(localStorage.getItem(CACHE_KEY));
+      if (!parsed?.cards?.length) { location.reload(); return; }
+      allCards = parsed.cards;
+      dataFetchedAt = parsed.fetchedAt;
+      ownedSet = loadCollection();
+      loadFoil();
+      boosterPacks = loadPacks();
+      timelineEvents = loadTimeline();
+      // Try loading cached variants too
+      try {
+        const vp = JSON.parse(localStorage.getItem(VARIANT_KEY));
+        if (vp?.cards?.length) variantCards = vp.cards;
+      } catch {}
+      document.getElementById('loading-screen').style.display = 'none';
+      document.getElementById('main-content').style.display = '';
+      renderProgress();
+      renderFabRecent();
+      renderDashboard();
+      if (!binderConfig.configured) {
+        const settingsBtn = document.querySelector('[data-tab="settings"]');
+        if (settingsBtn) settingsBtn.click();
+      } else {
+        applyConfigToTabs();
+      }
+    } catch { location.reload(); }
+  };
+
   async function init() {
     try {
       await loadFxRate();
@@ -6522,9 +6614,21 @@ document.head.appendChild(manifestLink);
         applyConfigToTabs();
       }
     } catch (err) {
-      document.getElementById('loading-screen').innerHTML =
-        `<p style="color:var(--accent)">Failed to load card data: ${err.message}</p>
-         <button onclick="location.reload()" class="btn btn-primary" style="margin-top:12px">Retry</button>`;
+      const hasCachedData = !!localStorage.getItem(CACHE_KEY);
+      const ls = document.getElementById('loading-screen');
+      ls.className = '';
+      ls.innerHTML =
+        `<div class="error-screen">
+          <div class="error-icon"></div>
+          <h2>Unable to Load Card Data</h2>
+          <p class="error-detail">The Scryfall API could not be reached. This is usually temporary &mdash; check your internet connection or try again in a moment.</p>
+          <div class="error-code">${esc(err.message)}</div>
+          <div class="error-actions">
+            <button onclick="location.reload()" class="btn btn-retry">Retry</button>
+            ${hasCachedData ? '<button onclick="window._bootFromCache()" class="btn btn-offline">Load Cached Data</button>' : ''}
+          </div>
+          <p class="error-hint">If the problem persists, Scryfall may be down. Check <a href="https://status.scryfall.com" target="_blank" rel="noopener">status.scryfall.com</a> for updates.</p>
+        </div>`;
     }
   }
 
