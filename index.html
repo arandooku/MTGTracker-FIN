@@ -5620,8 +5620,14 @@ document.head.appendChild(manifestLink);
       </div>`;
     }
 
-    // Refresh icon
-    const refreshIcon = `<button style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:0.85rem;padding:0 2px;transition:all 0.15s" onclick="window._refreshScryfall && window._refreshScryfall(this); window._refreshFxRate && window._refreshFxRate()" title="Refresh prices">↻</button>`;
+    // Price source info — verbose with MYT timestamps
+    const priceTime = dataFetchedAt
+      ? new Date(dataFetchedAt).toLocaleString('en-MY', { timeZone: 'Asia/Kuala_Lumpur', year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true }) + ' MYT'
+      : 'not cached';
+    const fxTime = fxFetchedAt
+      ? new Date(fxFetchedAt).toLocaleString('en-MY', { timeZone: 'Asia/Kuala_Lumpur', year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true }) + ' MYT'
+      : 'offline (fallback)';
+    const refreshIcon = `<button id="portfolio-refresh-btn" style="background:none;border:1px solid var(--surface3);border-radius:6px;cursor:pointer;color:var(--text-muted);font-size:0.72rem;padding:3px 10px;transition:all 0.15s;margin-top:4px;display:inline-flex;align-items:center;gap:4px" title="Refresh prices"><span style="font-size:0.85rem">↻</span> Refresh Prices</button>`;
 
     el.innerHTML = `
       <div class="dashboard">
@@ -5632,8 +5638,10 @@ document.head.appendChild(manifestLink);
             <div style="font-size:clamp(1.6rem,5vw,2rem);font-weight:900;color:var(--owned-border)">$${collectionValueUSD.toFixed(2)}</div>
             <div style="font-size:1rem;font-weight:700;color:var(--accent)">RM ${collectionValueMYR.toFixed(2)}</div>
           </div>
-          <div style="font-size:0.7rem;color:var(--text-muted);margin-bottom:var(--sp-3)">
-            ${owned} cards · via Scryfall/TCGPlayer · 1 USD = ${USD_TO_MYR.toFixed(2)} MYR ${refreshIcon}
+          <div id="portfolio-price-info" style="font-size:0.68rem;color:var(--text-muted);margin-bottom:var(--sp-3);line-height:1.6">
+            <div>${owned} cards · Prices via <span style="color:var(--accent2)">Scryfall / TCGPlayer</span> · fetched ${priceTime} · ${dataFetchedAt ? timeAgo(new Date(dataFetchedAt)) : ''}</div>
+            <div>FX: 1 USD = ${USD_TO_MYR.toFixed(4)} MYR${fxIsLive ? ' · via ExchangeRate-API · fetched ' + fxTime + ' · ' + timeAgo(new Date(fxFetchedAt)) : ' · <span style="color:var(--accent)">offline fallback rate</span>'}</div>
+            ${refreshIcon}
           </div>
           <div style="display:flex;gap:6px">${rarityBar}</div>
         </div>
@@ -5700,6 +5708,50 @@ document.head.appendChild(manifestLink);
         if (card) openModal(card);
       });
     });
+
+    // Wire portfolio refresh button — in-place, no full page reload
+    const portfolioRefreshBtn = document.getElementById('portfolio-refresh-btn');
+    if (portfolioRefreshBtn) {
+      portfolioRefreshBtn.addEventListener('click', async function(e) {
+        e.preventDefault();
+        const btn = this;
+        const infoEl = document.getElementById('portfolio-price-info');
+        btn.disabled = true;
+        btn.innerHTML = '<span style="font-size:0.85rem;animation:spin-refresh 0.7s linear infinite;display:inline-block">↻</span> Refreshing prices...';
+
+        try {
+          // Refresh card data
+          localStorage.removeItem(CACHE_KEY);
+          localStorage.removeItem(VARIANT_KEY);
+          allCards = await loadCards();
+          if (binderConfig.scope?.collectorBinder) await fetchVariants();
+
+          // Refresh FX rate
+          localStorage.removeItem(FX_KEY);
+          fxIsLive = false;
+          fxFetchedAt = null;
+          await loadFxRate();
+
+          btn.innerHTML = '<span style="font-size:0.85rem">✓</span> Prices updated!';
+          btn.style.color = 'var(--owned-border)';
+          btn.style.borderColor = 'var(--owned-border)';
+          showToast('Prices refreshed from Scryfall.');
+
+          // Re-render portfolio after a brief success state
+          setTimeout(() => { renderPortfolio(); }, 1200);
+        } catch(err) {
+          btn.innerHTML = '<span style="font-size:0.85rem">✗</span> Refresh failed';
+          btn.style.color = 'var(--accent)';
+          btn.style.borderColor = 'var(--accent)';
+          showToast('Price refresh failed — check your connection.');
+          setTimeout(() => {
+            btn.innerHTML = '<span style="font-size:0.85rem">↻</span> Refresh Prices';
+            btn.style.color = ''; btn.style.borderColor = '';
+            btn.disabled = false;
+          }, 2000);
+        }
+      });
+    }
   }
 
   // ── Rendering: Timeline ──
