@@ -354,10 +354,16 @@
     box-shadow: 0 2px 10px var(--ff-glow);
   }
   .tab-content { display: none; }
-  .tab-content.active { display: block; animation: tab-enter 0.4s ease both; }
-  @keyframes tab-enter {
-    from { opacity: 0; transform: translateY(12px); }
-    to { opacity: 1; transform: translateY(0); }
+  .tab-content.active { display: block; }
+  .tab-content.tab-slide-in-right { animation: tab-slide-in-right 0.3s ease both; }
+  .tab-content.tab-slide-in-left { animation: tab-slide-in-left 0.3s ease both; }
+  @keyframes tab-slide-in-right {
+    from { opacity: 0; transform: translateX(30px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes tab-slide-in-left {
+    from { opacity: 0; transform: translateX(-30px); }
+    to { opacity: 1; transform: translateX(0); }
   }
 
   /* ── Bottom Nav (mobile) ── */
@@ -6259,13 +6265,28 @@ document.head.appendChild(manifestLink);
   });
 
   // ── Tabs ──
+  const TAB_ORDER = ['dashboard','portfolio','timeline','binder','collector','settings'];
+  let currentTabIndex = 0;
+
   function switchTab(tabName) {
+    const newIndex = TAB_ORDER.indexOf(tabName);
+    const direction = newIndex >= currentTabIndex ? 'right' : 'left';
+    currentTabIndex = newIndex !== -1 ? newIndex : currentTabIndex;
+
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.bnav-btn').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(t => {
+      t.classList.remove('active', 'tab-slide-in-right', 'tab-slide-in-left');
+    });
     document.querySelectorAll(`.tab-btn[data-tab="${tabName}"]`).forEach(b => b.classList.add('active'));
     document.querySelectorAll(`.bnav-btn[data-tab="${tabName}"]`).forEach(b => b.classList.add('active'));
-    document.getElementById(`tab-${tabName}`)?.classList.add('active');
+    const tabEl = document.getElementById(`tab-${tabName}`);
+    if (tabEl) {
+      tabEl.classList.add('active');
+      if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        tabEl.classList.add(direction === 'right' ? 'tab-slide-in-right' : 'tab-slide-in-left');
+      }
+    }
     if (tabName === 'binder') renderBinder();
     if (tabName === 'dashboard') renderDashboard();
     if (tabName === 'portfolio') renderPortfolio();
@@ -6282,6 +6303,30 @@ document.head.appendChild(manifestLink);
   document.querySelectorAll('.bnav-btn').forEach(btn => {
     btn.addEventListener('click', () => switchTab(btn.dataset.tab));
   });
+
+  // ── Mobile Tab Swipe ──
+  (function initTabSwipe() {
+    let touchStartX = 0, touchStartY = 0;
+    const app = document.getElementById('app');
+    app.addEventListener('touchstart', e => {
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+    }, { passive: true });
+    app.addEventListener('touchend', e => {
+      const dx = e.changedTouches[0].clientX - touchStartX;
+      const dy = e.changedTouches[0].clientY - touchStartY;
+      if (Math.abs(dx) < 50 || Math.abs(dy) > Math.abs(dx)) return;
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      const visibleTabs = TAB_ORDER.filter(t => {
+        const btn = document.querySelector(`.tab-btn[data-tab="${t}"]`);
+        return btn && btn.style.display !== 'none';
+      });
+      const curIdx = visibleTabs.indexOf(TAB_ORDER[currentTabIndex]);
+      if (curIdx === -1) return;
+      if (dx < -50 && curIdx < visibleTabs.length - 1) switchTab(visibleTabs[curIdx + 1]);
+      else if (dx > 50 && curIdx > 0) switchTab(visibleTabs[curIdx - 1]);
+    }, { passive: true });
+  })();
 
   // ── Export / Import / Reset ──
   document.getElementById('export-btn').addEventListener('click', () => {
