@@ -1311,6 +1311,58 @@
     margin-top: 6px; gap: 6px; padding-left: 4px;
   }
 
+  /* ── Journey Feed ── */
+  .journey-timeline {
+    position: relative; padding-left: 28px;
+    border-left: 2px solid var(--ff-border); margin-left: 12px;
+  }
+  .journey-day { margin-bottom: var(--sp-4); position: relative; }
+  .journey-dot {
+    position: absolute; left: -34px; top: 2px;
+    width: 14px; height: 14px; border-radius: 50%;
+    border: 3px solid var(--bg); background: var(--surface3);
+  }
+  .journey-dot.today { background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+  .journey-dot.milestone { background: var(--accent2); box-shadow: 0 0 8px rgba(212,168,80,0.4); }
+  .journey-date {
+    font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.1em; margin-bottom: 6px; color: var(--text-muted);
+  }
+  .journey-date.today { color: var(--accent); }
+  .journey-chip {
+    background: var(--surface); border-radius: 8px;
+    padding: var(--sp-2) var(--sp-3); display: inline-flex;
+    align-items: center; gap: var(--sp-2);
+    border: 1px solid var(--ff-border); font-size: 0.82rem;
+    margin: 0 6px 6px 0;
+  }
+  .journey-chip img { width: 28px; height: 38px; border-radius: 4px; object-fit: cover; }
+  .journey-chip .chip-name { font-weight: 600; }
+  .journey-chip .chip-rarity { font-size: 0.7rem; text-transform: uppercase; }
+  .journey-chip.removed { opacity: 0.5; }
+  .journey-chip.removed .chip-name { text-decoration: line-through; }
+  .journey-milestone-card {
+    background: linear-gradient(135deg, rgba(212,168,80,0.08), rgba(212,168,80,0.02));
+    border: 1px solid rgba(212,168,80,0.3); border-radius: 8px;
+    padding: var(--sp-3) var(--sp-4); margin-bottom: 6px;
+  }
+  .journey-milestone-card .jm-title { font-size: 0.82rem; font-weight: 700; color: var(--accent2); }
+  .journey-milestone-card .jm-sub { font-size: 0.72rem; color: var(--text-muted); margin-top: 2px; }
+  .journey-expand {
+    background: var(--surface); border: 1px dashed var(--ff-border);
+    border-radius: 8px; padding: 6px 10px;
+    font-size: 0.78rem; color: var(--text-muted);
+    cursor: pointer; display: inline-flex; align-items: center;
+    transition: all 0.2s;
+  }
+  .journey-expand:hover { border-color: var(--accent); color: var(--text); }
+  .streak-banner {
+    background: var(--ff-panel); border-radius: var(--sp-3);
+    padding: var(--sp-4);
+    display: flex; align-items: center; gap: var(--sp-4);
+    border: 1px solid var(--ff-border); margin-bottom: var(--sp-4);
+  }
+
   /* Activity feed */
   .activity-feed { display: flex; flex-direction: column; gap: 0; }
   .activity-item {
@@ -5134,170 +5186,165 @@ document.head.appendChild(manifestLink);
     const total = allCards.length;
     const owned = ownedSet.size;
     const addEvents = timelineEvents.filter(e => e.type === 'add');
+    const rarityColors = { mythic: '#e8702a', rare: '#c9a14e', uncommon: '#72b5b5', common: '#888' };
+
+    // Streak calculation
+    let streak = 0;
+    if (addEvents.length > 0) {
+      const today = new Date(); today.setHours(0,0,0,0);
+      const dayMs = 86400000;
+      const addDays = new Set(addEvents.map(e => e.date.slice(0, 10)));
+      let checkDate = new Date(today);
+      const todayStr = checkDate.toISOString().slice(0, 10);
+      if (!addDays.has(todayStr)) checkDate = new Date(today.getTime() - dayMs);
+      while (addDays.has(checkDate.toISOString().slice(0, 10))) {
+        streak++;
+        checkDate = new Date(checkDate.getTime() - dayMs);
+      }
+    }
+    const firstEvent = addEvents[0];
+    const daysSince = firstEvent ? Math.max(1, Math.floor((Date.now() - new Date(firstEvent.date).getTime()) / 86400000)) : 0;
+    const cardsPerWeek = daysSince > 0 ? (owned / daysSince) * 7 : 0;
+
+    // Group events by day (descending)
+    const dayMap = {};
+    for (const evt of timelineEvents) {
+      const day = evt.date.slice(0, 10);
+      if (!dayMap[day]) dayMap[day] = [];
+      dayMap[day].push(evt);
+    }
+    const sortedDays = Object.keys(dayMap).sort().reverse();
 
     // Milestones
     const milestones = [
-      { target: 75, label: '25%' },
-      { target: 150, label: '50%' },
-      { target: 225, label: '75%' },
-      { target: allCards.length || 309, label: '100%' },
+      { target: Math.round(total * 0.25), label: '25%' },
+      { target: Math.round(total * 0.5), label: '50%' },
+      { target: Math.round(total * 0.75), label: '75%' },
+      { target: total, label: '100%' },
     ];
-    // Walk through add events to find when each milestone was hit
     const seen = new Set();
+    const milestoneDays = {};
     for (const evt of addEvents) {
       seen.add(evt.cn);
+      const day = evt.date.slice(0, 10);
       for (const m of milestones) {
-        if (!m.date && seen.size >= m.target) m.date = evt.date;
+        if (!m.date && seen.size >= m.target) {
+          m.date = day;
+          if (!milestoneDays[day]) milestoneDays[day] = [];
+          milestoneDays[day].push(m);
+        }
       }
     }
-    const lastAchievedIdx = milestones.filter(m => m.date).length - 1;
-    const milestoneFillPct = milestones.length > 1
-      ? Math.min(100, ((lastAchievedIdx + 1) / milestones.length) * 100)
-      : 0;
 
-    // Pace calculations
-    const firstEvent = addEvents[0];
-    const daysSinceFirst = firstEvent
-      ? Math.max(1, Math.floor((Date.now() - new Date(firstEvent.date).getTime()) / 86400000))
-      : 0;
-    const cardsPerDay = daysSinceFirst > 0 ? owned / daysSinceFirst : 0;
-    const cardsPerWeek = cardsPerDay * 7;
-    const remaining = total - owned;
-    const daysToComplete = cardsPerDay > 0 ? Math.ceil(remaining / cardsPerDay) : 0;
-    const completionDate = daysToComplete > 0
-      ? new Date(Date.now() + daysToComplete * 86400000).toLocaleDateString()
-      : null;
-    const totalPackCards = boosterPacks.reduce((s, p) => s + p.cards.length, 0);
-    const cardsPerPack = boosterPacks.length > 0 ? (totalPackCards / boosterPacks.length).toFixed(1) : 0;
+    const todayStr = new Date().toISOString().slice(0, 10);
 
-    // Growth chart data — cumulative by date
-    const dailyCounts = {};
-    const seenForChart = new Set();
-    for (const evt of addEvents) {
-      seenForChart.add(evt.cn);
-      const day = evt.date.slice(0, 10);
-      dailyCounts[day] = seenForChart.size;
-    }
-    const chartDays = Object.keys(dailyCounts).sort();
+    // Streak banner
+    const streakHTML = '<div class="streak-banner">' +
+      '<div style="font-size:2rem">' + (streak > 0 ? '🔥' : '💤') + '</div>' +
+      '<div style="flex:1">' +
+        '<div style="font-size:1.1rem;font-weight:700;color:var(--accent2)">' + (streak > 0 ? streak + '-Day Streak!' : 'Start a streak!') + '</div>' +
+        '<div style="font-size:0.78rem;color:var(--text-muted)">' + (streak > 0 ? 'Keep adding cards daily' : 'Add a card today to begin') + '</div>' +
+      '</div>' +
+      '<div style="text-align:right">' +
+        '<div style="font-weight:700;color:var(--text);font-size:1rem">' + cardsPerWeek.toFixed(1) + '</div>' +
+        '<div style="font-size:0.62rem;color:var(--text-muted)">cards/week</div>' +
+      '</div>' +
+    '</div>';
 
-    let growthChartSVG = '';
-    if (chartDays.length > 1) {
-      const cw = 300, ch = 80;
-      const points = chartDays.map((d, i) => ({
-        x: (i / (chartDays.length - 1)) * cw,
-        y: ch - (dailyCounts[d] / total) * ch,
-      }));
-      const linePoints = points.map(p => `${p.x},${p.y}`).join(' ');
-      const areaPoints = `0,${ch} ${linePoints} ${cw},${ch}`;
-      // Milestone lines
-      const mLines = milestones.map(m => {
-        const y = ch - (m.target / total) * ch;
-        return `<line x1="0" y1="${y}" x2="${cw}" y2="${y}" stroke="var(--surface2)" stroke-width="0.5" stroke-dasharray="2,2"/>
-          <text x="${cw - 2}" y="${y - 2}" fill="var(--text-muted)" font-size="7" text-anchor="end">${m.label}</text>`;
-      }).join('');
-      growthChartSVG = `
-        <svg class="value-chart" viewBox="0 0 ${cw} ${ch}" preserveAspectRatio="xMidYMid meet">
-          <defs><linearGradient id="tl-grad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="var(--accent)"/><stop offset="100%" stop-color="transparent"/>
-          </linearGradient></defs>
-          ${mLines}
-          <polygon class="value-chart-area chart-anim-area" points="${areaPoints}" style="fill:url(#tl-grad)"/>
-          <polyline class="value-chart-line chart-anim-line" points="${linePoints}"/>
-          ${points.map((p, i) => `<circle class="value-chart-dot" cx="${p.x}" cy="${p.y}" r="2">
-            <title>${chartDays[i]}: ${dailyCounts[chartDays[i]]} cards</title></circle>`).join('')}
-        </svg>
-        <div class="chart-labels"><span>${chartDays[0]}</span><span>${chartDays[chartDays.length - 1]}</span></div>`;
+    // Journey days
+    let journeyHTML = '';
+    if (sortedDays.length === 0) {
+      journeyHTML = '<div style="text-align:center;padding:32px 0;color:var(--text-muted)">' +
+        '<div style="font-size:2rem;margin-bottom:8px">📭</div>' +
+        '<div style="font-size:0.9rem;font-weight:600;margin-bottom:4px">Your collection journey starts here</div>' +
+        '<button class="btn btn-primary" style="margin-top:8px;font-size:0.78rem;padding:6px 14px" onclick="openFab()">Add Your First Card</button>' +
+      '</div>';
     } else {
-      growthChartSVG = '<div class="dash-sub" style="padding:16px 0;text-align:center">Add more cards to see your growth chart</div>';
+      journeyHTML = '<div class="journey-timeline">';
+      for (const day of sortedDays) {
+        const events = dayMap[day];
+        const isToday = day === todayStr;
+        const hasMilestone = milestoneDays[day];
+        const dotClass = isToday ? 'today' : (hasMilestone ? 'milestone' : '');
+
+        journeyHTML += '<div class="journey-day">' +
+          '<div class="journey-dot ' + dotClass + '"></div>' +
+          '<div class="journey-date ' + (isToday ? 'today' : '') + '">' + (isToday ? 'Today' : new Date(day + 'T00:00:00').toLocaleDateString('en', { weekday: 'short', month: 'short', day: 'numeric' })) + '</div>';
+
+        // Inline milestones
+        if (hasMilestone) {
+          for (const m of hasMilestone) {
+            journeyHTML += '<div class="journey-milestone-card">' +
+              '<div class="jm-title">🏆 ' + m.label + ' Milestone Reached!</div>' +
+              '<div class="jm-sub">' + m.target + ' / ' + total + ' cards · ' + new Date(day + 'T00:00:00').toLocaleDateString() + '</div>' +
+            '</div>';
+          }
+        }
+
+        const addEvts = events.filter(e => e.type === 'add');
+        const removeEvts = events.filter(e => e.type === 'remove');
+        const packEvts = events.filter(e => e.type === 'add' && e.source === 'pack');
+
+        // Pack summary
+        if (packEvts.length > 0) {
+          const packValue = packEvts.reduce((s, e) => { const c = getCardByNumber(e.cn); return s + (c ? (parseFloat(c.price_usd) || 0) : 0); }, 0);
+          journeyHTML += '<div class="journey-chip" style="width:100%;margin-bottom:6px">' +
+            '<span>📦</span><span>Opened pack · ' + packEvts.length + ' cards · <span style="color:var(--owned-border)">+$' + packValue.toFixed(2) + '</span></span>' +
+          '</div>';
+        }
+
+        // Card chips (max 3 + expand)
+        const visibleAdds = addEvts.slice(0, 3);
+        const hiddenCount = addEvts.length - 3;
+        journeyHTML += '<div style="display:flex;flex-wrap:wrap">';
+        for (const evt of visibleAdds) {
+          const card = getCardByNumber(evt.cn);
+          if (!card) continue;
+          journeyHTML += '<div class="journey-chip">' +
+            '<img src="' + esc(card.image_small) + '" alt="' + displayNameText(card) + '" loading="lazy">' +
+            '<div><div class="chip-name">' + displayName(card) + '</div>' +
+            '<div class="chip-rarity" style="color:' + (rarityColors[card.rarity] || '#888') + '">' + esc(card.rarity) + ' · #' + esc(card.collector_number) + '</div></div>' +
+          '</div>';
+        }
+        if (hiddenCount > 0) {
+          journeyHTML += '<div class="journey-expand" data-day="' + day + '">+' + hiddenCount + ' more</div>';
+        }
+        journeyHTML += '</div>';
+
+        // Removed cards
+        for (const evt of removeEvts) {
+          const card = getCardByNumber(evt.cn);
+          if (!card) continue;
+          journeyHTML += '<div class="journey-chip removed">' +
+            '<div style="width:6px;height:6px;border-radius:50%;background:var(--accent);flex-shrink:0"></div>' +
+            '<span class="chip-name">' + displayName(card) + '</span>' +
+          '</div>';
+        }
+        journeyHTML += '</div>';
+      }
+      journeyHTML += '</div>';
     }
 
-    // Heatmap — last 12 weeks
-    const heatmapDays = 84;
-    const today = new Date();
-    today.setHours(0,0,0,0);
-    const dayCountMap = {};
-    for (const evt of addEvents) {
-      const d = evt.date.slice(0, 10);
-      dayCountMap[d] = (dayCountMap[d] || 0) + 1;
-    }
-    const heatCells = [];
-    for (let i = heatmapDays - 1; i >= 0; i--) {
-      const d = new Date(today); d.setDate(d.getDate() - i);
-      const key = d.toISOString().slice(0, 10);
-      const count = dayCountMap[key] || 0;
-      const level = count === 0 ? '' : count <= 2 ? 'l1' : count <= 5 ? 'l2' : count <= 10 ? 'l3' : 'l4';
-      const dayName = d.toLocaleDateString('en', { weekday: 'short', month: 'short', day: 'numeric' });
-      heatCells.push(`<div class="heatmap-cell ${level}" data-tip="${dayName}: ${count} cards"></div>`);
-    }
+    el.innerHTML = '<div class="dashboard">' + streakHTML + journeyHTML + '</div>';
 
-    // Recent activity (last 15)
-    const recentEvents = [...timelineEvents].reverse().slice(0, 15);
-    const activityHTML = recentEvents.length > 0 ? recentEvents.map(evt => {
-      const card = getCardByNumber(evt.cn);
-      if (!card) return '';
-      const ago = timeAgo(new Date(evt.date));
-      return `<div class="activity-item">
-        <div class="activity-dot ${esc(evt.type)}"></div>
-        <img src="${esc(card.image_small)}" alt="${displayNameText(card)}">
-        <span class="activity-name">${displayName(card)}</span>
-        <span class="activity-meta">${evt.type === 'add' ? evt.source === 'pack' ? 'pack' : 'quick' : 'removed'} \u00B7 ${esc(ago)}</span>
-      </div>`;
-    }).join('') : '<div class="dash-sub" style="padding:20px 0;text-align:center">No activity yet — start adding cards!</div>';
-
-    el.innerHTML = `
-      <div class="dash-grid">
-        <div class="dash-card dash-card-full">
-          <h3>Collection Growth</h3>
-          <div class="value-chart-wrap">${growthChartSVG}</div>
-        </div>
-
-        <div class="dash-card dash-card-full">
-          <h3>Milestones</h3>
-          <div class="milestone-track">
-            <div class="milestone-fill" style="width:${milestoneFillPct}%"></div>
-            ${milestones.map((m, i) => `
-              <div class="milestone ${m.date ? 'achieved' : ''}" style="animation-delay:${i * 0.15}s">
-                <div class="milestone-dot">${m.date ? '\u2713' : m.target}</div>
-                <div class="milestone-label">${m.label} (${m.target})</div>
-                ${m.date ? `<div class="milestone-date">${new Date(m.date).toLocaleDateString()}</div>` : ''}
-              </div>
-            `).join('')}
-          </div>
-        </div>
-
-        <div class="dash-card">
-          <h3>Collecting Pace</h3>
-          <div class="dash-big-num">${cardsPerWeek.toFixed(1)}</div>
-          <div class="dash-sub">cards per week</div>
-          <div class="dash-sub" style="margin-top:8px">${cardsPerPack} cards per pack avg</div>
-          <div class="dash-sub">${daysSinceFirst} days collecting</div>
-          ${completionDate ? `<div class="dash-sub" style="margin-top:8px;color:var(--accent);font-weight:600">
-            Est. completion: ${completionDate}
-          </div>` : ''}
-        </div>
-
-        <div class="dash-card">
-          <h3>Stats</h3>
-          <div class="dash-big-num">${owned}</div>
-          <div class="dash-sub">of ${total} collected</div>
-          <div class="dash-sub" style="margin-top:8px">${addEvents.length} total adds</div>
-          <div class="dash-sub">${timelineEvents.filter(e => e.type === 'remove').length} removed</div>
-          <div class="dash-sub">${addEvents.filter(e => e.source === 'pack').length} from packs</div>
-        </div>
-
-        <div class="dash-card dash-card-full">
-          <h3>Activity Heatmap (12 weeks)</h3>
-          <div class="heatmap-wrap">
-            <div class="heatmap-grid">${heatCells.join('')}</div>
-          </div>
-        </div>
-
-        <div class="dash-card dash-card-full">
-          <h3>Recent Activity</h3>
-          <div class="activity-feed">${activityHTML}</div>
-        </div>
-      </div>
-    `;
+    // Expand handlers
+    el.querySelectorAll('.journey-expand').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const day = btn.dataset.day;
+        const events = dayMap[day]?.filter(e => e.type === 'add').slice(3) || [];
+        let html = '';
+        for (const evt of events) {
+          const card = getCardByNumber(evt.cn);
+          if (!card) continue;
+          html += '<div class="journey-chip">' +
+            '<img src="' + esc(card.image_small) + '" alt="' + displayNameText(card) + '" loading="lazy">' +
+            '<div><div class="chip-name">' + displayName(card) + '</div>' +
+            '<div class="chip-rarity" style="color:' + (rarityColors[card.rarity] || '#888') + '">' + esc(card.rarity) + '</div></div>' +
+          '</div>';
+        }
+        btn.outerHTML = html;
+      });
+    });
   }
 
   function timeAgo(date) {
