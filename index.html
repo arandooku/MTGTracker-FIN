@@ -4970,7 +4970,7 @@ document.head.appendChild(manifestLink);
 
     const allSearchable = [...allCards, ...variantCards];
     const matches = allSearchable.filter(c =>
-      c.name.toLowerCase().includes(q) || c.collector_number === q
+      c.name.toLowerCase().includes(q) || c.collector_number.toLowerCase() === q
     ).slice(0, 15);
 
     headerAcHighlight = -1;
@@ -5182,7 +5182,7 @@ document.head.appendChild(manifestLink);
       if (q.length < 1) { acList.classList.remove('show'); acList.innerHTML = ''; return; }
       const allSearchable = [...allCards, ...variantCards];
       const matches = allSearchable.filter(c =>
-        c.name.toLowerCase().includes(q) || c.collector_number === q
+        c.name.toLowerCase().includes(q) || c.collector_number.toLowerCase() === q
       ).slice(0, 15);
       acHl = -1;
       if (matches.length === 0) { acList.classList.remove('show'); acList.innerHTML = ''; return; }
