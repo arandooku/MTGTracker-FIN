@@ -153,6 +153,51 @@
     0%, 100% { opacity: 0.6; }
     50% { opacity: 1; }
   }
+  /* ── Header Inline Search ── */
+  .header-search-bar {
+    display: none;
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    align-items: center; gap: 8px;
+    padding: 0 16px;
+    background: var(--bg);
+    z-index: 50;
+    animation: searchBarIn 0.2s ease;
+  }
+  @keyframes searchBarIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .header-search-bar.open {
+    display: flex;
+  }
+  .header-search-icon {
+    flex-shrink: 0; color: var(--text-muted);
+  }
+  .header-search-bar input {
+    flex: 1; padding: 10px 12px; font-size: 0.95rem;
+    background: var(--slot-bg); border: 2px solid var(--accent);
+    border-radius: 8px; color: var(--text); outline: none;
+    font-family: 'Rajdhani', sans-serif;
+  }
+  .header-search-bar input::placeholder { color: var(--text-muted); }
+  .header-search-esc {
+    background: var(--surface2); border: none; border-radius: 6px;
+    color: var(--text-muted); font-size: 0.75rem; font-weight: 700;
+    padding: 5px 10px; cursor: pointer; flex-shrink: 0;
+    font-family: 'Rajdhani', sans-serif;
+  }
+  .header-search-esc:hover { color: var(--text); }
+
+  .header-autocomplete {
+    display: none;
+    position: absolute; top: 100%; left: 0; right: 0;
+    background: var(--surface); border: 1px solid var(--surface2);
+    border-top: none; border-radius: 0 0 12px 12px;
+    max-height: 400px; overflow-y: auto;
+    z-index: 49;
+    box-shadow: 0 8px 24px var(--shadow);
+  }
+  .header-autocomplete.show { display: block; }
   /* Light mode readability fixes */
   [data-theme="light"] {
     --foil-color: #8b6914;
@@ -326,7 +371,7 @@
     background: var(--surface); border-radius: 6px;
     padding: 4px; overflow-x: auto;
     -webkit-overflow-scrolling: touch; scrollbar-width: none;
-    border: 1px solid var(--ff-border);
+    border: 1px solid var(--ff-border); touch-action: pan-x;
   }
   .tabs::-webkit-scrollbar { display: none; }
   .tab-btn {
@@ -906,7 +951,7 @@
   /* ── Card Carousel ── */
   .card-carousel {
     display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px;
-    scrollbar-width: none; -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; -webkit-overflow-scrolling: touch; touch-action: pan-x;
   }
   .card-carousel::-webkit-scrollbar { display: none; }
   .card-carousel-item {
@@ -944,7 +989,7 @@
   .pill-scroll {
     display: flex; gap: 6px; overflow-x: auto;
     scrollbar-width: none; -webkit-overflow-scrolling: touch;
-    padding-bottom: 4px;
+    padding-bottom: 4px; touch-action: pan-x;
   }
   .pill-scroll::-webkit-scrollbar { display: none; }
 
@@ -1311,7 +1356,7 @@
   .milestone-date { font-size: 0.6rem; color: var(--text-muted); }
 
   /* Heatmap */
-  .heatmap-wrap { overflow-x: auto; padding-bottom: 4px; }
+  .heatmap-wrap { overflow-x: auto; padding-bottom: 4px; touch-action: pan-x; }
   .heatmap-grid {
     display: grid; grid-template-rows: repeat(7, 14px);
     grid-auto-flow: column; grid-auto-columns: 14px;
@@ -2936,12 +2981,25 @@ document.head.appendChild(manifestLink);
         </div>
       </div>
       <div class="header-actions" id="header-actions">
+        <button class="fab-util-btn" id="header-search-btn" title="Search Cards">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </button>
+        <button class="fab-util-btn" id="header-pack-btn" title="Open Booster Pack">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+        </button>
         <button class="fab-util-btn" id="theme-toggle" title="Toggle theme"></button>
         <button class="fab-util-btn" id="sync-btn" title="Cloud Sync">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
           <span class="sync-dot" id="sync-dot"></span>
         </button>
       </div>
+      <!-- Inline header search -->
+      <div class="header-search-bar" id="header-search-bar">
+        <svg class="header-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="header-search-input" placeholder="Search cards by name or #..." autocomplete="off">
+        <button class="header-search-esc" id="header-search-esc">ESC</button>
+      </div>
+      <div class="header-autocomplete" id="header-autocomplete"></div>
       <p class="subtitle">
         <span id="binder-preset-display">9-Pocket Binder</span>
         <span class="sep"></span>
@@ -4935,6 +4993,116 @@ document.head.appendChild(manifestLink);
     if (document.getElementById('tab-collector')?.classList.contains('active')) renderCollectorTab();
   }
 
+  // ── Header Search ──
+  const headerSearchBtn = document.getElementById('header-search-btn');
+  const headerSearchBar = document.getElementById('header-search-bar');
+  const headerSearchInput = document.getElementById('header-search-input');
+  const headerSearchEsc = document.getElementById('header-search-esc');
+  const headerAcList = document.getElementById('header-autocomplete');
+  let headerAcHighlight = -1;
+
+  function openHeaderSearch() {
+    headerSearchBar.classList.add('open');
+    setTimeout(() => headerSearchInput.focus(), 50);
+  }
+
+  function closeHeaderSearch() {
+    headerSearchBar.classList.remove('open');
+    headerSearchInput.value = '';
+    headerAcList.innerHTML = '';
+    headerAcList.classList.remove('show');
+    headerAcHighlight = -1;
+  }
+
+  headerSearchBtn.addEventListener('click', openHeaderSearch);
+  headerSearchEsc.addEventListener('click', closeHeaderSearch);
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && headerSearchBar.classList.contains('open')) {
+      closeHeaderSearch();
+    }
+  });
+
+  document.addEventListener('click', (e) => {
+    if (headerSearchBar.classList.contains('open') &&
+        !e.target.closest('.header-search-bar') &&
+        !e.target.closest('.header-autocomplete') &&
+        !e.target.closest('#header-search-btn')) {
+      closeHeaderSearch();
+    }
+  });
+
+  // ── Header Search Autocomplete ──
+  headerSearchInput.addEventListener('input', () => {
+    const q = headerSearchInput.value.trim().toLowerCase();
+    if (q.length < 1) { headerAcList.classList.remove('show'); headerAcList.innerHTML = ''; return; }
+
+    const allSearchable = [...allCards, ...variantCards];
+    const matches = allSearchable.filter(c =>
+      c.name.toLowerCase().includes(q) || c.collector_number === q
+    ).slice(0, 15);
+
+    headerAcHighlight = -1;
+    if (matches.length === 0) { headerAcList.classList.remove('show'); headerAcList.innerHTML = ''; return; }
+
+    headerAcList.innerHTML = matches.map((c, i) => {
+      const isOwned = ownedSet.has(c.collector_number);
+      const isFoilOwned = hasFoil(c.collector_number);
+      const vInfo = getCardVariantInfo(c);
+      const variantBadge = vInfo.label
+        ? `<span class="ac-variant-badge ${vInfo.cssClass}">${vInfo.label}</span>` : '';
+      const ownedBadge = isOwned
+        ? `<span class="ac-owned-badge" style="font-size:0.65rem">\u2713 Owned</span>`
+        : '';
+      const foilBadge = isFoilOwned
+        ? `<span style="color:var(--gold);font-size:0.65rem;font-weight:700">\u2726 Foil</span>` : '';
+      return `<div class="ac-card-row" data-cn="${esc(c.collector_number)}" data-index="${i}">
+        <img src="${esc(c.image_small)}" alt="${displayNameText(c)}" loading="lazy"${isOwned ? ' style="border:2px solid var(--owned-border);border-radius:6px"' : ''}>
+        <div class="ac-info">
+          <div class="ac-name">${displayName(c)} ${variantBadge}</div>
+          <div class="ac-detail">#${esc(c.collector_number)} \u00B7 ${esc(c.rarity)} \u00B7 ${esc(c.type_line || '')}</div>
+          <div class="ac-prices">
+            ${c.price_usd > 0 ? `<span style="color:var(--owned-border)">$${c.price_usd.toFixed(2)}</span>` : ''}
+            ${c.price_usd_foil > 0 ? `<span style="color:var(--gold)">\u2726 $${c.price_usd_foil.toFixed(2)}</span>` : ''}
+          </div>
+        </div>
+        <div class="ac-actions">${ownedBadge}${foilBadge}<span style="color:var(--text-muted);font-size:1rem">\u203A</span></div>
+      </div>`;
+    }).join('');
+    headerAcList.classList.add('show');
+  });
+
+  headerSearchInput.addEventListener('keydown', (e) => {
+    const items = headerAcList.querySelectorAll('.ac-card-row');
+    if (!items.length) return;
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      headerAcHighlight = Math.min(headerAcHighlight + 1, items.length - 1);
+      updateHeaderAcHighlight(items);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      headerAcHighlight = Math.max(headerAcHighlight - 1, 0);
+      updateHeaderAcHighlight(items);
+    } else if (e.key === 'Enter' && headerAcHighlight >= 0) {
+      e.preventDefault();
+      items[headerAcHighlight].click();
+    }
+  });
+
+  function updateHeaderAcHighlight(items) {
+    items.forEach((el, i) => el.classList.toggle('hl', i === headerAcHighlight));
+    if (items[headerAcHighlight]) items[headerAcHighlight].scrollIntoView({ block: 'nearest' });
+  }
+
+  headerAcList.addEventListener('click', (e) => {
+    const row = e.target.closest('.ac-card-row');
+    if (!row) return;
+    const cn = row.dataset.cn;
+    const card = getCardByNumber(cn);
+    headerAcList.classList.remove('show');
+    if (card) openModal(card);
+  });
+
   // ── FAB (Floating Action Button) ──
   const fabBtn = document.getElementById('fab-btn');
   const fabPanel = document.getElementById('fab-panel');
@@ -4968,7 +5136,7 @@ document.head.appendChild(manifestLink);
   fabClose.addEventListener('click', closeFab);
 
   document.addEventListener('click', (e) => {
-    if (!e.target.closest('.fab-search') && fabPanel.classList.contains('show')) {
+    if (!e.target.closest('.fab-search') && !e.target.closest('[onclick*="openFab"]') && fabPanel.classList.contains('show')) {
       closeFab();
     }
   });
@@ -6965,6 +7133,10 @@ document.head.appendChild(manifestLink);
       if (document.getElementById('tab-binder').classList.contains('active')) renderSpread();
       // Return to FAB pack view if we were adding from pack mode
       if (wasPackMode && currentPack) openFab();
+      // Re-focus header search if it was open
+      if (headerSearchBar.classList.contains('open')) {
+        headerSearchInput.focus();
+      }
     }, 280);
   }
 
@@ -7170,16 +7342,49 @@ document.head.appendChild(manifestLink);
 
   // ── Mobile Tab Swipe ──
   (function initTabSwipe() {
-    let touchStartX = 0, touchStartY = 0;
+    let touchStartX = 0, touchStartY = 0, touchStartTarget = null;
+    let swipeLocked = false, swipeDirection = ''; // 'horizontal' | 'vertical' | ''
+    const LOCK_THRESHOLD = 10; // px before we decide direction
     const app = document.getElementById('app');
+
+    function isInsideScrollable(target) {
+      let el = target;
+      while (el && el !== app) {
+        if (el.scrollWidth > el.clientWidth + 1) return true;
+        el = el.parentElement;
+      }
+      return false;
+    }
+
     app.addEventListener('touchstart', e => {
       touchStartX = e.touches[0].clientX;
       touchStartY = e.touches[0].clientY;
+      touchStartTarget = e.target;
+      swipeLocked = false;
+      swipeDirection = '';
     }, { passive: true });
+
+    app.addEventListener('touchmove', e => {
+      if (swipeLocked) {
+        if (swipeDirection === 'horizontal') e.preventDefault();
+        return;
+      }
+      const dx = Math.abs(e.touches[0].clientX - touchStartX);
+      const dy = Math.abs(e.touches[0].clientY - touchStartY);
+      if (dx < LOCK_THRESHOLD && dy < LOCK_THRESHOLD) return;
+      swipeLocked = true;
+      if (dx > dy && !isInsideScrollable(touchStartTarget)) {
+        swipeDirection = 'horizontal';
+        e.preventDefault(); // lock to horizontal — suppress vertical scroll
+      } else {
+        swipeDirection = 'vertical';
+      }
+    }, { passive: false });
+
     app.addEventListener('touchend', e => {
+      if (swipeDirection !== 'horizontal') return;
       const dx = e.changedTouches[0].clientX - touchStartX;
-      const dy = e.changedTouches[0].clientY - touchStartY;
-      if (Math.abs(dx) < 50 || Math.abs(dy) > Math.abs(dx)) return;
+      if (Math.abs(dx) < 50) return;
       if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
       const visibleTabs = TAB_ORDER.filter(t => {
         const btn = document.querySelector(`.tab-btn[data-tab="${t}"]`);
