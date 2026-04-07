@@ -5323,8 +5323,111 @@ document.head.appendChild(manifestLink);
     }
   }
 
-  function wirePackModalSearch() { /* wired in Task 8 */ }
-  function finalizePackModal() { /* wired in Task 9 */ }
+  function wirePackModalSearch() {
+    const searchInput = document.getElementById('pack-modal-search');
+    const acList = document.getElementById('pack-modal-ac');
+    let acHl = -1;
+
+    searchInput.addEventListener('input', () => {
+      const q = searchInput.value.trim().toLowerCase();
+      if (q.length < 1) { acList.classList.remove('show'); acList.innerHTML = ''; return; }
+      const allSearchable = [...allCards, ...variantCards];
+      const matches = allSearchable.filter(c =>
+        c.name.toLowerCase().includes(q) || c.collector_number === q
+      ).slice(0, 15);
+      acHl = -1;
+      if (matches.length === 0) { acList.classList.remove('show'); acList.innerHTML = ''; return; }
+      acList.innerHTML = matches.map((c, i) => {
+        const isOwned = ownedSet.has(c.collector_number);
+        const isFoilOwned = hasFoil(c.collector_number);
+        const inPack = currentPack.cards.includes(c.collector_number);
+        return `<div class="ac-item" data-cn="${esc(c.collector_number)}" style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+          <span style="display:flex;align-items:center;gap:6px;min-width:0;flex:1">
+            <span class="ac-rarity-dot ${esc(c.rarity)}"></span>
+            <span class="card-name" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(c.name)}</span>
+            <span class="card-num" style="flex-shrink:0">#${esc(c.collector_number)}</span>
+          </span>
+          <span style="display:flex;align-items:center;gap:4px;flex-shrink:0">
+            ${acVariantBadgeHTML(c)}
+            ${inPack ? '<span class="owned-tag">in pack</span>' : (isOwned || isFoilOwned) ? '<span class="owned-tag">' + (isFoilOwned ? '\u2726 ' : '') + 'owned</span>' : ''}
+          </span>
+        </div>`;
+      }).join('');
+      acList.classList.add('show');
+    });
+
+    searchInput.addEventListener('keydown', (e) => {
+      const items = acList.querySelectorAll('.ac-item');
+      if (!items.length) return;
+      if (e.key === 'ArrowDown') { e.preventDefault(); acHl = Math.min(acHl + 1, items.length - 1); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); acHl = Math.max(acHl - 1, 0); }
+      else if (e.key === 'Enter' && acHl >= 0) { e.preventDefault(); items[acHl].click(); }
+      items.forEach((el, i) => el.classList.toggle('hl', i === acHl));
+    });
+
+    acList.addEventListener('click', (e) => {
+      const item = e.target.closest('.ac-item');
+      if (!item) return;
+      const cn = item.dataset.cn;
+      const card = getCardByNumber(cn);
+      searchInput.value = '';
+      acList.classList.remove('show');
+      if (card) {
+        _packModeAdding = true;
+        packModalOverlay.classList.add('dimmed');
+        openModal(card);
+      }
+    });
+  }
+
+  function addCardToPackModal(cn, asFoil) {
+    if (!currentPack) return;
+    currentPack.cards.push(cn);
+    addCard(cn);
+    if (asFoil) addFoil(cn);
+    renderPackModalCardList();
+    const counter = document.getElementById('pack-modal-count');
+    if (counter) {
+      counter.textContent = currentPack.cards.length;
+      counter.classList.remove('bump');
+      void counter.offsetWidth;
+      counter.classList.add('bump');
+    }
+  }
+
+  function finalizePackModal() {
+    if (!currentPack || currentPack.cards.length === 0) return;
+
+    const pack = {
+      id: Date.now(),
+      date: new Date().toISOString(),
+      price: currentPack.price,
+      cards: [...currentPack.cards],
+    };
+    boosterPacks.push(pack);
+    savePacks();
+
+    const rarityOrder = { mythic: 4, rare: 3, uncommon: 2, common: 1 };
+    let bestRarity = 'common';
+    for (const cn of pack.cards) {
+      const card = getCardByNumber(cn);
+      if (card && (rarityOrder[card.rarity] || 0) > (rarityOrder[bestRarity] || 0)) {
+        bestRarity = card.rarity;
+      }
+    }
+
+    currentPack = null;
+    packModalOverlay.classList.remove('visible', 'dimmed');
+    document.body.style.overflow = '';
+    packModalBody.innerHTML = '';
+    packModalFooter.innerHTML = '';
+
+    showPackSummary(pack, bestRarity);
+
+    if (document.getElementById('tab-dashboard').classList.contains('active')) renderDashboard();
+    if (document.getElementById('tab-portfolio').classList.contains('active')) renderPortfolio();
+    if (document.getElementById('tab-timeline').classList.contains('active')) renderTimeline();
+  }
 
   // ── FAB (Floating Action Button) ──
   const fabBtn = document.getElementById('fab-btn');
@@ -7204,23 +7307,19 @@ document.head.appendChild(manifestLink);
     const isPack = _packModeAdding && currentPack;
 
     function addToPackAndReturn(cn, asFoil) {
-      addCardToPack(cn);
-      if (asFoil) addFoil(cn);
+      addCardToPackModal(cn, asFoil);
       _packModeAdding = false;
-      // Check if the added card has same-name siblings (variants)
       const addedCard = getCardByNumber(cn);
       const cardName = addedCard ? addedCard.name : '';
       const allSearchable = [...allCards, ...variantCards];
       const sameNameCount = cardName ? allSearchable.filter(c => c.name === cardName).length : 0;
       closeModal();
       setTimeout(() => {
-        openFab(); renderPackStep2();
-        // If multiple variants share this name, restore search so user can pick another
         if (sameNameCount > 1) {
-          const psi = document.getElementById('pack-search-input');
+          const psi = document.getElementById('pack-modal-search');
           if (psi) { psi.value = cardName; psi.dispatchEvent(new Event('input')); psi.focus(); }
         }
-      }, 300);
+      }, 350);
     }
 
     const isFoilOwned = hasFoil(card.collector_number);
@@ -7354,8 +7453,11 @@ document.head.appendChild(manifestLink);
     setTimeout(() => {
       overlay.classList.remove('visible', 'closing');
       if (document.getElementById('tab-binder').classList.contains('active')) renderSpread();
-      // Return to FAB pack view if we were adding from pack mode
-      if (wasPackMode && currentPack) openFab();
+      // Return to pack modal if we were adding from pack mode
+      if (wasPackMode && currentPack) {
+        packModalOverlay.classList.remove('dimmed');
+        renderPackModalStep2();
+      }
       // Re-focus header search if it was open
       if (headerSearchBar.classList.contains('open')) {
         headerSearchInput.focus();
