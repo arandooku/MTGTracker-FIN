@@ -8031,6 +8031,9 @@ document.head.appendChild(manifestLink);
       return v.oracle_id === familyOracleId;
     }) : [];
 
+    // If no variants exist and card is a main-set card, skip pills entirely
+    if (variants.length === 0 && !isVariantCard) return '';
+
     // Helper: colored indicator dot per variant type
     function vdot(v) {
       if (!v) return '<span class="vdot vdot-regular"></span>';
