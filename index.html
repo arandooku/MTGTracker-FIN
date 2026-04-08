@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src https://cards.scryfall.io https://*.scryfall.io https://gamepedia.cursecdn.com blob: data:; connect-src https://api.scryfall.com https://api.github.com https://open.er-api.com; manifest-src blob:; base-uri 'none'; form-action 'none'">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>FIN Binder Tracker</title>
 <!-- iOS PWA -->
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -237,7 +237,7 @@
     inset: auto; top: 0; left: 0; right: 0; height: 2px; border: none; border-radius: 0;
     background: linear-gradient(90deg, transparent, rgba(200,140,40,0.2), transparent);
   }
-  [data-theme="light"] .dash-card:hover { border-color: var(--accent); }
+  [data-theme="light"] .dash-card.interactive:hover { border-color: var(--accent); }
   [data-theme="light"] .top-card-item { background: #efe8d8; }
   [data-theme="light"] .fill-cell { background: #ddd4c0; }
   [data-theme="light"] .foil-chip.owned { border-color: rgba(139,105,20,0.5); color: var(--foil-color); background: var(--foil-color-bg); }
@@ -486,10 +486,11 @@
   .dash-card:nth-child(6) { animation-delay: 0.3s; }
   .dash-card:nth-child(7) { animation-delay: 0.36s; }
   .dash-card:nth-child(8) { animation-delay: 0.42s; }
-  .dash-card:hover {
+  .dash-card.interactive:hover {
     transform: translateY(-4px);
     box-shadow: inset 0 0 0 1px var(--ff-border-inner), 0 0 20px var(--ff-glow), 0 8px 24px var(--shadow);
     border-color: var(--accent);
+    cursor: pointer;
   }
   @keyframes card-enter {
     from { opacity: 0; transform: translateY(16px) scale(0.97); }
@@ -958,12 +959,35 @@
     font-size: 0.85rem; font-weight: 600;
     box-shadow: 0 4px 20px var(--shadow); z-index: 2000;
     transition: transform 0.3s cubic-bezier(0.34,1.4,0.64,1), opacity 0.25s ease;
-    opacity: 0; pointer-events: none; white-space: nowrap;
+    opacity: 0; pointer-events: none; white-space: normal;
+    max-width: calc(100vw - 32px); text-align: center;
   }
   .toast.show {
     transform: translateX(-50%) translateY(0);
     opacity: 1;
   }
+  .toast.show.has-undo { pointer-events: auto; cursor: pointer; }
+  .toast .undo-link {
+    color: var(--accent2); font-weight: 700; margin-left: 8px;
+    text-decoration: underline; cursor: pointer;
+  }
+  .toast .undo-link:hover { color: var(--gold); }
+
+  /* ── No Results ── */
+  .ac-no-results {
+    padding: 16px; text-align: center;
+    color: var(--text-muted); font-size: 0.82rem;
+  }
+  .ac-no-results .ac-no-icon { font-size: 1.4rem; margin-bottom: 4px; display: block; opacity: 0.5; }
+
+  /* ── Empty State ── */
+  .empty-state {
+    text-align: center; padding: 32px 16px;
+    color: var(--text-muted); animation: card-enter 0.4s ease both;
+  }
+  .empty-state-icon { font-size: 2.2rem; margin-bottom: 8px; opacity: 0.4; display: block; }
+  .empty-state-title { font-size: 0.95rem; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+  .empty-state-desc { font-size: 0.82rem; max-width: 320px; margin: 0 auto 12px; line-height: 1.5; }
 
   /* ── Card Carousel ── */
   .card-carousel {
@@ -3433,7 +3457,10 @@ document.head.appendChild(manifestLink);
       <div class="skeleton skeleton-card" style="animation-delay:0.1s"></div>
       <div class="skeleton skeleton-card" style="grid-column:1/-1;height:80px;animation-delay:0.2s"></div>
     </div>
-    <p style="text-align:center;margin-top:16px;font-size:0.82rem;color:var(--text-muted)">Loading FIN set data...</p>
+    <p id="loading-status" style="text-align:center;margin-top:16px;font-size:0.82rem;color:var(--text-muted)">Loading FIN set data...</p>
+    <div style="max-width:300px;margin:12px auto 0;height:4px;background:var(--chart-empty);border-radius:2px;overflow:hidden">
+      <div id="loading-progress" style="width:0%;height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:2px;transition:width 0.3s ease"></div>
+    </div>
   </div>
 
   <div id="main-content" style="display:none;">
@@ -3446,25 +3473,25 @@ document.head.appendChild(manifestLink);
         </div>
       </div>
       <div class="header-actions" id="header-actions">
-        <button class="fab-util-btn" id="header-search-btn" title="Search Cards">
+        <button class="fab-util-btn" id="header-search-btn" title="Search Cards (Ctrl+K)" aria-label="Search cards">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         </button>
-        <button class="fab-util-btn" id="header-pack-btn" title="Open Booster Pack">
+        <button class="fab-util-btn" id="header-pack-btn" title="Open Booster Pack" aria-label="Open booster pack">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" rx="2" width="14" height="20"/><path d="M12 2v20"/><path d="M5 7h14"/><path d="M5 17h14"/><circle cx="12" cy="12" r="2.5"/></svg>
         </button>
-        <button class="fab-util-btn" id="theme-toggle" title="Toggle theme"></button>
-        <button class="fab-util-btn" id="sync-btn" title="Cloud Sync">
+        <button class="fab-util-btn" id="theme-toggle" title="Toggle theme" aria-label="Toggle dark/light theme"></button>
+        <button class="fab-util-btn" id="sync-btn" title="Cloud Sync" aria-label="Cloud sync settings">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
-          <span class="sync-dot" id="sync-dot"></span>
+          <span class="sync-dot" id="sync-dot" aria-hidden="true"></span>
         </button>
       </div>
       <!-- Inline header search -->
       <div class="header-search-bar" id="header-search-bar">
         <svg class="header-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input type="search" id="header-search-input" placeholder="Search cards by name or #..." autocomplete="off" inputmode="search">
-        <button class="header-search-esc" id="header-search-esc">ESC</button>
+        <input type="search" id="header-search-input" placeholder="Search cards by name or #..." autocomplete="off" inputmode="search" aria-label="Search cards by name or collector number" role="combobox" aria-expanded="false" aria-controls="header-autocomplete" aria-autocomplete="list">
+        <button class="header-search-esc" id="header-search-esc" aria-label="Close search">ESC</button>
       </div>
-      <div class="header-autocomplete" id="header-autocomplete"></div>
+      <div class="header-autocomplete" id="header-autocomplete" role="listbox" aria-label="Search results"></div>
       <p class="subtitle">
         <span id="binder-preset-display">9-Pocket Binder</span>
         <span class="sep"></span>
@@ -3610,7 +3637,12 @@ document.head.appendChild(manifestLink);
       <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">Create a fine-grained token</a> with <strong>Gists read &amp; write</strong> permission only. Set a 90-day expiry for safety. This token can access your Gists &mdash; never share it.
     </div>
     <label>GitHub Personal Access Token</label>
-    <input type="password" id="sync-token-input" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off">
+    <div style="position:relative">
+      <input type="password" id="sync-token-input" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off" aria-label="GitHub personal access token" style="padding-right:40px">
+      <button type="button" id="sync-token-toggle" aria-label="Show or hide token" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-muted);cursor:pointer;padding:4px;font-size:0.82rem;line-height:1" title="Show/hide token">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+      </button>
+    </div>
     <div id="sync-modal-body"></div>
     <div class="sync-actions">
       <button class="btn btn-primary" id="sync-save-btn">Save &amp; Sync</button>
@@ -3822,13 +3854,53 @@ document.head.appendChild(manifestLink);
     scheduleSyncPush();
   }
 
-  function showToast(msg, duration) {
+  // ── Focus Trap for Modals ──
+  let _focusTrapCleanup = null;
+  function trapFocus(containerEl) {
+    releaseFocusTrap();
+    const focusable = 'button:not([disabled]):not([style*="display:none"]):not([style*="display: none"]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+    function handler(e) {
+      if (e.key !== 'Tab') return;
+      const els = [...containerEl.querySelectorAll(focusable)].filter(el => el.offsetParent !== null);
+      if (els.length === 0) return;
+      const first = els[0], last = els[els.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    }
+    containerEl.addEventListener('keydown', handler);
+    _focusTrapCleanup = () => containerEl.removeEventListener('keydown', handler);
+    // Focus first focusable element
+    const first = containerEl.querySelector(focusable);
+    if (first) first.focus();
+  }
+  function releaseFocusTrap() {
+    if (_focusTrapCleanup) { _focusTrapCleanup(); _focusTrapCleanup = null; }
+  }
+
+  function showToast(msg, duration, opts) {
     duration = duration || 2000;
     const el = document.getElementById('toast');
-    el.textContent = msg;
+    el.textContent = '';
+    el.classList.remove('has-undo');
+    if (opts && opts.undo) {
+      el.appendChild(document.createTextNode(msg));
+      const undoBtn = document.createElement('span');
+      undoBtn.className = 'undo-link';
+      undoBtn.textContent = 'Undo';
+      undoBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        opts.undo();
+        el.classList.remove('show', 'has-undo');
+        clearTimeout(el._t);
+      });
+      el.appendChild(undoBtn);
+      el.classList.add('has-undo');
+    } else {
+      el.textContent = msg;
+    }
     el.classList.add('show');
     clearTimeout(el._t);
-    el._t = setTimeout(function() { el.classList.remove('show'); }, duration);
+    el._t = setTimeout(function() { el.classList.remove('show', 'has-undo'); }, duration);
   }
 
   function showSheet(opts) {
@@ -4094,7 +4166,10 @@ document.head.appendChild(manifestLink);
     } else {
       syncHTML =
         '<label style="font-size:0.78rem;color:var(--text-muted);font-weight:600;display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px">GitHub Personal Access Token</label>' +
-        '<input type="password" id="sf-sync-token" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off" style="width:100%;padding:10px 12px;font-size:0.9rem;background:var(--slot-bg);border:2px solid var(--surface2);border-radius:8px;color:var(--text);outline:none;margin-bottom:8px;font-family:monospace">' +
+        '<div style="position:relative">' +
+        '<input type="password" id="sf-sync-token" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off" aria-label="GitHub personal access token" style="width:100%;padding:10px 40px 10px 12px;font-size:0.9rem;background:var(--slot-bg);border:2px solid var(--surface2);border-radius:8px;color:var(--text);outline:none;margin-bottom:8px;font-family:monospace">' +
+        '<button type="button" id="sf-sync-token-toggle" aria-label="Show or hide token" title="Show/hide token" style="position:absolute;right:8px;top:14px;background:none;border:none;color:var(--text-muted);cursor:pointer;padding:4px;line-height:1"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>' +
+        '</div>' +
         '<div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:12px">' +
           '<a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener" style="color:var(--accent2);text-decoration:none">Create a fine-grained token</a> &mdash; Gists read &amp; write only, 90-day expiry' +
         '</div>' +
@@ -4391,6 +4466,15 @@ document.head.appendChild(manifestLink);
             }}
           ]
         });
+      });
+    }
+
+    // Token visibility toggle
+    var sfTokenToggle = document.getElementById('sf-sync-token-toggle');
+    if (sfTokenToggle) {
+      sfTokenToggle.addEventListener('click', function() {
+        var inp = document.getElementById('sf-sync-token');
+        if (inp) inp.type = inp.type === 'password' ? 'text' : 'password';
       });
     }
 
@@ -4736,6 +4820,7 @@ document.head.appendChild(manifestLink);
         saveGistConfig();
       }
       updateSyncDot('connected');
+      lastSyncTime = Date.now();
       return true;
     } catch (err) {
       console.error('Sync push failed:', err);
@@ -4744,6 +4829,18 @@ document.head.appendChild(manifestLink);
     } finally {
       isSyncing = false;
     }
+  }
+
+  let lastSyncTime = 0;
+  function formatTimeAgo(ts) {
+    const s = Math.floor((Date.now() - ts) / 1000);
+    if (s < 10) return 'Just now';
+    if (s < 60) return s + 's ago';
+    const m = Math.floor(s / 60);
+    if (m < 60) return m + 'm ago';
+    const h = Math.floor(m / 60);
+    if (h < 24) return h + 'h ago';
+    return Math.floor(h / 24) + 'd ago';
   }
 
   async function gistPull() {
@@ -4786,6 +4883,7 @@ document.head.appendChild(manifestLink);
       // Fetch variants if collector scope was enabled in pulled config
       if (binderConfig.scope?.collectorBinder && variantCards.length === 0) fetchVariants();
       updateSyncDot('connected');
+      lastSyncTime = Date.now();
       return true;
     } catch (err) {
       console.error('Sync pull failed:', err);
@@ -4824,12 +4922,14 @@ document.head.appendChild(manifestLink);
   function renderSyncModalBody() {
     const body = document.getElementById('sync-modal-body');
     if (gistConfig.gistId) {
+      const syncAgo = lastSyncTime ? formatTimeAgo(lastSyncTime) : 'Never';
       body.innerHTML = `
         <div style="display:flex;align-items:center;gap:6px;margin-bottom:12px">
           <span style="width:8px;height:8px;border-radius:50%;background:var(--owned-border);flex-shrink:0"></span>
           <span style="font-size:0.82rem;font-weight:600">Connected</span>
           <span style="font-size:0.7rem;color:var(--text-muted);margin-left:auto">Gist: ${esc(gistConfig.gistId.slice(0, 8))}...</span>
         </div>
+        <div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:12px;text-align:center">Last synced: ${syncAgo}</div>
         <div style="display:flex;flex-direction:column;gap:8px">
           <button class="btn btn-primary" id="sync-pull-btn" style="width:100%;padding:12px;font-size:0.9rem;min-height:44px">
             Pull from Cloud
@@ -4845,14 +4945,25 @@ document.head.appendChild(manifestLink);
       document.getElementById('sync-pull-btn').addEventListener('click', async (e) => {
         e.stopPropagation();
         const btn = e.target;
-        btn.textContent = 'Pulling...';
-        btn.disabled = true;
-        const ok = await gistPull();
-        btn.textContent = ok ? 'Pulled!' : 'Failed';
-        setTimeout(() => {
-          if (ok) closeSyncModal();
-          else renderSyncModalBody();
-        }, 1000);
+        if (ownedSet.size > 0) {
+          showConfirmDialog(
+            'Overwrite Local Data?',
+            'Pulling will replace your local collection (' + ownedSet.size + ' cards, ' + Object.keys(foilOwned).length + ' foils) with cloud data. This cannot be undone.',
+            async () => {
+              btn.textContent = 'Pulling...';
+              btn.disabled = true;
+              const ok = await gistPull();
+              btn.textContent = ok ? 'Pulled!' : 'Failed';
+              setTimeout(() => { if (ok) closeSyncModal(); else renderSyncModalBody(); }, 1000);
+            }
+          );
+        } else {
+          btn.textContent = 'Pulling...';
+          btn.disabled = true;
+          const ok = await gistPull();
+          btn.textContent = ok ? 'Pulled!' : 'Failed';
+          setTimeout(() => { if (ok) closeSyncModal(); else renderSyncModalBody(); }, 1000);
+        }
       });
       document.getElementById('sync-push-btn').addEventListener('click', async (e) => {
         e.stopPropagation();
@@ -4937,6 +5048,11 @@ document.head.appendChild(manifestLink);
   document.getElementById('sync-modal-overlay').addEventListener('click', (e) => {
     if (e.target === e.currentTarget) closeSyncModal();
   });
+  document.getElementById('sync-token-toggle').addEventListener('click', () => {
+    const inp = document.getElementById('sync-token-input');
+    const isHidden = inp.type === 'password';
+    inp.type = isHidden ? 'text' : 'password';
+  });
 
   // Init sync dot on load
   gistConfig = loadGistConfig();
@@ -4954,16 +5070,25 @@ document.head.appendChild(manifestLink);
   }
 
   // ── Data loading ──
+  function updateLoadingProgress(pct, msg) {
+    const bar = document.getElementById('loading-progress');
+    const status = document.getElementById('loading-status');
+    if (bar) bar.style.width = pct + '%';
+    if (status && msg) status.textContent = msg;
+  }
+
   async function fetchFromScryfall() {
     const cards = [];
     let page = 1;
     let hasMore = true;
+    updateLoadingProgress(10, 'Fetching card data from Scryfall...');
     while (hasMore) {
       const resp = await fetch(
         `https://api.scryfall.com/cards/search?q=set:fin+is:booster+game:paper+lang:en&unique=prints&order=collector_number&page=${page}`
       );
       if (!resp.ok) throw new Error(`Scryfall API error: ${resp.status}`);
       const data = await resp.json();
+      updateLoadingProgress(10 + page * 30, 'Processing page ' + page + '...');
       for (const c of data.data) {
         cards.push({
           collector_number: c.collector_number,
@@ -5646,6 +5771,11 @@ document.head.appendChild(manifestLink);
     if (document.getElementById('tab-portfolio').classList.contains('active')) renderPortfolio();
     if (document.getElementById('tab-timeline').classList.contains('active')) renderTimeline();
     if (document.getElementById('tab-collector')?.classList.contains('active')) renderCollectorTab();
+    const card = getCardByNumber(cn);
+    const name = card ? displayNameText(card) : '#' + cn;
+    showToast('Removed ' + name, 4000, {
+      undo: () => { addCard(cn); showToast('Restored ' + name); }
+    });
   }
 
   // ── Header Search ──
@@ -5668,6 +5798,7 @@ document.head.appendChild(manifestLink);
     headerSearchInput.value = '';
     headerAcList.innerHTML = '';
     headerAcList.classList.remove('show');
+    headerSearchInput.setAttribute('aria-expanded', 'false');
     headerAcHighlight = -1;
   }
 
@@ -5702,7 +5833,7 @@ document.head.appendChild(manifestLink);
   // ── Header Search Autocomplete ──
   headerSearchInput.addEventListener('input', () => {
     const q = headerSearchInput.value.trim().toLowerCase();
-    if (q.length < 1) { headerAcList.classList.remove('show'); headerAcList.innerHTML = ''; return; }
+    if (q.length < 1) { headerAcList.classList.remove('show'); headerAcList.innerHTML = ''; headerSearchInput.setAttribute('aria-expanded', 'false'); return; }
 
     const allSearchable = [...allCards, ...variantCards];
     const matches = allSearchable.filter(c =>
@@ -5710,7 +5841,17 @@ document.head.appendChild(manifestLink);
     ).slice(0, 15);
 
     headerAcHighlight = -1;
-    if (matches.length === 0) { headerAcList.classList.remove('show'); headerAcList.innerHTML = ''; return; }
+    if (matches.length === 0) {
+      headerAcList.textContent = '';
+      const noRes = document.createElement('div');
+      noRes.className = 'ac-no-results';
+      noRes.innerHTML = '<span class="ac-no-icon">&#128269;</span>';
+      noRes.appendChild(document.createTextNode('No cards matching \u201c' + q + '\u201d'));
+      headerAcList.appendChild(noRes);
+      headerAcList.classList.add('show');
+      headerSearchInput.setAttribute('aria-expanded', 'true');
+      return;
+    }
 
     headerAcList.innerHTML = matches.map((c, i) => {
       const isOwned = ownedSet.has(c.collector_number);
@@ -5727,7 +5868,7 @@ document.head.appendChild(manifestLink);
       let detailParts = [`#${esc(c.collector_number)}`, esc(c.rarity)];
       if (c.price_usd > 0) detailParts.push(`<span class="ac-price-usd">RM ${(c.price_usd * USD_TO_MYR).toFixed(2)}</span>`);
       if (c.price_usd_foil > 0) detailParts.push(`<span class="ac-price-foil">\u2726 RM ${(c.price_usd_foil * USD_TO_MYR).toFixed(2)}</span>`);
-      return `<div class="ac-card-row${isVar ? ' ac-variant-row' : ''}" data-cn="${esc(c.collector_number)}" data-index="${i}">
+      return `<div class="ac-card-row${isVar ? ' ac-variant-row' : ''}" data-cn="${esc(c.collector_number)}" data-index="${i}" role="option" aria-selected="false">
         <img src="${esc(c.image_small)}" alt="${displayNameText(c)}" loading="lazy"${isOwned ? ' class="ac-img-owned"' : ''}>
         <div class="ac-info">
           <div class="ac-name">${displayName(c)}</div>
@@ -5737,6 +5878,7 @@ document.head.appendChild(manifestLink);
       </div>`;
     }).join('');
     headerAcList.classList.add('show');
+    headerSearchInput.setAttribute('aria-expanded', 'true');
   });
 
   headerSearchInput.addEventListener('keydown', (e) => {
@@ -5757,7 +5899,10 @@ document.head.appendChild(manifestLink);
   });
 
   function updateHeaderAcHighlight(items) {
-    items.forEach((el, i) => el.classList.toggle('hl', i === headerAcHighlight));
+    items.forEach((el, i) => {
+      el.classList.toggle('hl', i === headerAcHighlight);
+      el.setAttribute('aria-selected', i === headerAcHighlight ? 'true' : 'false');
+    });
     if (items[headerAcHighlight]) items[headerAcHighlight].scrollIntoView({ block: 'nearest' });
   }
 
@@ -6223,7 +6368,7 @@ document.head.appendChild(manifestLink);
         <div class="stat-pill"><div class="stat-num" style="color:var(--owned-border)">RM ${(collValue * USD_TO_MYR).toFixed(0)}</div><div class="stat-label">Value</div></div>
       </div>
 
-      <div class="dash-card" style="margin-bottom:var(--sp-3)">
+      <div class="dash-card interactive" style="margin-bottom:var(--sp-3)">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--sp-2)">
           <h3 style="margin:0">This Session</h3>
           <span style="font-size:0.68rem;color:var(--accent);font-weight:600">${recentCNs.length} cards added</span>
@@ -6382,8 +6527,15 @@ document.head.appendChild(manifestLink);
     const refreshIcon = `<button id="portfolio-refresh-btn" style="background:none;border:1px solid var(--surface3);border-radius:6px;cursor:pointer;color:var(--text-muted);font-size:0.72rem;padding:3px 10px;transition:all 0.15s;margin-top:4px;display:inline-flex;align-items:center;gap:4px" title="Refresh prices"><span style="font-size:0.85rem">↻</span> Refresh Prices</button>`;
 
     // Note: all values below are derived from internal app state (allCards, ownedSet, etc.) — no user input is interpolated unsanitized
+    const emptyBanner = owned === 0 ? `<div class="empty-state" style="margin-bottom:var(--sp-4)">
+      <span class="empty-state-icon">&#128176;</span>
+      <div class="empty-state-title">No cards in collection yet</div>
+      <div class="empty-state-desc">Add cards to see your portfolio valuation, top cards, and value trends.</div>
+      <button class="btn btn-primary" style="font-size:0.78rem;padding:6px 14px" onclick="event.stopPropagation();document.getElementById('header-search-btn').click()">Add Cards</button>
+    </div>` : '';
     el.innerHTML = `
       <div class="dashboard">
+        ${emptyBanner}
         <div class="value-card">
           <div class="value-card-body">
             <div class="value-card-header">
@@ -7847,10 +7999,12 @@ document.head.appendChild(manifestLink);
     // Lock modal height after first paint so pill switching doesn't cause layout jumps
     requestAnimationFrame(() => {
       modalEl.style.minHeight = modalEl.offsetHeight + 'px';
+      trapFocus(modalEl);
     });
   }
 
   function closeModal() {
+    releaseFocusTrap();
     const wasPackMode = _packModeAdding;
     _currentModalCard = null;
     _packModeAdding = false;
@@ -8169,6 +8323,7 @@ document.head.appendChild(manifestLink);
   document.getElementById('import-file').addEventListener('change', (e) => {
     const file = e.target.files[0];
     if (!file) return;
+    if (file.size > 10 * 1024 * 1024) { showToast('File too large (max 10 MB)'); e.target.value = ''; return; }
     const reader = new FileReader();
     reader.onload = () => {
       try {
@@ -8615,14 +8770,17 @@ document.head.appendChild(manifestLink);
 
   async function init() {
     try {
+      updateLoadingProgress(5, 'Loading exchange rates...');
       await loadFxRate();
       allCards = await loadCards();
+      updateLoadingProgress(80, 'Building card index...');
       rebuildLookups();
       fetchVariants(); // always load variants (needed for search, portfolio, dashboard)
       ownedSet = loadCollection();
       loadFoil();
       boosterPacks = loadPacks();
       timelineEvents = loadTimeline();
+      updateLoadingProgress(100, 'Ready!');
       const loadingEl = document.getElementById('loading-screen');
       loadingEl.classList.add('skeleton-fade-out');
       setTimeout(() => {
