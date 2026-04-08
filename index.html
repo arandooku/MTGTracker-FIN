@@ -8238,10 +8238,14 @@ document.head.appendChild(manifestLink);
       const baseLabel = fcInfo.label ? fcInfo.short : 'Main';
       // Always append #CN for variants to match the pill labels
       const fcLabel = fcInfo.label ? `${baseLabel} #${fc.collector_number}` : baseLabel;
-      if (fc.price_usd > 0)
+      const hasRegularPrice = fc.price_usd > 0;
+      const hasFoilPrice = fc.price_usd_foil > 0;
+      if (hasRegularPrice)
         chips.push(priceChip(fcLabel, fc.price_usd, fc.price_usd * USD_TO_MYR, 'usd', fc.collector_number, false));
-      if (fc.price_usd_foil > 0 && !(fc.price_usd > 0 && fc.price_usd_foil === fc.price_usd))
+      if (hasFoilPrice && !(hasRegularPrice && fc.price_usd_foil === fc.price_usd))
         chips.push(priceChip(fcLabel + ' \u2726', fc.price_usd_foil, fc.price_usd_foil * USD_TO_MYR, 'foil', fc.collector_number, true));
+      if (!hasRegularPrice && !hasFoilPrice)
+        chips.push(`<div class="modal-price-chip no-price" data-price-cn="${esc(fc.collector_number)}"><div class="price-label">${esc(fcLabel)}</div><span class="price-sub">No price data</span></div>`);
     }
     if (chips.length === 0)
       chips.push('<div class="modal-price-chip no-price"><span class="price-sub">No price data</span></div>');
