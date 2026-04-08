@@ -267,7 +267,7 @@
   .cmd-search {
     display: flex; align-items: center; gap: 12px;
     padding: 18px 20px;
-    border-bottom: 1px solid var(--ff-border);
+    border-top: 1px solid var(--ff-border);
   }
   .cmd-search svg { width: 20px; height: 20px; color: var(--text-muted); flex-shrink: 0; }
   .cmd-search input {
@@ -3743,15 +3743,10 @@ document.head.appendChild(manifestLink);
           <span class="cmd-title">Command</span>
           <button class="cmd-close" id="cmd-esc" aria-label="Close">&times;</button>
         </div>
+        <div class="cmd-actions" id="cmd-actions"></div>
         <div class="cmd-search">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
           <input type="search" id="cmd-input" placeholder="Search cards, actions…" autocomplete="off" inputmode="search" aria-label="Search cards and actions">
-        </div>
-        <div class="cmd-actions" id="cmd-actions"></div>
-        <div class="cmd-footer">
-          <span><kbd>&uarr;&darr;</kbd> navigate</span>
-          <span><kbd>&crarr;</kbd> select</span>
-          <span><kbd>esc</kbd> close</span>
         </div>
       </div>
     </div>
