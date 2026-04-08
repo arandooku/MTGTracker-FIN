@@ -6354,7 +6354,7 @@ document.head.appendChild(manifestLink);
     packModalFooter.innerHTML = '';
   }
 
-  document.getElementById('header-pack-btn').addEventListener('click', openPackModal);
+  // Pack button click now handled by Command Deck action item
   packModalClose.addEventListener('click', () => closePackModal(false));
   packModalOverlay.addEventListener('click', (e) => {
     if (e.target === packModalOverlay && !packModalOverlay.classList.contains('dimmed')) {
