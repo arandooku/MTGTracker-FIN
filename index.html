@@ -104,6 +104,7 @@
     padding-bottom: max(80px, calc(80px + env(safe-area-inset-bottom, 0px)));
     padding-left: max(16px, env(safe-area-inset-left, 0px));
     padding-right: max(16px, env(safe-area-inset-right, 0px));
+    overflow-x: hidden;
   }
 
   /* ── Header ── */
@@ -416,7 +417,7 @@
     box-shadow: 0 2px 10px var(--ff-glow);
   }
   .tab-content { display: none; }
-  .tab-content.active { display: block; }
+  .tab-content.active { display: block; min-height: calc(100vh - 160px); min-height: calc(100dvh - 160px); }
   .tab-content.tab-slide-in-right { animation: tab-slide-in-right 0.3s ease both; }
   .tab-content.tab-slide-in-left { animation: tab-slide-in-left 0.3s ease both; }
   @keyframes tab-slide-in-right {
@@ -992,7 +993,7 @@
   /* ── Card Carousel ── */
   .card-carousel {
     display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px;
-    scrollbar-width: none; -webkit-overflow-scrolling: touch; touch-action: pan-x;
+    scrollbar-width: none; -webkit-overflow-scrolling: touch;
   }
   .card-carousel::-webkit-scrollbar { display: none; }
   .card-carousel-item {
@@ -1032,9 +1033,19 @@
   .pill-scroll {
     display: flex; gap: 6px; overflow-x: auto;
     scrollbar-width: none; -webkit-overflow-scrolling: touch;
-    padding-bottom: 4px; touch-action: pan-x;
+    padding-bottom: 4px;
   }
   .pill-scroll::-webkit-scrollbar { display: none; }
+  .coll-filter-bar {
+    display: flex; flex-direction: column; gap: 6px;
+    margin-bottom: var(--sp-2);
+  }
+  .coll-filter-row {
+    display: flex; gap: 6px;
+  }
+  .coll-filter-row .pill-chip {
+    flex: 1; text-align: center; min-width: 0;
+  }
 
   /* ── Rarity Circles ── */
   .rarity-circle {
@@ -1254,6 +1265,10 @@
   [data-theme="light"] .value-card:hover { border-color: var(--accent); }
   [data-theme="light"] .value-card-badge { background: rgba(85,136,51,0.1); border-color: rgba(85,136,51,0.25); }
   [data-theme="light"] .value-card-myr { text-shadow: none; }
+  @media (hover: none) {
+    .value-card:hover { transform: none; box-shadow: inset 0 0 0 1px var(--ff-border-inner), 0 0 14px var(--ff-glow), 0 4px 16px rgba(0,0,0,0.3); border-color: var(--ff-border); }
+    .card-carousel-item:hover { transform: none; }
+  }
 
   /* ── Card Name Overlay ── */
   .card-name-overlay {
@@ -1928,6 +1943,8 @@
 
   /* Page flip overlay — full 180deg turn like a real page */
   @media (max-width: 700px) {
+    /* Prevent iOS Safari auto-zoom on input focus (requires >= 16px) */
+    input[type="search"], input[type="text"], input:not([type]), textarea, select { font-size: 16px !important; }
     /* Tab nav — hide top pills, show bottom nav */
     .tabs { display: none !important; }
     .bottom-nav {
@@ -7907,7 +7924,7 @@ document.head.appendChild(manifestLink);
         const foilLabel = isVariant ? (typeAlreadyFoil ? variantType : `${variantType} Foil`) : 'Foil';
         if (isFoilOwned) {
           foilToggleBtn.textContent = `Remove ${foilLabel}`;
-          foilToggleBtn.className = 'btn btn-secondary';
+          foilToggleBtn.className = 'btn btn-danger';
         } else {
           foilToggleBtn.textContent = `Add ${foilLabel} \u2726`;
           foilToggleBtn.className = 'btn btn-foil';
@@ -8214,6 +8231,7 @@ document.head.appendChild(manifestLink);
     const direction = newIndex >= currentTabIndex ? 'right' : 'left';
     currentTabIndex = newIndex !== -1 ? newIndex : currentTabIndex;
 
+    window.scrollTo(0, 0);
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.bnav-btn').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.tab-content').forEach(t => {
@@ -8571,10 +8589,22 @@ document.head.appendChild(manifestLink);
       </div>`;
 
     // ── Pill chip filter bar ──
-    const filterChips = ['All Cards', '\u2726 Foils', 'Extended Art', 'Showcase', 'Surge Foil', 'Chocobo Track'];
+    const row1Chips = [
+      { key: 'All Cards', label: 'All' },
+      { key: 'Owned', label: 'Owned' },
+      { key: '\u2726 Foils', label: '\u2726 Foils' }
+    ];
+    const row2Chips = [
+      { key: 'Extended Art', label: 'Extended' },
+      { key: 'Showcase', label: 'Showcase' },
+      { key: 'Surge Foil', label: 'Surge' },
+      { key: 'Chocobo Track', label: 'Chocobo' }
+    ];
+    const chipHTML = (f) => `<button class="pill-chip coll-filter-type${activeFilter === f.key ? ' active' : ''}" data-type="${f.key}">${f.label}</button>`;
     const filterBarHTML = `
-      <div class="pill-scroll" style="margin-bottom:var(--sp-2)">
-        ${filterChips.map(f => `<button class="pill-chip coll-filter-type${activeFilter === f ? ' active' : ''}" data-type="${f}">${f}</button>`).join('')}
+      <div class="coll-filter-bar">
+        <div class="coll-filter-row">${row1Chips.map(chipHTML).join('')}</div>
+        <div class="coll-filter-row">${row2Chips.map(chipHTML).join('')}</div>
       </div>`;
 
     // ── Search + rarity row ──
@@ -8608,7 +8638,10 @@ document.head.appendChild(manifestLink);
       const spp = binderConfig.slotsPerPage;
       let cards;
 
-      if (activeFilter === '\u2726 Foils') {
+      if (activeFilter === 'Owned') {
+        cards = [...allPool].filter(c => ownedSet.has(c.collector_number) || hasFoil(c.collector_number))
+          .sort((a, b) => compareCollector(a.collector_number, b.collector_number));
+      } else if (activeFilter === '\u2726 Foils') {
         cards = allCards.slice().sort((a, b) => compareCollector(a.collector_number, b.collector_number));
       } else if (activeFilter === 'Extended Art') {
         cards = variantCards.filter(c => (c.frame_effects || []).includes('extendedart'));
