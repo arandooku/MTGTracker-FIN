@@ -5215,10 +5215,18 @@ document.head.appendChild(manifestLink);
   }
 
   function updateSyncDot(status) {
-    const dot = document.getElementById('sync-dot');
-    const btn = document.getElementById('sync-btn');
-    dot.className = 'sync-dot' + (status ? ' ' + status : '');
-    btn.classList.toggle('spinning', status === 'syncing');
+    // Update HUD sync chip
+    const chip = document.getElementById('sync-chip');
+    if (chip) {
+      chip.className = 'sync-chip' + (status ? ' ' + status : '');
+      const label = chip.querySelector('.sync-chip-label');
+      if (label) {
+        if (status === 'syncing') label.textContent = 'Syncing\u2026';
+        else if (status === 'error') label.textContent = 'Error';
+        else if (status === 'connected') label.textContent = 'Synced';
+        else label.textContent = '';
+      }
+    }
   }
 
   function buildSyncPayload() {
@@ -5597,6 +5605,20 @@ document.head.appendChild(manifestLink);
   function saveCollection() {
     localStorage.setItem(COLLECTION_KEY, JSON.stringify({ owned: [...ownedSet] }));
     scheduleSyncPush();
+    updateHUDStats();
+  }
+
+  // ── HUD Stats ──
+  function updateHUDStats() {
+    const total = allCards.length;
+    const owned = ownedSet.size;
+    const pct = total ? (owned / total * 100) : 0;
+    const hudOwned = document.getElementById('hud-owned');
+    const hudPct = document.getElementById('hud-pct');
+    const hudFill = document.getElementById('hud-progress-fill');
+    if (hudOwned) hudOwned.textContent = owned;
+    if (hudPct) hudPct.textContent = Math.round(pct) + '%';
+    if (hudFill) hudFill.style.width = pct + '%';
   }
 
   function loadPacks() {
@@ -6210,7 +6232,6 @@ document.head.appendChild(manifestLink);
     if (document.getElementById('tab-portfolio').classList.contains('active')) renderPortfolio();
     if (document.getElementById('tab-timeline').classList.contains('active')) renderTimeline();
     if (document.getElementById('tab-collector')?.classList.contains('active')) renderCollectorTab();
-    if (isSearchPageOpen()) applySearchFilters();
   }
 
   function removeCard(cn) {
@@ -6224,7 +6245,6 @@ document.head.appendChild(manifestLink);
     if (document.getElementById('tab-portfolio').classList.contains('active')) renderPortfolio();
     if (document.getElementById('tab-timeline').classList.contains('active')) renderTimeline();
     if (document.getElementById('tab-collector')?.classList.contains('active')) renderCollectorTab();
-    if (isSearchPageOpen()) applySearchFilters();
     const card = getCardByNumber(cn);
     const name = card ? displayNameText(card) : '#' + cn;
     showToast('Removed ' + name, 4000, {
@@ -6232,380 +6252,231 @@ document.head.appendChild(manifestLink);
     });
   }
 
-  // ── Header Search ──
-  const headerSearchBtn = document.getElementById('header-search-btn');
-  const headerSearchBar = document.getElementById('header-search-bar');
-  const headerSearchInput = document.getElementById('header-search-input');
-  const headerSearchEsc = document.getElementById('header-search-esc');
-  const headerAcList = document.getElementById('header-autocomplete');
-  let headerAcHighlight = -1;
+  // ── Command Deck ──
+  const cmdOverlay = document.getElementById('cmd-overlay');
+  const cmdPalette = document.getElementById('cmd-palette');
+  const cmdInput = document.getElementById('cmd-input');
+  const cmdActions = document.getElementById('cmd-actions');
+  const cmdEsc = document.getElementById('cmd-esc');
+  const cmdTrigger = document.getElementById('cmd-trigger');
+  const searchFab = document.getElementById('search-fab');
+  let cmdHighlight = -1;
 
-  function openHeaderSearch() {
-    headerSearchBar.classList.add('open');
-    headerSearchInput.focus();
-    // Double-tap focus for mobile keyboards that need a slight delay after display change
-    setTimeout(() => { headerSearchInput.blur(); headerSearchInput.focus(); }, 50);
+  const CMD_ITEMS = [
+    {
+      id: 'pack',
+      name: 'Open Booster Pack',
+      hint: 'Simulate pulling cards from a play booster',
+      icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" rx="2" width="14" height="20"/><path d="M12 2v20"/><path d="M5 7h14"/><path d="M5 17h14"/><circle cx="12" cy="12" r="2.5"/></svg>',
+      iconColor: 'var(--gold, #d4a850)',
+      action: function() { closeCommandDeck(); openPackModal(); },
+      badge: function() { return null; }
+    },
+    {
+      id: 'theme',
+      name: 'Toggle Theme',
+      hint: 'Switch appearance mode',
+      icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>',
+      iconColor: 'var(--accent)',
+      action: function() { toggleTheme(); renderCommandActions(cmdInput.value); },
+      badge: function() {
+        var mode = document.documentElement.getAttribute('data-theme') === 'dark' ? 'Dark' : 'Light';
+        return { text: mode, cls: 'cmd-badge-blue' };
+      }
+    },
+    {
+      id: 'sync',
+      name: 'Cloud Sync',
+      hint: 'Push or pull collection data',
+      icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>',
+      iconColor: '#4aad5e',
+      action: function() { closeCommandDeck(); openSyncModal(); },
+      badge: function() {
+        if (!gistConfig.token) return { text: 'Not Set Up', cls: 'cmd-badge-red' };
+        return { text: 'Connected', cls: 'cmd-badge-green' };
+      }
+    },
+    {
+      id: 'settings',
+      name: 'Settings',
+      hint: 'Binder config, data, appearance',
+      icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>',
+      iconColor: 'var(--text-muted)',
+      action: function() { closeCommandDeck(); switchTab('settings'); },
+      badge: function() { return null; }
+    }
+  ];
+
+  function openCommandDeck() {
+    cmdOverlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    cmdInput.value = '';
+    cmdHighlight = -1;
+    renderCommandActions('');
+    setTimeout(function() { cmdInput.focus(); }, 50);
   }
 
-  function closeHeaderSearch() {
-    headerSearchBar.classList.remove('open');
-    headerSearchInput.value = '';
-    headerAcList.innerHTML = '';
-    headerAcList.classList.remove('show');
-    headerSearchInput.setAttribute('aria-expanded', 'false');
-    headerAcHighlight = -1;
+  function closeCommandDeck() {
+    cmdOverlay.classList.remove('open');
+    document.body.style.overflow = '';
+    cmdInput.value = '';
   }
 
-  headerSearchBtn.addEventListener('click', openHeaderSearch);
-  headerSearchEsc.addEventListener('click', closeHeaderSearch);
+  function isCommandDeckOpen() {
+    return cmdOverlay.classList.contains('open');
+  }
 
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && headerSearchBar.classList.contains('open')) {
-      closeHeaderSearch();
+  // Expose for onclick attributes in dashboard (replaces openSearchPage)
+  window.openSearchPage = openCommandDeck;
+
+  function renderCommandActions(query) {
+    var q = query.trim().toLowerCase();
+    var parts = [];
+
+    // Filter and render action items
+    var matchedActions = CMD_ITEMS.filter(function(item) {
+      return !q || item.name.toLowerCase().includes(q) || item.hint.toLowerCase().includes(q);
+    });
+
+    matchedActions.forEach(function(item, i) {
+      var badge = item.badge();
+      var badgeHtml = badge
+        ? '<span class="cmd-action-badge ' + badge.cls + '">' + esc(badge.text) + '</span>'
+        : '';
+      parts.push(
+        '<div class="cmd-action" data-cmd-id="' + item.id + '" data-cmd-index="' + i + '">'
+          + '<div class="cmd-action-icon" style="color:' + item.iconColor + '">' + item.icon + '</div>'
+          + '<div class="cmd-action-text">'
+            + '<div class="cmd-action-name">' + esc(item.name) + '</div>'
+            + '<div class="cmd-action-hint">' + esc(item.hint) + '</div>'
+          + '</div>'
+          + badgeHtml
+        + '</div>'
+      );
+    });
+
+    // If there is a search query, also show card results
+    if (q.length >= 1) {
+      var allSearchable = allCards.concat(variantCards);
+      var cardMatches = allSearchable.filter(function(c) {
+        return c.name.toLowerCase().includes(q) || c.collector_number.toLowerCase() === q;
+      }).slice(0, 10);
+
+      if (cardMatches.length > 0) {
+        if (matchedActions.length > 0) {
+          parts.push('<div style="border-top:1px solid var(--ff-border);margin:4px 0;"></div>');
+        }
+        cardMatches.forEach(function(c) {
+          var isOwned = ownedSet.has(c.collector_number);
+          var isFoilOwnedCard = hasFoil(c.collector_number);
+          var isVar = !mainSetCNs.has(c.collector_number);
+          var ownedBadge = isOwned ? '<span class="ac-owned-badge">✓ Owned</span>' : '';
+          var foilBadge = isFoilOwnedCard ? '<span class="ac-foil-badge">✦ Foil</span>' : '';
+          var collectorBadge = isVar ? '<span class="ac-collector-badge">Collector</span>' : '';
+          var detailParts = ['#' + esc(c.collector_number), esc(c.rarity)];
+          if (c.price_usd > 0) detailParts.push('<span class="ac-price-usd">RM ' + (c.price_usd * USD_TO_MYR).toFixed(2) + '</span>');
+          parts.push(
+            '<div class="ac-card-row' + (isVar ? ' ac-variant-row' : '') + '" data-cn="' + esc(c.collector_number) + '">'
+              + '<img src="' + esc(c.image_small) + '" alt="' + displayNameText(c) + '" loading="lazy"' + (isOwned ? ' class="ac-img-owned"' : '') + '>'
+              + '<div class="ac-info">'
+                + '<div class="ac-name">' + displayName(c) + '</div>'
+                + '<div class="ac-detail">' + detailParts.join(' · ') + '</div>'
+              + '</div>'
+              + '<div class="ac-actions">' + collectorBadge + ownedBadge + foilBadge + '<span class="ac-chevron">›</span></div>'
+            + '</div>'
+          );
+        });
+      }
+    }
+
+    // Build DOM from parts
+    cmdActions.textContent = '';
+    var temp = document.createElement('div');
+    temp.innerHTML = parts.join('');
+    while (temp.firstChild) cmdActions.appendChild(temp.firstChild);
+    cmdHighlight = -1;
+  }
+
+  // Trigger buttons
+  cmdTrigger.addEventListener('click', openCommandDeck);
+  searchFab.addEventListener('click', function() {
+    if (isCommandDeckOpen()) closeCommandDeck();
+    else openCommandDeck();
+  });
+  cmdEsc.addEventListener('click', closeCommandDeck);
+
+  // Click outside palette to close
+  cmdOverlay.addEventListener('click', function(e) {
+    if (e.target === cmdOverlay) closeCommandDeck();
+  });
+
+  // Search input filtering
+  cmdInput.addEventListener('input', function() {
+    renderCommandActions(cmdInput.value);
+  });
+
+  // Keyboard navigation
+  cmdInput.addEventListener('keydown', function(e) {
+    var items = cmdActions.querySelectorAll('.cmd-action, .ac-card-row');
+    if (!items.length) return;
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      cmdHighlight = Math.min(cmdHighlight + 1, items.length - 1);
+      updateCmdHighlight(items);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      cmdHighlight = Math.max(cmdHighlight - 1, -1);
+      updateCmdHighlight(items);
+    } else if (e.key === 'Enter' && cmdHighlight >= 0) {
+      e.preventDefault();
+      items[cmdHighlight].click();
     }
   });
 
-  document.addEventListener('click', (e) => {
-    if (headerSearchBar.classList.contains('open') &&
-        !e.target.closest('.header-search-bar') &&
-        !e.target.closest('.header-autocomplete') &&
-        !e.target.closest('#header-search-btn')) {
-      closeHeaderSearch();
+  function updateCmdHighlight(items) {
+    items.forEach(function(el, i) { el.classList.toggle('hl', i === cmdHighlight); });
+    if (cmdHighlight >= 0 && items[cmdHighlight]) items[cmdHighlight].scrollIntoView({ block: 'nearest' });
+  }
+
+  // Action + card click delegation
+  cmdActions.addEventListener('click', function(e) {
+    var actionEl = e.target.closest('.cmd-action');
+    if (actionEl) {
+      var id = actionEl.dataset.cmdId;
+      var item = CMD_ITEMS.find(function(i) { return i.id === id; });
+      if (item) item.action();
+      return;
+    }
+    var cardRow = e.target.closest('.ac-card-row');
+    if (cardRow) {
+      var cn = cardRow.dataset.cn;
+      var card = getCardByNumber(cn);
+      if (card) { closeCommandDeck(); openModal(card); }
     }
   });
 
-  // Global keyboard shortcut: Ctrl+K or / to open search
-  document.addEventListener('keydown', (e) => {
+  // Global keyboard shortcut: Ctrl+K or / to open command deck
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && isCommandDeckOpen()) {
+      closeCommandDeck();
+      return;
+    }
     if ((e.key === 'k' && (e.ctrlKey || e.metaKey)) ||
         (e.key === '/' && !e.target.closest('input, textarea'))) {
       e.preventDefault();
-      if (isMobile()) {
-        if (isSearchPageOpen()) closeSearchPage();
-        else openSearchPage();
-      } else {
-        openHeaderSearch();
-      }
+      if (isCommandDeckOpen()) closeCommandDeck();
+      else openCommandDeck();
     }
   });
 
-  // ── Header Search Autocomplete ──
-  headerSearchInput.addEventListener('input', () => {
-    const q = headerSearchInput.value.trim().toLowerCase();
-    if (q.length < 1) { headerAcList.classList.remove('show'); headerAcList.innerHTML = ''; headerSearchInput.setAttribute('aria-expanded', 'false'); return; }
-
-    const allSearchable = [...allCards, ...variantCards];
-    const matches = allSearchable.filter(c =>
-      c.name.toLowerCase().includes(q) || c.collector_number.toLowerCase() === q
-    ).slice(0, 15);
-
-    headerAcHighlight = -1;
-    if (matches.length === 0) {
-      headerAcList.textContent = '';
-      const noRes = document.createElement('div');
-      noRes.className = 'ac-no-results';
-      noRes.innerHTML = '<span class="ac-no-icon">&#128269;</span>';
-      noRes.appendChild(document.createTextNode('No cards matching \u201c' + q + '\u201d'));
-      headerAcList.appendChild(noRes);
-      headerAcList.classList.add('show');
-      headerSearchInput.setAttribute('aria-expanded', 'true');
-      return;
-    }
-
-    headerAcList.innerHTML = matches.map((c, i) => {
-      const isOwned = ownedSet.has(c.collector_number);
-      const isFoilOwned = hasFoil(c.collector_number);
-      const isVar = !mainSetCNs.has(c.collector_number);
-      const ownedBadge = isOwned
-        ? `<span class="ac-owned-badge">\u2713 Owned</span>`
-        : '';
-      const foilBadge = isFoilOwned
-        ? `<span class="ac-foil-badge">\u2726 Foil</span>` : '';
-      const collectorBadge = isVar
-        ? `<span class="ac-collector-badge">Collector</span>` : '';
-      // Build detail fragments: collector #, rarity, then prices inline
-      let detailParts = [`#${esc(c.collector_number)}`, esc(c.rarity)];
-      if (c.price_usd > 0) detailParts.push(`<span class="ac-price-usd">RM ${(c.price_usd * USD_TO_MYR).toFixed(2)}</span>`);
-      if (c.price_usd_foil > 0) detailParts.push(`<span class="ac-price-foil">\u2726 RM ${(c.price_usd_foil * USD_TO_MYR).toFixed(2)}</span>`);
-      return `<div class="ac-card-row${isVar ? ' ac-variant-row' : ''}" data-cn="${esc(c.collector_number)}" data-index="${i}" role="option" aria-selected="false">
-        <img src="${esc(c.image_small)}" alt="${displayNameText(c)}" loading="lazy"${isOwned ? ' class="ac-img-owned"' : ''}>
-        <div class="ac-info">
-          <div class="ac-name">${displayName(c)}</div>
-          <div class="ac-detail">${detailParts.join(' \u00B7 ')}</div>
-        </div>
-        <div class="ac-actions">${collectorBadge}${ownedBadge}${foilBadge}<span class="ac-chevron">\u203A</span></div>
-      </div>`;
-    }).join('');
-    headerAcList.classList.add('show');
-    headerSearchInput.setAttribute('aria-expanded', 'true');
+  // Sync chip click opens command deck with sync highlighted
+  document.getElementById('sync-chip').addEventListener('click', function() {
+    openCommandDeck();
+    cmdInput.value = 'sync';
+    renderCommandActions('sync');
   });
 
-  headerSearchInput.addEventListener('keydown', (e) => {
-    const items = headerAcList.querySelectorAll('.ac-card-row');
-    if (!items.length) return;
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      headerAcHighlight = Math.min(headerAcHighlight + 1, items.length - 1);
-      updateHeaderAcHighlight(items);
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      headerAcHighlight = Math.max(headerAcHighlight - 1, 0);
-      updateHeaderAcHighlight(items);
-    } else if (e.key === 'Enter' && headerAcHighlight >= 0) {
-      e.preventDefault();
-      items[headerAcHighlight].click();
-    }
-  });
-
-  function updateHeaderAcHighlight(items) {
-    items.forEach((el, i) => {
-      el.classList.toggle('hl', i === headerAcHighlight);
-      el.setAttribute('aria-selected', i === headerAcHighlight ? 'true' : 'false');
-    });
-    if (items[headerAcHighlight]) items[headerAcHighlight].scrollIntoView({ block: 'nearest' });
-  }
-
-  headerAcList.addEventListener('click', (e) => {
-    const row = e.target.closest('.ac-card-row');
-    if (!row) return;
-    const cn = row.dataset.cn;
-    const card = getCardByNumber(cn);
-    headerAcList.classList.remove('show');
-    if (card) openModal(card);
-  });
-
-  // ── Full-Screen Search Page ──
-  const searchPage = document.getElementById('search-page');
-  const searchPageInput = document.getElementById('search-page-input');
-  const searchPageClose = document.getElementById('search-page-close');
-  const searchFab = document.getElementById('search-fab');
-
-  let searchCloseTimer = null;
-
-  function openSearchPage() {
-    clearTimeout(searchCloseTimer);
-    searchPage.classList.add('animating');
-    searchPage.offsetHeight; // force reflow
-    searchPage.classList.add('open');
-    searchPage.classList.remove('animating');
-    document.body.style.overflow = 'hidden';
-    setTimeout(() => { searchPageInput.focus(); }, 320);
-    renderSearchBlankState();
-  }
-
-  function closeSearchPage() {
-    searchPage.classList.add('animating');
-    searchPage.classList.remove('open');
-    document.body.style.overflow = '';
-    searchPageInput.value = '';
-    clearSearchResults();
-    clearSearchChips();
-    searchCloseTimer = setTimeout(() => { searchPage.classList.remove('animating'); }, 300);
-  }
-
-  function isSearchPageOpen() {
-    return searchPage.classList.contains('open');
-  }
-
-  // Expose for onclick attributes in dashboard
-  window.openSearchPage = openSearchPage;
-
-  // FAB toggle
-  searchFab.addEventListener('click', () => {
-    if (isSearchPageOpen()) closeSearchPage();
-    else openSearchPage();
-  });
-
-  // Close button
-  searchPageClose.addEventListener('click', closeSearchPage);
-
-  // Escape key closes search page
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && isSearchPageOpen()) {
-      closeSearchPage();
-    }
-  });
-
-  // Swipe-down to dismiss
-  (function initSearchSwipeDismiss() {
-    let startY = 0, currentY = 0, isDragging = false;
-    searchPage.addEventListener('touchstart', (e) => {
-      if (searchPage.scrollTop > 0) return;
-      startY = e.touches[0].clientY;
-      currentY = startY;
-      isDragging = true;
-    }, { passive: true });
-
-    searchPage.addEventListener('touchmove', (e) => {
-      if (!isDragging) return;
-      currentY = e.touches[0].clientY;
-      const dy = currentY - startY;
-      if (dy > 0) {
-        searchPage.style.transform = 'translateY(' + dy + 'px)';
-        searchPage.style.transition = 'none';
-      }
-    }, { passive: true });
-
-    searchPage.addEventListener('touchend', () => {
-      if (!isDragging) return;
-      isDragging = false;
-      const dy = currentY - startY;
-      searchPage.style.transition = 'transform 0.2s ease-out';
-      searchPage.style.transform = '';
-      if (dy > 80) closeSearchPage();
-      else setTimeout(() => { searchPage.style.transition = ''; }, 200);
-    }, { passive: true });
-  })();
-
-  function renderSearchBlankState() {
-    const recentSection = document.getElementById('search-recent-section');
-    const recentContainer = document.getElementById('search-recent');
-    const addEvents = timelineEvents.filter(e => e.type === 'add');
-    const recentCNs = [...new Set(addEvents.slice(-8).reverse().map(e => e.cn))];
-    if (recentCNs.length === 0) {
-      recentSection.style.display = 'none';
-    } else {
-      recentSection.style.display = '';
-      recentContainer.innerHTML = recentCNs.map(cn => {
-        const card = getCardByNumber(cn);
-        if (!card) return '';
-        return '<div class="search-recent-card" data-cn="' + esc(card.collector_number) + '">' +
-          '<img src="' + esc(card.image_small) + '" alt="' + esc(displayNameText(card)) + '" loading="lazy">' +
-          '</div>';
-      }).join('');
-    }
-    document.getElementById('search-page-blank').style.display = '';
-    document.getElementById('search-page-results').style.display = 'none';
-  }
-
-  function clearSearchResults() {
-    document.getElementById('search-results-grid').innerHTML = '';
-    document.getElementById('search-results-count').textContent = '';
-  }
-
-  function clearSearchChips() {
-    document.querySelectorAll('.search-chip').forEach(c => c.classList.remove('active'));
-  }
-
-  // Quick action: Open Pack
-  document.getElementById('search-action-pack').addEventListener('click', () => {
-    openPackModal();
-  });
-
-  // Quick action: Missing Cards
-  document.getElementById('search-action-missing').addEventListener('click', () => {
-    clearSearchChips();
-    const chip = document.querySelector('.search-chip[data-filter="missing"]');
-    if (chip) { chip.classList.add('active'); applySearchFilters(); }
-  });
-
-  // Quick action: Mythic Rares
-  document.getElementById('search-action-mythic').addEventListener('click', () => {
-    clearSearchChips();
-    const chip = document.querySelector('.search-chip[data-filter="mythic"]');
-    if (chip) { chip.classList.add('active'); applySearchFilters(); }
-  });
-
-  // Filter chips
-  document.querySelectorAll('.search-chip').forEach(chip => {
-    chip.addEventListener('click', () => {
-      chip.classList.toggle('active');
-      applySearchFilters();
-    });
-  });
-
-  // Recently added card clicks
-  document.getElementById('search-recent').addEventListener('click', (e) => {
-    const cardEl = e.target.closest('.search-recent-card');
-    if (!cardEl) return;
-    const card = getCardByNumber(cardEl.dataset.cn);
-    if (card) openModal(card);
-  });
-
-  function applySearchFilters() {
-    const q = searchPageInput.value.trim().toLowerCase();
-    const activeChips = [...document.querySelectorAll('.search-chip.active')].map(c => c.dataset.filter);
-
-    if (!q && activeChips.length === 0) {
-      document.getElementById('search-page-blank').style.display = '';
-      document.getElementById('search-page-results').style.display = 'none';
-      return;
-    }
-
-    const allSearchable = [...allCards, ...variantCards];
-    let results = allSearchable;
-
-    if (q) {
-      results = results.filter(c =>
-        c.name.toLowerCase().includes(q) ||
-        c.collector_number.toLowerCase() === q ||
-        c.collector_number.toLowerCase().startsWith(q)
-      );
-    }
-
-    for (const filter of activeChips) {
-      if (filter === 'owned') results = results.filter(c => ownedSet.has(c.collector_number));
-      else if (filter === 'missing') results = results.filter(c => !ownedSet.has(c.collector_number));
-      else results = results.filter(c => c.rarity === filter);
-    }
-
-    document.getElementById('search-page-blank').style.display = 'none';
-    document.getElementById('search-page-results').style.display = '';
-
-    const countEl = document.getElementById('search-results-count');
-    const gridEl = document.getElementById('search-results-grid');
-
-    if (results.length === 0) {
-      countEl.textContent = 'No cards found';
-      gridEl.innerHTML = '';
-      return;
-    }
-
-    countEl.textContent = results.length + ' card' + (results.length !== 1 ? 's' : '');
-
-    const shown = results.slice(0, 60);
-    gridEl.innerHTML = shown.map(c => {
-      const isOwned = ownedSet.has(c.collector_number);
-      const priceStr = c.price_usd > 0 ? '$' + c.price_usd.toFixed(2) : '';
-      return '<div class="search-result-card' + (isOwned ? ' owned' : '') + '" data-cn="' + esc(c.collector_number) + '">' +
-        '<img src="' + esc(c.image_small) + '" alt="' + esc(displayNameText(c)) + '" loading="lazy">' +
-        '<div class="search-result-info">' +
-          '<div class="search-result-name">' + displayName(c) + '</div>' +
-          '<div class="search-result-detail">#' + esc(c.collector_number) + (priceStr ? ' &middot; ' + priceStr : '') + '</div>' +
-          (isOwned
-            ? '<div class="search-result-owned">&check; Owned</div>'
-            : '<div class="search-result-add" data-cn="' + esc(c.collector_number) + '">+ Add</div>') +
-        '</div>' +
-      '</div>';
-    }).join('');
-    if (results.length > 60) {
-      gridEl.insertAdjacentHTML('beforeend',
-        '<div style="grid-column:1/-1;text-align:center;padding:12px;color:var(--text-muted);font-size:0.72rem">Showing 60 of ' + results.length + ' results. Refine your search to see more.</div>');
-    }
-  }
-
-  // Debounced search input
-  let searchPageDebounce = null;
-  searchPageInput.addEventListener('input', () => {
-    clearTimeout(searchPageDebounce);
-    searchPageDebounce = setTimeout(() => applySearchFilters(), 200);
-  });
-
-  // Result card clicks (event delegation)
-  document.getElementById('search-results-grid').addEventListener('click', (e) => {
-    const addBtn = e.target.closest('.search-result-add');
-    if (addBtn) {
-      e.stopPropagation();
-      const cn = addBtn.dataset.cn;
-      addCard(cn);
-      applySearchFilters();
-      return;
-    }
-    const cardEl = e.target.closest('.search-result-card');
-    if (cardEl) {
-      const card = getCardByNumber(cardEl.dataset.cn);
-      if (card) openModal(card);
-    }
-  });
 
   // ── Pack Opening Modal ──
   const packModalOverlay = document.getElementById('pack-modal-overlay');
@@ -6963,6 +6834,7 @@ document.head.appendChild(manifestLink);
     const owned = ownedSet.size;
     const missing = total - owned;
     const pct = total ? (owned / total * 100) : 0;
+    updateHUDStats();
     const rarities = ['mythic', 'rare', 'uncommon', 'common'];
     const rarityColors = { mythic: '#e8702a', rare: '#c9a14e', uncommon: '#72b5b5', common: '#777' };
     const rarityCounts = {};
@@ -7031,7 +6903,7 @@ document.head.appendChild(manifestLink);
         }).join('')}</div>`
       : `<div style="text-align:center;padding:16px 0;color:var(--text-muted);font-size:0.82rem">
           Open a pack or search for cards to get started
-          <br><button class="btn btn-primary" style="margin-top:8px;font-size:0.78rem;padding:6px 14px" onclick="event.stopPropagation();if(typeof openSearchPage==='function'&&window.innerWidth<=700){openSearchPage()}else{document.getElementById('header-search-btn').click()}">Add Cards</button>
+          <br><button class="btn btn-primary" style="margin-top:8px;font-size:0.78rem;padding:6px 14px" onclick="event.stopPropagation();openSearchPage()">Add Cards</button>
         </div>`;
 
     // Binder mini-map
@@ -7276,7 +7148,7 @@ document.head.appendChild(manifestLink);
       <span class="empty-state-icon"><svg viewBox="0 0 512 512" width="40" height="40"><path fill="var(--accent)" d="M256 16L128 176l128 320 128-320L256 16zm0 64l80 112H176l80-112zm-96 144h192l-96 240-96-240z"/></svg></span>
       <div class="empty-state-title">No cards in collection yet</div>
       <div class="empty-state-desc">Add cards to see your portfolio valuation, top cards, and value trends.</div>
-      <button class="btn btn-primary" style="font-size:0.78rem;padding:6px 14px" onclick="event.stopPropagation();if(typeof openSearchPage==='function'&&window.innerWidth<=700){openSearchPage()}else{document.getElementById('header-search-btn').click()}">Add Cards</button>
+      <button class="btn btn-primary" style="font-size:0.78rem;padding:6px 14px" onclick="event.stopPropagation();openSearchPage()">Add Cards</button>
     </div>` : '';
     el.innerHTML = `
       <div class="dashboard">
@@ -7515,7 +7387,7 @@ document.head.appendChild(manifestLink);
       journeyHTML = '<div style="text-align:center;padding:32px 0;color:var(--text-muted)">' +
         '<div style="font-size:2rem;margin-bottom:8px">📭</div>' +
         '<div style="font-size:0.9rem;font-weight:600;margin-bottom:4px">Your collection journey starts here</div>' +
-        '<button class="btn btn-primary" style="margin-top:8px;font-size:0.78rem;padding:6px 14px" onclick="event.stopPropagation();if(typeof openSearchPage===\'function\'&&window.innerWidth<=700){openSearchPage()}else{document.getElementById(\'header-search-btn\').click()}">Add Your First Card</button>' +
+        '<button class="btn btn-primary" style="margin-top:8px;font-size:0.78rem;padding:6px 14px" onclick="event.stopPropagation();openSearchPage()">Add Your First Card</button>' +
       '</div>';
     } else {
       journeyHTML = '<div class="journey-timeline">';
@@ -8769,12 +8641,9 @@ document.head.appendChild(manifestLink);
         document.body.style.overflow = 'hidden';
         renderPackModalStep2();
       }
-      // Re-focus header search if it was open
-      if (headerSearchBar.classList.contains('open')) {
-        headerSearchInput.focus();
-        if (headerSearchInput.value.trim()) {
-          headerSearchInput.dispatchEvent(new Event('input'));
-        }
+      // Re-focus command deck if it was open
+      if (isCommandDeckOpen()) {
+        cmdInput.focus();
       }
     }, 280);
   }
@@ -9044,7 +8913,7 @@ document.head.appendChild(manifestLink);
       const dx = e.changedTouches[0].clientX - touchStartX;
       if (Math.abs(dx) < 50) return;
       if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-      if (isSearchPageOpen()) return;
+      if (isCommandDeckOpen()) return;
       const visibleTabs = TAB_ORDER.filter(t => {
         if (isMobile()) {
           const bnav = document.querySelector('.bnav-btn[data-tab="' + t + '"]');
@@ -9530,6 +9399,7 @@ document.head.appendChild(manifestLink);
       }, 300);
       renderProgress();
       renderDashboard();
+      updateHUDStats();
       if (!binderConfig.configured) {
         const settingsBtn = document.querySelector('[data-tab="settings"]');
         if (settingsBtn) settingsBtn.click();
@@ -9561,6 +9431,7 @@ document.head.appendChild(manifestLink);
       }, 300);
       renderProgress();
       renderDashboard();
+      updateHUDStats();
       // Auto-navigate to Settings on first run
       if (!binderConfig.configured) {
         const settingsBtn = document.querySelector('[data-tab="settings"]');
