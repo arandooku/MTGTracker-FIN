@@ -5544,19 +5544,46 @@ document.head.appendChild(manifestLink);
     return (card.promo_types || []).includes('chocobotrackfoil');
   }
 
+  function isNeonInk(card) {
+    return (card.promo_types || []).includes('neonink');
+  }
+
+  function isSerialized(card) {
+    return (card.promo_types || []).includes('serialized');
+  }
+
+  function isStarterDeck(card) {
+    return (card.promo_types || []).includes('starterdeck');
+  }
+
   function isShowcase(card) {
     return (card.frame_effects || []).includes('inverted');
   }
 
+  function isExtendedArt(card) {
+    return (card.frame_effects || []).includes('extendedart');
+  }
+
+  function isBorderless(card) {
+    const pt = card.promo_types || [];
+    const fe = card.frame_effects || [];
+    return pt.includes('boosterfun') && !fe.includes('inverted') && !fe.includes('extendedart')
+      && !isSurgeFoil(card) && !isChocoboTrack(card) && !isNeonInk(card) && !isSerialized(card);
+  }
+
   // Returns uppercase badge label for foil toast and variant chips
+  // Priority: most specific promo_type first, then frame_effects
   function getFoilVariantLabel(card) {
     if (!card) return 'FOIL';
-    const fe = card.frame_effects || [];
-    if (isSurgeFoil(card))           return 'SURGE FOIL';
-    if (isChocoboTrack(card))        return 'CHOCOBO TRACK FOIL';
-    if (fe.includes('extendedart'))  return 'EXTENDED ART';
-    if (isShowcase(card))            return 'SHOWCASE';
-    if ((card.finishes || []).includes('foil') && (card.finishes || []).every(f => f !== 'nonfoil')) return 'COLLECTOR FOIL';
+    if (isSurgeFoil(card))    return 'SURGE FOIL';
+    if (isChocoboTrack(card)) return 'CHOCOBO TRACK FOIL';
+    if (isNeonInk(card))      return 'NEON INK FOIL';
+    if (isSerialized(card))   return 'SERIALIZED';
+    if (isStarterDeck(card))  return 'STARTER DECK';
+    if (isExtendedArt(card))  return 'EXTENDED ART';
+    if (isShowcase(card))     return 'SHOWCASE';
+    if (isBorderless(card))   return 'BORDERLESS';
+    if ((card.finishes || []).includes('foil') && (card.finishes || []).every(f => f !== 'nonfoil')) return 'FOIL';
     return 'FOIL';
   }
 
@@ -5570,17 +5597,19 @@ document.head.appendChild(manifestLink);
   }
 
   // Returns { label, cssClass, short } for autocomplete badge rendering
+  // Priority: most specific promo_type first, then frame_effects
   function getCardVariantInfo(card) {
     if (!card) return { label: '', cssClass: 'vb-normal', short: '' };
-    const isVariant = !mainSetCNs.has(card.collector_number);
-    const fe = card.frame_effects || [];
-    if (isSurgeFoil(card))          return { label: 'SURGE FOIL', cssClass: 'vb-surge', short: 'Surge' };
-    if (isChocoboTrack(card))       return { label: 'CHOCOBO TRACK', cssClass: 'vb-chocobo', short: 'Chocobo' };
-    if (fe.includes('extendedart')) return { label: 'EXTENDED ART', cssClass: 'vb-extended', short: 'Ext. Art' };
-    if (isShowcase(card))           return { label: 'SHOWCASE', cssClass: 'vb-showcase', short: 'Showcase' };
-    if (isVariant) {
-      if ((card.finishes || []).every(f => f !== 'nonfoil'))
-        return { label: 'COLLECTOR FOIL', cssClass: 'vb-collector', short: 'Collector' };
+    const isVar = !mainSetCNs.has(card.collector_number);
+    if (isSurgeFoil(card))    return { label: 'SURGE FOIL', cssClass: 'vb-surge', short: 'Surge' };
+    if (isChocoboTrack(card)) return { label: 'CHOCOBO TRACK', cssClass: 'vb-chocobo', short: 'Chocobo' };
+    if (isNeonInk(card))      return { label: 'NEON INK', cssClass: 'vb-showcase', short: 'Neon Ink' };
+    if (isSerialized(card))   return { label: 'SERIALIZED', cssClass: 'vb-collector', short: 'Serialized' };
+    if (isStarterDeck(card))  return { label: 'STARTER DECK', cssClass: 'vb-normal', short: 'Starter' };
+    if (isExtendedArt(card))  return { label: 'EXTENDED ART', cssClass: 'vb-extended', short: 'Ext. Art' };
+    if (isShowcase(card))     return { label: 'SHOWCASE', cssClass: 'vb-showcase', short: 'Showcase' };
+    if (isVar && isBorderless(card)) return { label: 'BORDERLESS', cssClass: 'vb-extended', short: 'Borderless' };
+    if (isVar) {
       return { label: 'VARIANT', cssClass: 'vb-collector', short: 'Variant' };
     }
     return { label: '', cssClass: 'vb-normal', short: '' };
@@ -7975,13 +8004,16 @@ document.head.appendChild(manifestLink);
 
   // ── Modal helpers ──
   function getVariantLabel(v) {
-    var fe = v.frame_effects || [];
-    if (isSurgeFoil(v)) return 'Surge Foil';
+    if (isSurgeFoil(v))    return 'Surge Foil';
     if (isChocoboTrack(v)) return 'Chocobo Track Foil';
-    if (fe.includes('extendedart')) return 'Extended Art';
-    if (isShowcase(v)) return 'Showcase';
+    if (isNeonInk(v))      return 'Neon Ink';
+    if (isSerialized(v))   return 'Serialized';
+    if (isStarterDeck(v))  return 'Starter Deck';
+    if (isExtendedArt(v))  return 'Extended Art';
+    if (isShowcase(v))     return 'Showcase';
+    if (isBorderless(v))   return 'Borderless';
     if (mainSetCNs.has(v.collector_number)) return 'Foil';
-    return 'Collector Variant';
+    return 'Variant';
   }
 
   function buildFoilInfoHTML(card) {
