@@ -274,7 +274,7 @@
     border-color: rgba(124,58,237,0.3);
   }
   .search-action-card:hover { border-color: var(--accent); }
-  .search-action-emoji { display: block; font-size: 1.25rem; margin-bottom: 4px; }
+  .search-action-emoji { display: flex; justify-content: center; margin-bottom: 4px; }
   .search-action-text {
     font-size: 0.7rem; font-weight: 600; color: var(--text);
     font-family: 'Rajdhani', sans-serif;
@@ -3774,7 +3774,7 @@ document.head.appendChild(manifestLink);
         <button class="search-page-close" id="search-page-close" aria-label="Close search">&times;</button>
       </div>
       <div class="search-page-input-wrap">
-        <svg class="search-page-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <svg class="search-page-icon" width="16" height="16" viewBox="0 0 512 512"><path fill="currentColor" d="M208 48C117.2 48 44 121.2 44 212s73.2 164 164 164c37.8 0 72.7-12.8 100.5-34.3l115.4 115.4c6.2 6.2 16.4 6.2 22.6 0s6.2-16.4 0-22.6L331.1 319.1C355.5 290.1 370 252.8 370 212 370 121.2 296.8 48 208 48zm0 40c68.5 0 124 55.5 124 124s-55.5 124-124 124S84 280.5 84 212 139.5 88 208 88zm-12 44c-4.4 0-8 3.6-8 8 0 4.4 3.6 8 8 8 35.3 0 64 28.7 64 64 0 4.4 3.6 8 8 8s8-3.6 8-8c0-44.2-35.8-80-80-80z"/></svg>
         <input type="search" id="search-page-input" placeholder="Search cards by name or #..." autocomplete="off" inputmode="search" aria-label="Search cards" style="font-size:16px;">
       </div>
       <div id="search-page-blank" class="search-page-body">
@@ -3782,15 +3782,15 @@ document.head.appendChild(manifestLink);
           <div class="search-section-label">Quick Actions</div>
           <div class="search-action-row">
             <button class="search-action-card" id="search-action-pack">
-              <span class="search-action-emoji">&#127183;</span>
+              <span class="search-action-emoji"><svg viewBox="0 0 512 512" width="24" height="24"><path fill="var(--accent)" d="M209.813 19.313L18.405 81.28 209.813 161.5l191.406-80.22-191.407-61.968zm-208.5 80.5v225.874l14.03 5.157 194.47 71.47V176.437l-14.094-5.906-194.407-70.72zm417 0l-194.407 70.72-14.094 5.905v225.875l194.47-71.47 14.03-5.156V99.813z"/></svg></span>
               <span class="search-action-text">Open Pack</span>
             </button>
             <button class="search-action-card" id="search-action-missing">
-              <span class="search-action-emoji">&#10067;</span>
+              <span class="search-action-emoji"><svg viewBox="0 0 512 512" width="24" height="24"><path fill="var(--text-muted)" d="M255.97 19.313c-130.37 0-236.688 106.318-236.688 236.687 0 130.37 106.318 236.688 236.688 236.688 130.37 0 236.718-106.318 236.718-236.688 0-130.37-106.348-236.688-236.72-236.688zm0 41.375c107.97 0 195.343 87.342 195.343 195.312 0 107.97-87.373 195.313-195.344 195.313-107.97 0-195.314-87.343-195.314-195.313 0-107.97 87.343-195.313 195.313-195.313zM228.906 134v18.688h54.125V134h-54.124zm0 56.063v133.468h54.125V190.063h-54.124zm0 169.625V416h54.125v-56.313h-54.124z"/></svg></span>
               <span class="search-action-text">Missing</span>
             </button>
             <button class="search-action-card" id="search-action-mythic">
-              <span class="search-action-emoji">&#11088;</span>
+              <span class="search-action-emoji"><svg viewBox="0 0 512 512" width="24" height="24"><path fill="#e8702a" d="M256 25.4L89.4 122.8v194.8L256 414.8l166.6-97.2V122.8L256 25.4zm0 45.4l132.6 77.4v154.8L256 380.4l-132.6-77.4V148.2L256 70.8zm0 66l-66.3 38.7v77.4l66.3 38.7 66.3-38.7v-77.4L256 136.8z"/></svg></span>
               <span class="search-action-text">Mythic Rares</span>
             </button>
           </div>
