@@ -8314,7 +8314,7 @@ document.head.appendChild(manifestLink);
           foilToggleBtn.onclick = () => addToPackAndReturn(card.collector_number, true);
         }
       } else if (canBeFoil && !isPack) {
-        const inherentlyFoil = isVariant && !hasNonfoil && (isSurgeFoil(card) || isChocoboTrack(card));
+        const inherentlyFoil = isVariant && !hasNonfoil;
         _showFoilToggle = inherentlyFoil;
         foilToggleBtn.disabled = false;
         const typeAlreadyFoil = isVariant && variantType.toLowerCase().includes('foil');
@@ -8399,7 +8399,7 @@ document.head.appendChild(manifestLink);
     if (foilInfoEl) foilInfoEl.innerHTML = buildFoilInfoHTML(card);
 
     // Highlight price chips for the current card
-    const _initInherentFoil = isVariant && !hasNonfoil && (isSurgeFoil(card) || isChocoboTrack(card));
+    const _initInherentFoil = isVariant && !hasNonfoil;
     if (_initInherentFoil) highlightPriceChips(card.collector_number, true);
     else highlightPriceChipsByCn(card.collector_number);
 
@@ -8573,7 +8573,7 @@ document.head.appendChild(manifestLink);
     if (_currentModalCard && _currentModalCard.collector_number === targetCN) {
       const isVar = !mainSetCNs.has(_currentModalCard.collector_number);
       const _hasNonfoil = (_currentModalCard.finishes || []).includes('nonfoil');
-      const _inherentFoil = isVar && !_hasNonfoil && (isSurgeFoil(_currentModalCard) || isChocoboTrack(_currentModalCard));
+      const _inherentFoil = isVar && !_hasNonfoil;
       showModalBtn(document.getElementById('modal-toggle'), !(isVar && !_hasNonfoil));
       showModalBtn(document.getElementById('modal-foil-toggle'), _inherentFoil);
       if (_inherentFoil) highlightPriceChips(targetCN, true);
@@ -8586,7 +8586,7 @@ document.head.appendChild(manifestLink);
     // Navigated to a variant — show appropriate button
     const isVar = !mainSetCNs.has(targetCard.collector_number);
     const _tHasNonfoil = (targetCard.finishes || []).includes('nonfoil');
-    const _tInherentFoil = isVar && !_tHasNonfoil && (isSurgeFoil(targetCard) || isChocoboTrack(targetCard));
+    const _tInherentFoil = isVar && !_tHasNonfoil;
     showModalBtn(document.getElementById('modal-toggle'), !(isVar && !_tHasNonfoil));
     showModalBtn(document.getElementById('modal-foil-toggle'), _tInherentFoil);
     if (_tInherentFoil) highlightPriceChips(targetCard.collector_number, true);
