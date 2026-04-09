@@ -63,7 +63,7 @@ Everything lives in `index.html` — no build step, no external JS files. The sc
 | Timeline | Chronological pull log |
 | Binder | Paginated binder grid with flanking nav arrows, spread view, page slider widget, slot-click to add/remove |
 | Collector | Unified foil + variant grid with filter bar, search, pagination, foil shimmer, slot-click ownership (requires `collectorBinder` scope enabled) |
-| Settings | Binder config wizard, Gist sync config, cache controls |
+| Settings | Binder config wizard, Gist sync config, scan engine settings (OCR.space API key, clear hash cache), cache controls |
 
 ## Scryfall API
 
@@ -83,4 +83,9 @@ When committing and pushing, only stage the actual application files (`index.htm
 - Collection data syncs to a private GitHub Gist via the GitHub API.
 - User provides a Personal Access Token with `gist` scope. Stored in `fin-gist-config`.
 - Auto-pushes 5 seconds after any save (debounced). Manual push/pull via sync button in header.
+- **Auto-pull on startup**: If `fin-gist-config` has valid credentials but `binderConfig.configured` is false (e.g. different device or cleared storage), automatically pulls from cloud during init before showing UI.
 - Gist file `fin-binder-data.json` payload includes: `collection`, `packs`, `timeline`, `binderConfig`, and `foil` objects.
+
+## Known Gotchas
+
+- **Const ordering**: `VALID_CN`, `VALID_ISO`, `VALID_PRESET` must be declared before `loadConfig()` is called (line ~5449). `sanitizeBinderConfig()` is a hoisted function declaration but these regex constants use `const` (temporal dead zone). Moving them after `loadConfig()` silently breaks config loading — the `try/catch` in `loadConfig` swallows the ReferenceError and returns `{ configured: false }`.
