@@ -7103,37 +7103,53 @@ document.head.appendChild(manifestLink);
     var norm = normalizeCardName(ocrText);
     if (norm.length < 2) return null;
 
-    // 1. Exact match
+    // 1. Exact match on full text
     if (nameMap.has(norm)) return { name: norm, cards: nameMap.get(norm), score: 1.0 };
 
-    // 2. Substring — OCR read is contained in a card name or vice versa
+    // 2. Check if any known card name appears as a substring in the OCR text
     var bestSub = null;
     var bestSubLen = 0;
     nameMap.forEach(function(cards, name) {
-      if (name.includes(norm) || norm.includes(name)) {
-        var overlap = Math.min(norm.length, name.length);
-        if (overlap > bestSubLen) {
-          bestSubLen = overlap;
-          bestSub = { name: name, cards: cards, score: overlap / Math.max(norm.length, name.length) };
+      if (name.length >= 3 && norm.includes(name)) {
+        if (name.length > bestSubLen) {
+          bestSubLen = name.length;
+          bestSub = { name: name, cards: cards, score: 0.95 };
         }
       }
     });
-    if (bestSub && bestSub.score >= 0.7) return bestSub;
+    if (bestSub) return bestSub;
 
-    // 3. Levenshtein distance
-    var bestLev = null;
-    var bestScore = 0;
-    nameMap.forEach(function(cards, name) {
-      var maxLen = Math.max(norm.length, name.length);
-      if (maxLen === 0) return;
-      var dist = levenshtein(norm, name);
-      var score = 1 - (dist / maxLen);
-      if (score > bestScore) {
-        bestScore = score;
-        bestLev = { name: name, cards: cards, score: score };
+    // 3. Sliding window: try consecutive word groups from OCR text
+    //    OCR may read "Yiazmat Ultimate Mark Creature Legendary..."
+    //    We try windows of 1-5 words against the name map
+    var words = norm.split(/\s+/);
+    var bestWin = null;
+    var bestWinScore = 0;
+    for (var winSize = Math.min(5, words.length); winSize >= 1; winSize--) {
+      for (var wi = 0; wi <= words.length - winSize; wi++) {
+        var window = words.slice(wi, wi + winSize).join(' ');
+        if (window.length < 3) continue;
+
+        // Exact window match
+        if (nameMap.has(window)) {
+          return { name: window, cards: nameMap.get(window), score: 1.0 };
+        }
+
+        // Levenshtein against each card name
+        nameMap.forEach(function(cards, name) {
+          // Only compare windows of similar length (within 40%)
+          if (Math.abs(window.length - name.length) > name.length * 0.4) return;
+          var maxLen = Math.max(window.length, name.length);
+          var dist = levenshtein(window, name);
+          var score = 1 - (dist / maxLen);
+          if (score > bestWinScore) {
+            bestWinScore = score;
+            bestWin = { name: name, cards: cards, score: score };
+          }
+        });
       }
-    });
-    if (bestLev && bestLev.score >= 0.7) return bestLev;
+    }
+    if (bestWin && bestWin.score >= 0.65) return bestWin;
 
     return null;
   }
