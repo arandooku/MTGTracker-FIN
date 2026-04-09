@@ -6887,10 +6887,7 @@ document.head.appendChild(manifestLink);
       if (initTimedOut) { worker.terminate(); return; }
       clearTimeout(initTimeout);
       scanWorker = worker;
-      return worker.setParameters({
-        tessedit_pageseg_mode: Tesseract.PSM.SINGLE_BLOCK,
-        preserve_interword_spaces: '1'
-      });
+      return worker.setParameters({ tessedit_pageseg_mode: Tesseract.PSM.AUTO });
     }).then(function() {
       if (initTimedOut) return;
       scannerStatus.textContent = 'Hold card steady in the frame';
@@ -6979,89 +6976,6 @@ document.head.appendChild(manifestLink);
       });
   }
 
-  // ── Image Preprocessing for OCR ──
-
-  // Calculate video pixel region for the guide rect (accounts for object-fit: cover)
-  function getGuideRectCrop(videoW, videoH) {
-    var vfW = scannerViewfinder.clientWidth;
-    var vfH = scannerViewfinder.clientHeight;
-    if (!vfW || !vfH) return { x: 0, y: 0, w: videoW, h: videoH };
-    var guideW = vfW * 0.65;
-    var guideH = guideW * (7 / 5);
-    var guideX = (vfW - guideW) / 2;
-    var guideY = (vfH - guideH) / 2;
-    var videoAR = videoW / videoH;
-    var vfAR = vfW / vfH;
-    var renderedW, renderedH, offsetX, offsetY;
-    if (videoAR > vfAR) {
-      renderedH = vfH; renderedW = vfH * videoAR;
-      offsetX = (renderedW - vfW) / 2; offsetY = 0;
-    } else {
-      renderedW = vfW; renderedH = vfW / videoAR;
-      offsetX = 0; offsetY = (renderedH - vfH) / 2;
-    }
-    var sx = videoW / renderedW, sy = videoH / renderedH;
-    var cx = Math.max(0, Math.round((guideX + offsetX) * sx));
-    var cy = Math.max(0, Math.round((guideY + offsetY) * sy));
-    var cw = Math.min(Math.round(guideW * sx), videoW - cx);
-    var ch = Math.min(Math.round(guideH * sy), videoH - cy);
-    return { x: cx, y: cy, w: cw, h: ch };
-  }
-
-  // Preprocess a canvas region for OCR: grayscale → contrast stretch → binarize → upscale
-  function preprocessForOCR(srcCanvas, region, scale) {
-    scale = scale || 2;
-    var sx = region ? region.x : 0, sy = region ? region.y : 0;
-    var sw = region ? region.w : srcCanvas.width, sh = region ? region.h : srcCanvas.height;
-    var ow = sw * scale, oh = sh * scale;
-    var c = document.createElement('canvas');
-    c.width = ow; c.height = oh;
-    var ctx = c.getContext('2d');
-    // Draw source region scaled up
-    ctx.drawImage(srcCanvas, sx, sy, sw, sh, 0, 0, ow, oh);
-    // Get pixel data
-    var imgData = ctx.getImageData(0, 0, ow, oh);
-    var d = imgData.data;
-    // Pass 1: convert to grayscale, find min/max for contrast stretch
-    var gray = new Uint8Array(ow * oh);
-    var gMin = 255, gMax = 0;
-    for (var i = 0; i < d.length; i += 4) {
-      var g = Math.round(d[i] * 0.299 + d[i + 1] * 0.587 + d[i + 2] * 0.114);
-      gray[i >> 2] = g;
-      if (g < gMin) gMin = g;
-      if (g > gMax) gMax = g;
-    }
-    // Pass 2: contrast stretch + Otsu binarization
-    var range = gMax - gMin || 1;
-    // Otsu threshold: build histogram, find optimal threshold
-    var hist = new Array(256).fill(0);
-    for (var j = 0; j < gray.length; j++) {
-      var stretched = Math.round((gray[j] - gMin) / range * 255);
-      gray[j] = stretched;
-      hist[stretched]++;
-    }
-    var total = gray.length;
-    var sum = 0; for (var t = 0; t < 256; t++) sum += t * hist[t];
-    var sumB = 0, wB = 0, maxVar = 0, threshold = 128;
-    for (var t2 = 0; t2 < 256; t2++) {
-      wB += hist[t2]; if (wB === 0) continue;
-      var wF = total - wB; if (wF === 0) break;
-      sumB += t2 * hist[t2];
-      var mB = sumB / wB, mF = (sum - sumB) / wF;
-      var between = wB * wF * (mB - mF) * (mB - mF);
-      if (between > maxVar) { maxVar = between; threshold = t2; }
-    }
-    // Apply binarization
-    for (var k = 0; k < gray.length; k++) {
-      var val = gray[k] >= threshold ? 255 : 0;
-      var pi = k * 4;
-      d[pi] = d[pi + 1] = d[pi + 2] = val;
-      d[pi + 3] = 255;
-    }
-    ctx.putImageData(imgData, 0, 0);
-    return c;
-  }
-
   function scanFrame() {
     // OCR modes (tesseract / ocrspace)
     if (!scanStream || scanCooldown || scanPaused || scanBusy) return;
@@ -7074,28 +6988,24 @@ document.head.appendChild(manifestLink);
     var vh = scannerVideo.videoHeight;
     if (!vw || !vh) { scanBusy = false; return; }
 
-    // Crop to guide rect region (card area only)
-    var crop = getGuideRectCrop(vw, vh);
-    scannerCanvas.width = crop.w;
-    scannerCanvas.height = crop.h;
+    // Capture full video frame
+    scannerCanvas.width = vw;
+    scannerCanvas.height = vh;
     var ctx = scannerCanvas.getContext('2d');
-    ctx.drawImage(scannerVideo, crop.x, crop.y, crop.w, crop.h, 0, 0, crop.w, crop.h);
+    ctx.drawImage(scannerVideo, 0, 0, vw, vh);
 
     var ocrPromise;
     var engine;
     if (scanMode === 'tesseract') {
       engine = 'Tesseract';
-      // Preprocess: grayscale + contrast + binarize + 2x upscale
-      var processed = preprocessForOCR(scannerCanvas, null, 2);
-      ocrPromise = scanWorker.recognize(processed, { rectangle: null })
+      ocrPromise = scanWorker.recognize(scannerCanvas)
         .then(function(result) { return result.data.text; });
     } else {
       engine = 'Cloud';
       var remaining = getOcrUsageRemaining();
       if (remaining <= 0) { scanBusy = false; onScanFail(); return; }
       scannerLastAdd.textContent = 'Cloud OCR: ' + remaining + '/25000 remaining this month';
-      // For OCR.space, send the cropped (but not binarized) image — their engine handles preprocessing
-      var base64 = scannerCanvas.toDataURL('image/jpeg', 0.85);
+      var base64 = scannerCanvas.toDataURL('image/jpeg', 0.8);
       ocrPromise = ocrSpaceRecognize(base64);
     }
 
@@ -7297,19 +7207,12 @@ document.head.appendChild(manifestLink);
       ocrPromise = ocrSpaceRecognize(base64)
         .then(function(text) { return { text: text, engine: 'Cloud' }; });
     } else {
-      // For photos: preprocess + use PSM.AUTO (more flexible for full card photos)
-      var processed = preprocessForOCR(scannerCanvas, null, 2);
       ocrPromise = scanWorker.setParameters({
         tessedit_pageseg_mode: Tesseract.PSM.AUTO
       }).then(function() {
-        return scanWorker.recognize(processed);
+        return scanWorker.recognize(scannerCanvas);
       }).then(function(result) {
-        // Restore PSM for auto-scan loop
-        return scanWorker.setParameters({
-          tessedit_pageseg_mode: Tesseract.PSM.SINGLE_BLOCK
-        }).then(function() {
-          return { text: result.data.text, engine: 'Tesseract' };
-        });
+        return { text: result.data.text, engine: 'Tesseract' };
       });
     }
 
