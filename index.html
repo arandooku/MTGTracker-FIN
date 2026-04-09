@@ -433,15 +433,15 @@
     position: absolute; inset: 0;
     display: flex; flex-direction: column;
     align-items: center;
-    justify-content: flex-start;
-    padding-top: 5%;
+    justify-content: flex-end;
+    padding-bottom: 16%;
     pointer-events: none;
   }
   .scanner-guide-rect {
-    width: 80%; height: 18vh;
+    width: 60%; height: 12vh;
     border: 2px dashed #e07838;
     border-radius: 8px;
-    box-shadow: 0 0 0 4000px rgba(0,0,0,0.35);
+    box-shadow: 0 0 0 4000px rgba(0,0,0,0.3);
   }
   .scanner-guide-label {
     margin-top: 8px;
@@ -3973,7 +3973,7 @@ document.head.appendChild(manifestLink);
           <canvas id="scanner-canvas" style="display:none"></canvas>
           <div class="scanner-guide">
             <div class="scanner-guide-rect"></div>
-            <div class="scanner-guide-label">Align card name here</div>
+            <div class="scanner-guide-label">Align collector number here (bottom of card)</div>
           </div>
           <div class="scanner-variant-picker" id="scanner-variant-picker" style="display:none">
             <div class="scanner-variant-title" id="scanner-variant-title"></div>
@@ -6595,11 +6595,12 @@ document.head.appendChild(manifestLink);
       clearTimeout(initTimeout);
       scanWorker = worker;
       return worker.setParameters({
-        tessedit_pageseg_mode: Tesseract.PSM.SINGLE_BLOCK
+        tessedit_pageseg_mode: Tesseract.PSM.SINGLE_LINE,
+        tessedit_char_whitelist: '0123456789/'
       });
     }).then(function() {
       if (initTimedOut) return;
-      scannerStatus.textContent = 'Align card name in the box above';
+      scannerStatus.textContent = 'Align collector number in the box';
       scannerStatus.className = 'scanner-status';
       startScanLoop();
     }).catch(function(err) {
@@ -6633,25 +6634,31 @@ document.head.appendChild(manifestLink);
     var vh = scannerVideo.videoHeight;
     if (!vw || !vh) { scanBusy = false; return; }
 
-    // Crop to guide rectangle region — must match CSS guide position
-    // Guide: centered 80% width, starts at 8% from top, 15% tall
-    var cropX = Math.floor(vw * 0.10);
-    var cropY = Math.floor(vh * 0.05);
-    var cropW = Math.floor(vw * 0.80);
-    var cropH = Math.floor(vh * 0.18);
+    // Crop to guide region — bottom area where collector number is printed
+    // Guide: centered 60% width, positioned at 75% from top, 10% tall
+    var cropX = Math.floor(vw * 0.20);
+    var cropY = Math.floor(vh * 0.72);
+    var cropW = Math.floor(vw * 0.60);
+    var cropH = Math.floor(vh * 0.12);
 
-    scannerCanvas.width = cropW;
-    scannerCanvas.height = cropH;
+    // Upscale small text for better OCR (2x)
+    var scaleW = cropW * 2;
+    var scaleH = cropH * 2;
+    scannerCanvas.width = scaleW;
+    scannerCanvas.height = scaleH;
     var ctx = scannerCanvas.getContext('2d');
-    ctx.drawImage(scannerVideo, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
+    ctx.imageSmoothingEnabled = true;
+    ctx.drawImage(scannerVideo, cropX, cropY, cropW, cropH, 0, 0, scaleW, scaleH);
 
-    // Preprocess: grayscale + boost contrast (let Tesseract handle binarization)
-    var imgData = ctx.getImageData(0, 0, cropW, cropH);
+    // Preprocess: grayscale + invert (collector number is light text on dark bg)
+    var imgData = ctx.getImageData(0, 0, scaleW, scaleH);
     var d = imgData.data;
     for (var px = 0; px < d.length; px += 4) {
       var gray = d[px] * 0.299 + d[px+1] * 0.587 + d[px+2] * 0.114;
-      // Boost contrast: stretch toward extremes
-      var val = Math.min(255, Math.max(0, (gray - 128) * 1.8 + 128));
+      // Invert so text becomes dark on light (Tesseract prefers this)
+      var val = 255 - gray;
+      // Boost contrast
+      val = Math.min(255, Math.max(0, (val - 128) * 2.0 + 128));
       d[px] = d[px+1] = d[px+2] = val;
     }
     ctx.putImageData(imgData, 0, 0);
@@ -6659,18 +6666,45 @@ document.head.appendChild(manifestLink);
     scanWorker.recognize(scannerCanvas).then(function(result) {
       scanBusy = false;
       var text = result.data.text.trim().replace(/[\n\r]+/g, ' ');
-      if (!text || text.length < 2) {
+      if (!text) {
         onScanFail();
         return;
       }
       // Show what OCR reads for debugging
       scannerCountEl.textContent = 'OCR: "' + text.substring(0, 40) + '"';
-      var match = fuzzyMatchCardName(text, scanNameMap);
-      if (!match) {
+
+      // Extract collector number: look for patterns like "099/309", "099", "99"
+      var cnMatch = text.match(/(\d{1,3})\s*\/\s*\d{2,3}/);
+      var cn = cnMatch ? cnMatch[1] : null;
+      if (!cn) {
+        // Try just a standalone number
+        var numMatch = text.match(/\b(\d{1,3})\b/);
+        cn = numMatch ? numMatch[1] : null;
+      }
+      if (!cn) {
         onScanFail();
         return;
       }
-      onScanSuccess(match);
+
+      // Pad to match collector number format (e.g. "9" -> "009", "99" -> "099")
+      while (cn.length < 3) cn = '0' + cn;
+
+      // Look up in card data
+      var card = getCardByNumber(cn);
+      if (!card) {
+        onScanFail();
+        return;
+      }
+
+      // Check if this CN has variants (same name, different printings)
+      var nameNorm = normalizeCardName(card.name);
+      var variants = scanNameMap.get(nameNorm);
+      if (variants && variants.length > 1) {
+        // We know the exact CN, so just add directly (no disambiguation needed)
+        onScanSuccess({ name: nameNorm, cards: [card], score: 1.0 });
+      } else {
+        onScanSuccess({ name: nameNorm, cards: [card], score: 1.0 });
+      }
     }).catch(function() {
       scanBusy = false;
       onScanFail();
@@ -6713,7 +6747,7 @@ document.head.appendChild(manifestLink);
     setTimeout(function() {
       scanCooldown = false;
       if (scannerOverlay.classList.contains('open')) {
-        scannerStatus.textContent = 'Align card name in the box above';
+        scannerStatus.textContent = 'Align collector number in the box';
         scannerStatus.className = 'scanner-status';
       }
     }, 1500);
@@ -6740,7 +6774,7 @@ document.head.appendChild(manifestLink);
         scanPaused = false;
         scanFailCount = 0;
         scannerSearchFallback.style.display = 'none';
-        scannerStatus.textContent = 'Align card name in the box above';
+        scannerStatus.textContent = 'Align collector number in the box';
         scannerStatus.className = 'scanner-status';
         scannerViewfinder.classList.remove('dimmed');
         searchOverlay.style.zIndex = '';
