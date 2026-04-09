@@ -33,7 +33,7 @@ Everything lives in `index.html` — no build step, no external JS files. The sc
 - **Tab navigation**: Dual nav system — desktop pill tray (`.tabs` with `.tab-btn`) and mobile bottom nav bar (`.bottom-nav` with `.bnav-btn`). Shared `switchTab(tabName)` handler wires both. `applyConfigToTabs()` shows/hides conditional tabs based on `binderConfig.scope`.
 - **Tabs**: Dashboard, Portfolio, Timeline, Binder, Collector (conditional), Settings.
 - **Booster Pack Mode**: Simulates opening packs, logs pulls to `fin-booster-packs` and `fin-timeline`.
-- **Card Scanner**: Two-engine scan mode picker — Tesseract OCR (local WASM text recognition) and OCR.space (cloud API). Mode picker shown on scan open. OCR modes use collector number regex + fuzzy name matching.
+- **Card Scanner**: Two-engine scan mode picker — Tesseract.js v7 OCR (local WASM text recognition, `PSM.AUTO`) and OCR.space (cloud API, Engine 2). Mode picker shown on scan open. Both modes capture full video frame, then match via collector number regex (4-digit `\b\d{4}\b`) + fuzzy name matching (`levenshtein` + substring). Shutter button appears after 4 failures for manual photo capture.
 - **PWA**: Manifest and icons generated at runtime via canvas; supports iOS/Android home-screen install.
 - **Celebration**: Rarity-tiered fanfare animations on card adds. Foil adds trigger `celebrateFoil()` — rainbow burst particle effect and shimmer toast.
 
