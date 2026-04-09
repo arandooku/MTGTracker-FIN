@@ -6582,11 +6582,15 @@ document.head.appendChild(manifestLink);
   }
 
   function closeScannerModal() {
+    var count = scanSessionAdds.length;
     scannerOverlay.classList.remove('open');
     document.body.style.overflow = '';
     stopCamera();
     stopScanLoop();
     hideVariantPicker();
+    if (count > 0) {
+      showToast('Scan complete — ' + count + ' card' + (count !== 1 ? 's' : '') + ' added');
+    }
   }
 
   function startCamera() {
@@ -6662,8 +6666,25 @@ document.head.appendChild(manifestLink);
     }
   }
 
-  // OCR.space API call
+  // OCR.space API call with usage tracking
+  var ocrSpaceUsage = JSON.parse(localStorage.getItem('fin-ocr-usage') || '{"count":0,"month":""}');
+  function getOcrUsageMonth() { return new Date().toISOString().substring(0, 7); }
+  function getOcrUsageRemaining() {
+    if (ocrSpaceUsage.month !== getOcrUsageMonth()) return 25000;
+    return Math.max(0, 25000 - ocrSpaceUsage.count);
+  }
+  function trackOcrUsage() {
+    var m = getOcrUsageMonth();
+    if (ocrSpaceUsage.month !== m) { ocrSpaceUsage.count = 0; ocrSpaceUsage.month = m; }
+    ocrSpaceUsage.count++;
+    localStorage.setItem('fin-ocr-usage', JSON.stringify(ocrSpaceUsage));
+  }
+
   function ocrSpaceRecognize(base64Img) {
+    var remaining = getOcrUsageRemaining();
+    if (remaining <= 0) {
+      return Promise.reject(new Error('OCR.space monthly limit reached'));
+    }
     var formData = new FormData();
     formData.append('base64Image', base64Img);
     formData.append('language', 'eng');
@@ -6676,6 +6697,7 @@ document.head.appendChild(manifestLink);
       body: formData
     }).then(function(r) { return r.json(); })
       .then(function(data) {
+        trackOcrUsage();
         if (data.ParsedResults && data.ParsedResults[0]) {
           return data.ParsedResults[0].ParsedText || '';
         }
@@ -6705,6 +6727,9 @@ document.head.appendChild(manifestLink);
         .then(function(res) { return (res.text || []).join(' '); });
     } else {
       // OCR.space fallback: send base64 JPEG
+      var remaining = getOcrUsageRemaining();
+      if (remaining <= 0) { scanBusy = false; onScanFail(); return; }
+      scannerLastAdd.textContent = 'Cloud OCR: ' + remaining + '/25000 remaining this month';
       var base64 = scannerCanvas.toDataURL('image/jpeg', 0.8);
       ocrPromise = ocrSpaceRecognize(base64);
     }
@@ -7002,7 +7027,7 @@ document.head.appendChild(manifestLink);
       // Add regular button
       var addBtn = document.createElement('button');
       addBtn.className = 'variant-add-btn';
-      addBtn.textContent = ownedSet.has(cn) ? '✓' : 'Add';
+      addBtn.textContent = ownedSet.has(cn) ? '✓ Regular' : 'Regular';
       addBtn.addEventListener('click', function(e) {
         e.stopPropagation();
         addScannedCard(card);
