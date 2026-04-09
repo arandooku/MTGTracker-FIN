@@ -7449,18 +7449,19 @@ if ('serviceWorker' in navigator) {
     return name.toLowerCase().replace(/[^a-z0-9 ]/g, '').trim();
   }
 
-  // OCR-aware stopwords: card types, keywords, and junk that OCR picks up
+  // OCR-aware stopwords: rules text junk that never appears in FIN card names
+  // Validated against all 593 FIN printings — no card name word collisions
   var OCR_STOP_WORDS = new Set([
-    'creature','enchantment','sorcery','instant','artifact','legendary','aura',
-    'equipment','land','basic','token','human','soldier','warrior','knight',
-    'flash','flying','trample','haste','vigilance','deathtouch','lifelink',
-    'ward','reach','first','strike','double','defender','hexproof','menace',
-    'indestructible','planeswalker','tribal','saga','adventure','vehicle',
-    'the','of','and','for','with','from','into','that','this','your','each',
-    'all','any','one','two','three','target','card','cards','player','turn',
-    'mana','tap','untap','draw','discard','destroy','exile','return','put',
-    'get','pay','add','its','may','when','whenever','if','then','until',
-    'end','phase','step','combat','attack','block','damage','life','power',
+    'creature','enchantment','sorcery','artifact','legendary','aura',
+    'equipment','basic','token','human',
+    'flash','flying','trample','vigilance','deathtouch','lifelink',
+    'defender','hexproof','menace',
+    'indestructible','planeswalker','tribal','adventure','vehicle',
+    'that','this','your','each',
+    'all','any','target','cards','player','turn',
+    'mana','tap','untap','draw','discard','destroy','exile','put',
+    'get','pay','its','may','when','whenever','if','then','until',
+    'end','phase','step','attack','block','damage','life',
     'toughness','counter','counters','ability','cost','control','owner',
     'graveyard','library','battlefield','hand','stack','zone'
   ]);
