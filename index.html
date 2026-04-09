@@ -6703,8 +6703,8 @@ document.head.appendChild(manifestLink);
         return;
       }
 
-      var mode = useNumberScan ? 'CN' : 'Name';
-      scannerCountEl.textContent = mode + ': "' + text.substring(0, 40) + '"';
+      lastScanText = text;
+      scannerCountEl.textContent = 'Read: "' + text.substring(0, 50) + '"';
 
       // Always try BOTH strategies on every OCR result
 
@@ -6719,7 +6719,7 @@ document.head.appendChild(manifestLink);
         if (cnNum < 1 || cnNum > 681) continue;
         var card = getCardByNumber(cn);
         if (card) {
-          scannerCountEl.textContent = mode + ' → CN #' + cn4 + ': ' + card.name;
+          scannerCountEl.textContent = 'Matched CN #' + cn4 + ': ' + card.name;
           onScanSuccess({ name: card.name, cards: [card], score: 1.0 });
           return;
         }
@@ -6728,7 +6728,7 @@ document.head.appendChild(manifestLink);
       // Strategy 2: Fuzzy match card name
       var match = fuzzyMatchCardName(text, scanNameMap);
       if (match) {
-        scannerCountEl.textContent = mode + ' → "' + match.name + '" (' + Math.round(match.score * 100) + '%)';
+        scannerCountEl.textContent = 'Match: "' + match.name + '" (' + Math.round(match.score * 100) + '%)';
         onScanSuccess(match);
         return;
       }
@@ -6788,10 +6788,14 @@ document.head.appendChild(manifestLink);
     }, 1500);
   }
 
+  var lastScanText = '';
   function onScanFail() {
     scanFailCount++;
+    // Keep showing what was last read so user can see it
+    if (lastScanText) {
+      scannerCountEl.textContent = 'No match: "' + lastScanText.substring(0, 50) + '"';
+    }
     if (scanFailCount >= 4) {
-      // Show shutter button for photo capture
       showShutterButton();
       scannerSearchFallback.style.display = '';
     }
@@ -7129,7 +7133,7 @@ document.head.appendChild(manifestLink);
     if (bestSub) return bestSub;
 
     // 3. Sliding window: try consecutive word groups from OCR text
-    //    OCR may read "Yiazmat Ultimate Mark Creature Legendary..."
+    //    OCR may read "TEE hunt the mark Creature Enchantment..."
     //    We try windows of 1-5 words against the name map
     var words = norm.split(/\s+/);
     var bestWin = null;
@@ -7144,10 +7148,22 @@ document.head.appendChild(manifestLink);
           return { name: window, cards: nameMap.get(window), score: 1.0 };
         }
 
+        // Window is a substring of a card name (e.g. "hunt the mark" inside "sidequest hunt the mark")
+        nameMap.forEach(function(cards, name) {
+          if (window.length >= 4 && name.includes(window)) {
+            var subScore = window.length / name.length;
+            if (subScore >= 0.4 && (subScore > bestWinScore || window.length > bestWinScore * 20)) {
+              bestWinScore = subScore;
+              bestWin = { name: name, cards: cards, score: subScore + 0.1 };
+            }
+          }
+        });
+        if (bestWin && bestWin.score >= 0.6) return bestWin;
+
         // Levenshtein against each card name
         nameMap.forEach(function(cards, name) {
-          // Only compare windows of similar length (within 40%)
-          if (Math.abs(window.length - name.length) > name.length * 0.4) return;
+          // Only compare windows of similar length (within 60%)
+          if (Math.abs(window.length - name.length) > name.length * 0.6) return;
           var maxLen = Math.max(window.length, name.length);
           var dist = levenshtein(window, name);
           var score = 1 - (dist / maxLen);
