@@ -433,12 +433,11 @@
     position: absolute; inset: 0;
     display: flex; flex-direction: column;
     align-items: center;
-    justify-content: flex-end;
-    padding-bottom: 16%;
+    justify-content: center;
     pointer-events: none;
   }
   .scanner-guide-rect {
-    width: 60%; height: 12vh;
+    width: 65%; aspect-ratio: 5/7;
     border: 2px dashed #e07838;
     border-radius: 8px;
     box-shadow: 0 0 0 4000px rgba(0,0,0,0.3);
@@ -3973,7 +3972,7 @@ document.head.appendChild(manifestLink);
           <canvas id="scanner-canvas" style="display:none"></canvas>
           <div class="scanner-guide">
             <div class="scanner-guide-rect"></div>
-            <div class="scanner-guide-label">Align collector number here (bottom of card)</div>
+            <div class="scanner-guide-label">Fill the frame with the card</div>
           </div>
           <div class="scanner-variant-picker" id="scanner-variant-picker" style="display:none">
             <div class="scanner-variant-title" id="scanner-variant-title"></div>
@@ -6537,7 +6536,7 @@ document.head.appendChild(manifestLink);
 
   function startCamera() {
     navigator.mediaDevices.getUserMedia({
-      video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }
+      video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } }
     }).then(function(stream) {
       scanStream = stream;
       scannerVideo.srcObject = stream;
@@ -6595,12 +6594,11 @@ document.head.appendChild(manifestLink);
       clearTimeout(initTimeout);
       scanWorker = worker;
       return worker.setParameters({
-        tessedit_pageseg_mode: Tesseract.PSM.SINGLE_LINE,
-        tessedit_char_whitelist: '0123456789/'
+        tessedit_pageseg_mode: Tesseract.PSM.AUTO
       });
     }).then(function() {
       if (initTimedOut) return;
-      scannerStatus.textContent = 'Align collector number in the box';
+      scannerStatus.textContent = 'Hold card steady in the frame';
       scannerStatus.className = 'scanner-status';
       startScanLoop();
     }).catch(function(err) {
@@ -6615,7 +6613,7 @@ document.head.appendChild(manifestLink);
 
   function startScanLoop() {
     if (scanInterval) return;
-    scanInterval = setInterval(scanFrame, 800);
+    scanInterval = setInterval(scanFrame, 1500);
   }
 
   function stopScanLoop() {
@@ -6634,34 +6632,12 @@ document.head.appendChild(manifestLink);
     var vh = scannerVideo.videoHeight;
     if (!vw || !vh) { scanBusy = false; return; }
 
-    // Crop to guide region — bottom area where collector number is printed
-    // Guide: centered 60% width, positioned at 75% from top, 10% tall
-    var cropX = Math.floor(vw * 0.20);
-    var cropY = Math.floor(vh * 0.72);
-    var cropW = Math.floor(vw * 0.60);
-    var cropH = Math.floor(vh * 0.12);
-
-    // Upscale small text for better OCR (2x)
-    var scaleW = cropW * 2;
-    var scaleH = cropH * 2;
-    scannerCanvas.width = scaleW;
-    scannerCanvas.height = scaleH;
+    // Capture full frame — no crop, no preprocessing
+    // Let Tesseract read all text, then we search for valid collector numbers
+    scannerCanvas.width = vw;
+    scannerCanvas.height = vh;
     var ctx = scannerCanvas.getContext('2d');
-    ctx.imageSmoothingEnabled = true;
-    ctx.drawImage(scannerVideo, cropX, cropY, cropW, cropH, 0, 0, scaleW, scaleH);
-
-    // Preprocess: grayscale + invert (collector number is light text on dark bg)
-    var imgData = ctx.getImageData(0, 0, scaleW, scaleH);
-    var d = imgData.data;
-    for (var px = 0; px < d.length; px += 4) {
-      var gray = d[px] * 0.299 + d[px+1] * 0.587 + d[px+2] * 0.114;
-      // Invert so text becomes dark on light (Tesseract prefers this)
-      var val = 255 - gray;
-      // Boost contrast
-      val = Math.min(255, Math.max(0, (val - 128) * 2.0 + 128));
-      d[px] = d[px+1] = d[px+2] = val;
-    }
-    ctx.putImageData(imgData, 0, 0);
+    ctx.drawImage(scannerVideo, 0, 0, vw, vh);
 
     scanWorker.recognize(scannerCanvas).then(function(result) {
       scanBusy = false;
@@ -6671,39 +6647,32 @@ document.head.appendChild(manifestLink);
         return;
       }
       // Show what OCR reads for debugging
-      scannerCountEl.textContent = 'OCR: "' + text.substring(0, 40) + '"';
+      scannerCountEl.textContent = 'OCR: "' + text.substring(0, 50) + '"';
 
-      // Extract collector number: look for patterns like "099/309", "099", "99"
-      var cnMatch = text.match(/(\d{1,3})\s*\/\s*\d{2,3}/);
-      var cn = cnMatch ? cnMatch[1] : null;
-      if (!cn) {
-        // Try just a standalone number
-        var numMatch = text.match(/\b(\d{1,3})\b/);
-        cn = numMatch ? numMatch[1] : null;
-      }
-      if (!cn) {
-        onScanFail();
-        return;
-      }
+      // Try both: collector number patterns AND fuzzy card name matching
 
-      // Pad to match collector number format (e.g. "9" -> "009", "99" -> "099")
-      while (cn.length < 3) cn = '0' + cn;
-
-      // Look up in card data
-      var card = getCardByNumber(cn);
-      if (!card) {
-        onScanFail();
-        return;
+      // Strategy 1: Find collector number pattern (e.g. "122/309", "122")
+      var allNums = text.match(/\d{1,3}/g) || [];
+      var foundCard = null;
+      for (var ni = 0; ni < allNums.length; ni++) {
+        var cn = allNums[ni];
+        while (cn.length < 3) cn = '0' + cn;
+        var card = getCardByNumber(cn);
+        if (card) { foundCard = card; break; }
       }
 
-      // Check if this CN has variants (same name, different printings)
-      var nameNorm = normalizeCardName(card.name);
-      var variants = scanNameMap.get(nameNorm);
-      if (variants && variants.length > 1) {
-        // We know the exact CN, so just add directly (no disambiguation needed)
-        onScanSuccess({ name: nameNorm, cards: [card], score: 1.0 });
+      // Strategy 2: Fuzzy match card name from OCR text
+      var nameMatch = null;
+      if (!foundCard) {
+        nameMatch = fuzzyMatchCardName(text, scanNameMap);
+      }
+
+      if (foundCard) {
+        onScanSuccess({ name: foundCard.name, cards: [foundCard], score: 1.0 });
+      } else if (nameMatch) {
+        onScanSuccess(nameMatch);
       } else {
-        onScanSuccess({ name: nameNorm, cards: [card], score: 1.0 });
+        onScanFail();
       }
     }).catch(function() {
       scanBusy = false;
@@ -6747,7 +6716,7 @@ document.head.appendChild(manifestLink);
     setTimeout(function() {
       scanCooldown = false;
       if (scannerOverlay.classList.contains('open')) {
-        scannerStatus.textContent = 'Align collector number in the box';
+        scannerStatus.textContent = 'Hold card steady in the frame';
         scannerStatus.className = 'scanner-status';
       }
     }, 1500);
@@ -6774,7 +6743,7 @@ document.head.appendChild(manifestLink);
         scanPaused = false;
         scanFailCount = 0;
         scannerSearchFallback.style.display = 'none';
-        scannerStatus.textContent = 'Align collector number in the box';
+        scannerStatus.textContent = 'Hold card steady in the frame';
         scannerStatus.className = 'scanner-status';
         scannerViewfinder.classList.remove('dimmed');
         searchOverlay.style.zIndex = '';
