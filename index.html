@@ -6479,7 +6479,104 @@ document.head.appendChild(manifestLink);
     openSyncModal();
   });
 
-  function openScannerModal() { showToast('Scanner coming soon...'); }
+  // ── OCR Scanner: Camera & Modal ──
+  var scannerOverlay = document.getElementById('scanner-overlay');
+  var scannerVideo = document.getElementById('scanner-video');
+  var scannerCanvas = document.getElementById('scanner-canvas');
+  var scannerStatus = document.getElementById('scanner-status');
+  var scannerLastAdd = document.getElementById('scanner-last-add');
+  var scannerCountEl = document.getElementById('scanner-count');
+  var scannerSearchFallback = document.getElementById('scanner-search-fallback');
+  var scannerDone = document.getElementById('scanner-done');
+  var scannerCloseBtn = document.getElementById('scanner-close');
+
+  var scanStream = null;
+  var scanWorker = null;
+  var scanInterval = null;
+  var scanCooldown = false;
+  var scanFailCount = 0;
+  var scanSessionAdds = [];
+  var scanNameMap = null;
+  var scanPaused = false;
+
+  function openScannerModal() {
+    if (!allCards || allCards.length === 0) {
+      showToast('Cards still loading — try again in a moment');
+      return;
+    }
+    scanSessionAdds = [];
+    scanFailCount = 0;
+    scanCooldown = false;
+    scanPaused = false;
+    scannerLastAdd.textContent = '';
+    scannerCountEl.textContent = '';
+    scannerSearchFallback.style.display = 'none';
+    scannerDone.textContent = 'Done';
+    scannerStatus.textContent = 'Initializing camera...';
+    scannerStatus.className = 'scanner-status';
+    scannerOverlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    scanNameMap = buildNameMap();
+    startCamera();
+  }
+
+  function closeScannerModal() {
+    scannerOverlay.classList.remove('open');
+    document.body.style.overflow = '';
+    stopCamera();
+    stopScanLoop();
+    if (scanWorker) {
+      scanWorker.terminate().catch(function() {});
+      scanWorker = null;
+    }
+    hideVariantPicker();
+  }
+
+  function startCamera() {
+    navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }
+    }).then(function(stream) {
+      scanStream = stream;
+      scannerVideo.srcObject = stream;
+      scannerVideo.onloadedmetadata = function() {
+        scannerStatus.textContent = 'Loading OCR engine...';
+        initTesseract();
+      };
+    }).catch(function(err) {
+      console.error('Camera error:', err);
+      scannerStatus.textContent = 'Camera access denied. Please allow camera access in your browser settings.';
+      scannerStatus.className = 'scanner-status warning';
+    });
+  }
+
+  function stopCamera() {
+    if (scanStream) {
+      scanStream.getTracks().forEach(function(t) { t.stop(); });
+      scanStream = null;
+    }
+    scannerVideo.srcObject = null;
+  }
+
+  // Stubs for functions defined in later tasks
+  function initTesseract() { scannerStatus.textContent = 'OCR engine loading... (stub)'; }
+  function stopScanLoop() {}
+  function hideVariantPicker() {}
+
+  // Close button and Done button
+  scannerCloseBtn.addEventListener('click', closeScannerModal);
+  scannerDone.addEventListener('click', closeScannerModal);
+
+  // Escape key closes scanner
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && scannerOverlay.classList.contains('open')) {
+      var vp = document.getElementById('scanner-variant-picker');
+      if (vp && vp.style.display !== 'none') {
+        hideVariantPicker();
+        return;
+      }
+      closeScannerModal();
+    }
+  });
 
   // Scan chip — show only if camera API is available
   (function() {
