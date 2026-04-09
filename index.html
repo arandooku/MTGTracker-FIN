@@ -502,6 +502,34 @@
     color: #e07838;
     margin-top: 2px;
   }
+  .variant-actions {
+    display: flex; gap: 4px; margin-top: 4px;
+    justify-content: center;
+  }
+  .variant-add-btn, .variant-foil-btn {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 0.55rem; font-weight: 600;
+    padding: 3px 8px; border-radius: 6px;
+    cursor: pointer; border: 1px solid;
+    transition: all 0.15s;
+  }
+  .variant-add-btn {
+    color: #4aad5e;
+    border-color: rgba(74,173,94,0.4);
+    background: rgba(74,173,94,0.12);
+  }
+  .variant-add-btn:hover { background: rgba(74,173,94,0.25); }
+  .variant-foil-btn {
+    color: #c4b5fd;
+    border-color: rgba(196,181,253,0.4);
+    background: rgba(196,181,253,0.12);
+  }
+  .variant-foil-btn:hover { background: rgba(196,181,253,0.25); }
+  .variant-foil-btn.owned {
+    color: #a78bfa;
+    border-color: rgba(167,139,250,0.5);
+    background: rgba(167,139,250,0.2);
+  }
   .scanner-variant-skip {
     background: none; border: 1px solid rgba(255,255,255,0.2);
     color: rgba(255,255,255,0.6);
@@ -7002,10 +7030,13 @@ document.head.appendChild(manifestLink);
     cards.forEach(function(card) {
       var div = document.createElement('div');
       div.className = 'scanner-variant-card';
-      if (ownedSet.has(card.collector_number)) div.classList.add('owned');
+      var cn = card.collector_number;
+      if (ownedSet.has(cn)) div.classList.add('owned');
 
-      var isVar = !mainSetCNs.has(card.collector_number);
+      var isVar = !mainSetCNs.has(cn);
       var label = isVar ? getFoilVariantLabel(card) : 'REGULAR';
+      var canBeFoil = (card.finishes || []).includes('foil');
+      var isFoilOwned = hasFoil(cn);
 
       var img = document.createElement('img');
       img.src = card.image_small;
@@ -7015,7 +7046,7 @@ document.head.appendChild(manifestLink);
 
       var cnEl = document.createElement('div');
       cnEl.className = 'variant-cn';
-      cnEl.textContent = '#' + card.collector_number;
+      cnEl.textContent = '#' + cn;
       div.appendChild(cnEl);
 
       var labelEl = document.createElement('div');
@@ -7023,11 +7054,50 @@ document.head.appendChild(manifestLink);
       labelEl.textContent = label;
       div.appendChild(labelEl);
 
-      div.addEventListener('click', function() {
+      // Action buttons row
+      var actionsEl = document.createElement('div');
+      actionsEl.className = 'variant-actions';
+
+      // Add regular button
+      var addBtn = document.createElement('button');
+      addBtn.className = 'variant-add-btn';
+      addBtn.textContent = ownedSet.has(cn) ? '✓' : 'Add';
+      addBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
         addScannedCard(card);
         hideVariantPicker();
       });
+      actionsEl.appendChild(addBtn);
 
+      // Add foil button (if card supports foil)
+      if (canBeFoil) {
+        var foilBtn = document.createElement('button');
+        foilBtn.className = 'variant-foil-btn' + (isFoilOwned ? ' owned' : '');
+        foilBtn.textContent = isFoilOwned ? '✦ ✓' : '✦ Foil';
+        foilBtn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          addFoil(cn);
+          scanSessionAdds.push(cn);
+          scannerCountEl.textContent = scanSessionAdds.length + ' card' + (scanSessionAdds.length !== 1 ? 's' : '') + ' scanned';
+          scannerDone.textContent = 'Done (' + scanSessionAdds.length + ' scanned)';
+          var cardName = displayNameText(card);
+          scannerStatus.textContent = 'Added foil: ' + cardName;
+          scannerStatus.className = 'scanner-status success';
+          scannerLastAdd.textContent = 'Last: ' + cardName + ' (foil)';
+          hideVariantPicker();
+          scanCooldown = true;
+          setTimeout(function() {
+            scanCooldown = false;
+            if (scannerOverlay.classList.contains('open')) {
+              scannerStatus.textContent = 'Hold card steady in the frame';
+              scannerStatus.className = 'scanner-status';
+            }
+          }, 1500);
+        });
+        actionsEl.appendChild(foilBtn);
+      }
+
+      div.appendChild(actionsEl);
       variantRow.appendChild(div);
     });
 
