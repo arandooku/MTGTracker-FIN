@@ -670,7 +670,6 @@
     border-radius: 0 2px 2px 0;
     transition: width 0.2s ease;
   }
-  .smp-hash::before { background: #e07838; }
   .smp-tesseract::before { background: #5b7fc7; }
   .smp-cloud::before { background: #4aad5e; }
   .smp-btn:hover::before { width: 5px; }
@@ -686,7 +685,6 @@
     display: flex; align-items: center; justify-content: center;
     flex-shrink: 0;
   }
-  .smp-hash .smp-icon { background: rgba(224,120,56,0.12); color: #e07838; }
   .smp-tesseract .smp-icon { background: rgba(91,127,199,0.12); color: #5b7fc7; }
   .smp-cloud .smp-icon { background: rgba(74,173,94,0.12); color: #4aad5e; }
   .smp-info { flex: 1; min-width: 0; }
@@ -731,32 +729,6 @@
   @keyframes smpSlideIn {
     from { opacity: 0; transform: translateY(10px) translateX(-4px); }
     to { opacity: 1; transform: translateY(0) translateX(0); }
-  }
-
-  /* Hash progress bar */
-  .hash-progress {
-    width: 100%; max-width: 280px;
-    margin-top: 8px;
-  }
-  .hash-progress-bar {
-    height: 3px;
-    border-radius: 2px;
-    background: rgba(255,255,255,0.08);
-    overflow: hidden;
-  }
-  .hash-progress-fill {
-    height: 100%;
-    border-radius: 2px;
-    background: linear-gradient(90deg, #e07838, #d4a850);
-    transition: width 0.3s ease;
-    width: 0%;
-  }
-  .hash-progress-text {
-    font-family: 'Rajdhani', sans-serif;
-    font-size: 0.68rem;
-    color: rgba(255,255,255,0.35);
-    text-align: center;
-    margin-top: 4px;
   }
 
   .search-results {
@@ -4161,17 +4133,6 @@ document.head.appendChild(manifestLink);
         <div class="scanner-mode-picker" id="scanner-mode-picker">
           <div class="smp-title">Select Engine</div>
           <div class="smp-buttons">
-            <button class="smp-btn smp-hash" data-scan-mode="hash">
-              <div class="smp-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
-              </div>
-              <div class="smp-info">
-                <div class="smp-name">VISUAL MATCH</div>
-                <div class="smp-desc">Matches card artwork visually &bull; Offline &bull; Fast</div>
-              </div>
-              <span class="smp-badge smp-badge-new">NEW</span>
-              <svg class="smp-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
-            </button>
             <button class="smp-btn smp-tesseract" data-scan-mode="tesseract">
               <div class="smp-icon">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
@@ -5012,14 +4973,13 @@ document.head.appendChild(manifestLink);
         '<div><div class="settings-section-title">Card Scanner</div>' +
         '<div class="settings-section-sub">Scan engine settings</div></div>' +
       '</div>' +
-      '<div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:var(--sp-2)">Choose your scan engine when scanning: Visual Match (image hashing, offline), Tesseract OCR (local text), or OCR.space (cloud).</div>' +
+      '<div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:var(--sp-2)">Choose your scan engine when scanning: Tesseract OCR (local text) or OCR.space (cloud).</div>' +
       '<label style="font-size:0.78rem;color:var(--text-muted);font-weight:600;display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px">OCR.space API Key</label>' +
       '<input type="password" id="sf-ocr-key" placeholder="Paste your API key" autocomplete="off" value="' + esc(getOcrSpaceKey()) + '" style="width:100%;padding:10px 12px;font-size:0.9rem;background:var(--slot-bg);border:2px solid var(--surface2);border-radius:8px;color:var(--text);outline:none;margin-bottom:8px;font-family:monospace">' +
       '<div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:4px">' +
         '<a href="https://ocr.space/ocrapi/freekey" target="_blank" rel="noopener" style="color:var(--accent2);text-decoration:none">Get a free API key</a> &mdash; 25,000 requests/month' +
       '</div>' +
       (getOcrSpaceKey() ? '<div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:8px">' + getOcrUsageRemaining().toLocaleString() + ' cloud OCR requests remaining this month</div>' : '') +
-      '<button id="sf-clear-hash" style="margin-top:6px;padding:8px 14px;border-radius:8px;background:var(--slot-bg);border:1px solid var(--surface2);color:var(--text-muted);font-family:Rajdhani,sans-serif;font-size:0.78rem;font-weight:600;cursor:pointer">Clear Image Hash Cache</button>' +
       '</div>' +
 
       // ── Appearance ──
@@ -5343,7 +5303,7 @@ document.head.appendChild(manifestLink);
           actions: [
             { label: 'Cancel', className: 'btn-secondary', onClick: function() {} },
             { label: 'Delete Everything', className: 'btn-danger', onClick: function() {
-              [CACHE_KEY, COLLECTION_KEY, THEME_KEY, PACKS_KEY, TIMELINE_KEY, FX_KEY, GIST_KEY, BINDER_CONFIG_KEY, FOIL_KEY, VARIANT_KEY, 'fin-hash-db', 'fin-ocr-usage'].forEach(function(k) { localStorage.removeItem(k); });
+              [CACHE_KEY, COLLECTION_KEY, THEME_KEY, PACKS_KEY, TIMELINE_KEY, FX_KEY, GIST_KEY, BINDER_CONFIG_KEY, FOIL_KEY, VARIANT_KEY, 'fin-ocr-usage'].forEach(function(k) { localStorage.removeItem(k); });
               location.reload();
             }}
           ]
@@ -5392,18 +5352,6 @@ document.head.appendChild(manifestLink);
           saveBtn.classList.remove('success');
         }, 1500);
         showToast('Binder updated.');
-      });
-    }
-
-    // Clear image hash cache button
-    var clearHashBtn = document.getElementById('sf-clear-hash');
-    if (clearHashBtn) {
-      clearHashBtn.addEventListener('click', function(e) {
-        e.preventDefault();
-        localStorage.removeItem('fin-hash-db');
-        hashIndex = null;
-        clearHashBtn.textContent = '\u2713 Cache cleared';
-        setTimeout(function() { clearHashBtn.textContent = 'Clear Image Hash Cache'; }, 2000);
       });
     }
 
@@ -6797,14 +6745,11 @@ document.head.appendChild(manifestLink);
   var scanCycle = 0;
 
   // ── Scan mode selection ──
-  var scanMode = null; // 'hash' | 'tesseract' | 'ocrspace'
+  var scanMode = null; // 'tesseract' | 'ocrspace'
   var scanModePicker = document.getElementById('scanner-mode-picker');
   var scannerTitle = document.getElementById('scanner-title');
   var scannerStatusArea = document.getElementById('scanner-status-area');
   var scannerFooter = document.getElementById('scanner-footer');
-  var hashIndex = null; // { collector_number: hexhash }
-  var HASH_DB_KEY = 'fin-hash-db';
-
   function openScannerModal() {
     if (!allCards || allCards.length === 0) {
       showToast('Cards still loading \u2014 try again in a moment');
@@ -6838,7 +6783,7 @@ document.head.appendChild(manifestLink);
 
   function selectScanMode(mode) {
     scanMode = mode;
-    var labels = { hash: 'VISUAL MATCH', tesseract: 'TESSERACT OCR', ocrspace: 'OCR.SPACE' };
+    var labels = { tesseract: 'TESSERACT OCR', ocrspace: 'OCR.SPACE' };
     scannerTitle.textContent = labels[mode] || 'SCAN MODE';
     // Hide picker, show camera UI
     scanModePicker.classList.add('hidden');
@@ -6909,9 +6854,7 @@ document.head.appendChild(manifestLink);
   // ── Scan Engine Dispatcher ──
 
   function initScanEngine() {
-    if (scanMode === 'hash') {
-      initHashEngine();
-    } else if (scanMode === 'tesseract') {
+    if (scanMode === 'tesseract') {
       initTesseract();
     } else if (scanMode === 'ocrspace') {
       initOcrSpaceEngine();
@@ -6944,7 +6887,10 @@ document.head.appendChild(manifestLink);
       if (initTimedOut) { worker.terminate(); return; }
       clearTimeout(initTimeout);
       scanWorker = worker;
-      return worker.setParameters({ tessedit_pageseg_mode: Tesseract.PSM.AUTO });
+      return worker.setParameters({
+        tessedit_pageseg_mode: Tesseract.PSM.SINGLE_BLOCK,
+        preserve_interword_spaces: '1'
+      });
     }).then(function() {
       if (initTimedOut) return;
       scannerStatus.textContent = 'Hold card steady in the frame';
@@ -6974,253 +6920,11 @@ document.head.appendChild(manifestLink);
     startScanLoop();
   }
 
-  // ── Engine: Visual Hash Match ──
-
-  // dhash: difference hash — compares adjacent pixel brightness
-  function dhash(img) {
-    var size = 8;
-    var c = document.createElement('canvas');
-    c.width = size + 1;
-    c.height = size;
-    var ctx = c.getContext('2d');
-    ctx.drawImage(img, 0, 0, c.width, c.height);
-    var d = ctx.getImageData(0, 0, c.width, c.height).data;
-    var bits = '';
-    for (var y = 0; y < size; y++) {
-      for (var x = 0; x < size; x++) {
-        var i = (y * (size + 1) + x) * 4;
-        var left = d[i] * 0.299 + d[i + 1] * 0.587 + d[i + 2] * 0.114;
-        var right = d[i + 4] * 0.299 + d[i + 5] * 0.587 + d[i + 6] * 0.114;
-        bits += left > right ? '1' : '0';
-      }
-    }
-    var hex = '';
-    for (var b = 0; b < bits.length; b += 4) {
-      hex += parseInt(bits.substring(b, b + 4), 2).toString(16);
-    }
-    return hex;
-  }
-
-  // dhash directly from a canvas source (avoids extra Image roundtrip)
-  function dhashCanvas(srcCanvas) {
-    var size = 8;
-    var c = document.createElement('canvas');
-    c.width = size + 1;
-    c.height = size;
-    var ctx = c.getContext('2d');
-    ctx.drawImage(srcCanvas, 0, 0, c.width, c.height);
-    var d = ctx.getImageData(0, 0, c.width, c.height).data;
-    var bits = '';
-    for (var y = 0; y < size; y++) {
-      for (var x = 0; x < size; x++) {
-        var i = (y * (size + 1) + x) * 4;
-        var left = d[i] * 0.299 + d[i + 1] * 0.587 + d[i + 2] * 0.114;
-        var right = d[i + 4] * 0.299 + d[i + 5] * 0.587 + d[i + 6] * 0.114;
-        bits += left > right ? '1' : '0';
-      }
-    }
-    var hex = '';
-    for (var b = 0; b < bits.length; b += 4) {
-      hex += parseInt(bits.substring(b, b + 4), 2).toString(16);
-    }
-    return hex;
-  }
-
-  function hammingDistanceHex(h1, h2) {
-    if (h1.length !== h2.length) return 64;
-    var dist = 0;
-    for (var i = 0; i < h1.length; i++) {
-      var xor = parseInt(h1[i], 16) ^ parseInt(h2[i], 16);
-      while (xor > 0) { dist += xor & 1; xor >>= 1; }
-    }
-    return dist;
-  }
-
-  // Get video pixel crop corresponding to the guide rect overlay
-  function getGuideRectCrop(videoW, videoH) {
-    var vfW = scannerViewfinder.clientWidth;
-    var vfH = scannerViewfinder.clientHeight;
-    if (!vfW || !vfH) return { x: 0, y: 0, w: videoW, h: videoH };
-
-    var guideW = vfW * 0.65;
-    var guideH = guideW * (7 / 5);
-    var guideX = (vfW - guideW) / 2;
-    var guideY = (vfH - guideH) / 2;
-
-    var videoAR = videoW / videoH;
-    var vfAR = vfW / vfH;
-    var renderedW, renderedH, offsetX, offsetY;
-    if (videoAR > vfAR) {
-      renderedH = vfH;
-      renderedW = vfH * videoAR;
-      offsetX = (renderedW - vfW) / 2;
-      offsetY = 0;
-    } else {
-      renderedW = vfW;
-      renderedH = vfW / videoAR;
-      offsetX = 0;
-      offsetY = (renderedH - vfH) / 2;
-    }
-
-    var scaleX = videoW / renderedW;
-    var scaleY = videoH / renderedH;
-    var cx = Math.round((guideX + offsetX) * scaleX);
-    var cy = Math.round((guideY + offsetY) * scaleY);
-    var cw = Math.round(guideW * scaleX);
-    var ch = Math.round(guideH * scaleY);
-
-    cx = Math.max(0, Math.min(cx, videoW - 1));
-    cy = Math.max(0, Math.min(cy, videoH - 1));
-    cw = Math.min(cw, videoW - cx);
-    ch = Math.min(ch, videoH - cy);
-    return { x: cx, y: cy, w: cw, h: ch };
-  }
-
-  // Build hash index for all cards (one-time, cached in localStorage)
-  function buildHashIndex(progressCb) {
-    var cards = allCards.concat(variantCards || []);
-    var hashes = {};
-    var total = cards.length;
-    var done = 0;
-    var concurrency = 6;
-
-    return new Promise(function(resolve) {
-      var queue = cards.slice();
-      var active = 0;
-
-      function processNext() {
-        while (active < concurrency && queue.length > 0) {
-          (function(card) {
-            active++;
-            if (!card.image_small) {
-              done++; active--;
-              if (progressCb) progressCb(done, total);
-              if (queue.length === 0 && active === 0) resolve(hashes);
-              else processNext();
-              return;
-            }
-            var img = new Image();
-            img.crossOrigin = 'anonymous';
-            img.onload = function() {
-              try { hashes[card.collector_number] = dhash(img); } catch (e) {}
-              done++; active--;
-              if (progressCb) progressCb(done, total);
-              if (queue.length === 0 && active === 0) resolve(hashes);
-              else processNext();
-            };
-            img.onerror = function() {
-              done++; active--;
-              if (progressCb) progressCb(done, total);
-              if (queue.length === 0 && active === 0) resolve(hashes);
-              else processNext();
-            };
-            img.src = card.image_small;
-          })(queue.shift());
-        }
-      }
-      processNext();
-    });
-  }
-
-  function initHashEngine() {
-    // Try loading cached hash index
-    try {
-      var cached = JSON.parse(localStorage.getItem(HASH_DB_KEY) || 'null');
-      var expectedCount = allCards.length + (variantCards ? variantCards.length : 0);
-      if (cached && cached.version === expectedCount && cached.hashes && Object.keys(cached.hashes).length > 0) {
-        hashIndex = cached.hashes;
-        scannerStatus.textContent = 'Hold card steady in the frame';
-        scannerStatus.className = 'scanner-status';
-        scannerCountEl.textContent = Object.keys(hashIndex).length + ' card hashes loaded';
-        startScanLoop();
-        return;
-      }
-    } catch (e) {}
-
-    // Build hash index from scratch
-    scannerStatus.textContent = 'Building image index...';
-    scannerStatus.className = 'scanner-status';
-    scannerCountEl.textContent = '0/' + (allCards.length + (variantCards ? variantCards.length : 0));
-
-    buildHashIndex(function(done, total) {
-      var pct = Math.round(done / total * 100);
-      scannerCountEl.textContent = 'Indexing: ' + done + '/' + total + ' (' + pct + '%)';
-    }).then(function(hashes) {
-      hashIndex = hashes;
-      var count = Object.keys(hashes).length;
-      // Cache to localStorage
-      try {
-        var expectedCount = allCards.length + (variantCards ? variantCards.length : 0);
-        localStorage.setItem(HASH_DB_KEY, JSON.stringify({ version: expectedCount, hashes: hashes }));
-      } catch (e) {}
-      scannerStatus.textContent = 'Hold card steady in the frame';
-      scannerStatus.className = 'scanner-status';
-      scannerCountEl.textContent = count + ' card hashes indexed';
-      startScanLoop();
-    });
-  }
-
-  // Hash-based scan frame: crop viewfinder region, hash, match
-  function hashScanFrame() {
-    if (!scanStream || scanCooldown || scanPaused || scanBusy) return;
-    if (scannerVideo.readyState < 2) return;
-    if (!hashIndex) return;
-    scanBusy = true;
-
-    var vw = scannerVideo.videoWidth;
-    var vh = scannerVideo.videoHeight;
-    if (!vw || !vh) { scanBusy = false; return; }
-
-    // Crop guide rect region from video
-    var crop = getGuideRectCrop(vw, vh);
-    var cropCanvas = document.createElement('canvas');
-    cropCanvas.width = crop.w;
-    cropCanvas.height = crop.h;
-    cropCanvas.getContext('2d').drawImage(
-      scannerVideo, crop.x, crop.y, crop.w, crop.h, 0, 0, crop.w, crop.h
-    );
-
-    var capturedHash = dhashCanvas(cropCanvas);
-
-    // Find best match
-    var bestCN = null, bestDist = 64, secondDist = 64;
-    var cns = Object.keys(hashIndex);
-    for (var i = 0; i < cns.length; i++) {
-      var dist = hammingDistanceHex(capturedHash, hashIndex[cns[i]]);
-      if (dist < bestDist) {
-        secondDist = bestDist;
-        bestDist = dist;
-        bestCN = cns[i];
-      } else if (dist < secondDist) {
-        secondDist = dist;
-      }
-    }
-
-    scanBusy = false;
-
-    // Accept if distance is low enough AND there's a clear gap to second-best
-    var threshold = 20;
-    if (bestCN && bestDist <= threshold) {
-      var card = getCardByNumber(bestCN);
-      if (card) {
-        var conf = Math.round((1 - bestDist / 64) * 100);
-        scannerCountEl.textContent = 'Hash \u2192 #' + bestCN + ' (' + conf + '% match, d=' + bestDist + ')';
-        onScanSuccess({ name: card.name, cards: [card], score: 1 - bestDist / 64 });
-        return;
-      }
-    }
-
-    if (bestCN) {
-      scannerCountEl.textContent = 'Closest: #' + bestCN + ' (d=' + bestDist + ', need \u2264' + threshold + ')';
-    }
-    onScanFail();
-  }
-
   // ── Scan Loop ──
 
   function startScanLoop() {
     if (scanInterval) return;
-    var interval = scanMode === 'hash' ? 1000 : 1500;
+    var interval = 1500;
     scanInterval = setInterval(scanFrame, interval);
   }
 
@@ -7275,10 +6979,90 @@ document.head.appendChild(manifestLink);
       });
   }
 
-  function scanFrame() {
-    // Hash mode uses its own scan path
-    if (scanMode === 'hash') { hashScanFrame(); return; }
+  // ── Image Preprocessing for OCR ──
 
+  // Calculate video pixel region for the guide rect (accounts for object-fit: cover)
+  function getGuideRectCrop(videoW, videoH) {
+    var vfW = scannerViewfinder.clientWidth;
+    var vfH = scannerViewfinder.clientHeight;
+    if (!vfW || !vfH) return { x: 0, y: 0, w: videoW, h: videoH };
+    var guideW = vfW * 0.65;
+    var guideH = guideW * (7 / 5);
+    var guideX = (vfW - guideW) / 2;
+    var guideY = (vfH - guideH) / 2;
+    var videoAR = videoW / videoH;
+    var vfAR = vfW / vfH;
+    var renderedW, renderedH, offsetX, offsetY;
+    if (videoAR > vfAR) {
+      renderedH = vfH; renderedW = vfH * videoAR;
+      offsetX = (renderedW - vfW) / 2; offsetY = 0;
+    } else {
+      renderedW = vfW; renderedH = vfW / videoAR;
+      offsetX = 0; offsetY = (renderedH - vfH) / 2;
+    }
+    var sx = videoW / renderedW, sy = videoH / renderedH;
+    var cx = Math.max(0, Math.round((guideX + offsetX) * sx));
+    var cy = Math.max(0, Math.round((guideY + offsetY) * sy));
+    var cw = Math.min(Math.round(guideW * sx), videoW - cx);
+    var ch = Math.min(Math.round(guideH * sy), videoH - cy);
+    return { x: cx, y: cy, w: cw, h: ch };
+  }
+
+  // Preprocess a canvas region for OCR: grayscale → contrast stretch → binarize → upscale
+  function preprocessForOCR(srcCanvas, region, scale) {
+    scale = scale || 2;
+    var sx = region ? region.x : 0, sy = region ? region.y : 0;
+    var sw = region ? region.w : srcCanvas.width, sh = region ? region.h : srcCanvas.height;
+    var ow = sw * scale, oh = sh * scale;
+    var c = document.createElement('canvas');
+    c.width = ow; c.height = oh;
+    var ctx = c.getContext('2d');
+    // Draw source region scaled up
+    ctx.drawImage(srcCanvas, sx, sy, sw, sh, 0, 0, ow, oh);
+    // Get pixel data
+    var imgData = ctx.getImageData(0, 0, ow, oh);
+    var d = imgData.data;
+    // Pass 1: convert to grayscale, find min/max for contrast stretch
+    var gray = new Uint8Array(ow * oh);
+    var gMin = 255, gMax = 0;
+    for (var i = 0; i < d.length; i += 4) {
+      var g = Math.round(d[i] * 0.299 + d[i + 1] * 0.587 + d[i + 2] * 0.114);
+      gray[i >> 2] = g;
+      if (g < gMin) gMin = g;
+      if (g > gMax) gMax = g;
+    }
+    // Pass 2: contrast stretch + Otsu binarization
+    var range = gMax - gMin || 1;
+    // Otsu threshold: build histogram, find optimal threshold
+    var hist = new Array(256).fill(0);
+    for (var j = 0; j < gray.length; j++) {
+      var stretched = Math.round((gray[j] - gMin) / range * 255);
+      gray[j] = stretched;
+      hist[stretched]++;
+    }
+    var total = gray.length;
+    var sum = 0; for (var t = 0; t < 256; t++) sum += t * hist[t];
+    var sumB = 0, wB = 0, maxVar = 0, threshold = 128;
+    for (var t2 = 0; t2 < 256; t2++) {
+      wB += hist[t2]; if (wB === 0) continue;
+      var wF = total - wB; if (wF === 0) break;
+      sumB += t2 * hist[t2];
+      var mB = sumB / wB, mF = (sum - sumB) / wF;
+      var between = wB * wF * (mB - mF) * (mB - mF);
+      if (between > maxVar) { maxVar = between; threshold = t2; }
+    }
+    // Apply binarization
+    for (var k = 0; k < gray.length; k++) {
+      var val = gray[k] >= threshold ? 255 : 0;
+      var pi = k * 4;
+      d[pi] = d[pi + 1] = d[pi + 2] = val;
+      d[pi + 3] = 255;
+    }
+    ctx.putImageData(imgData, 0, 0);
+    return c;
+  }
+
+  function scanFrame() {
     // OCR modes (tesseract / ocrspace)
     if (!scanStream || scanCooldown || scanPaused || scanBusy) return;
     if (scannerVideo.readyState < 2) return;
@@ -7290,24 +7074,28 @@ document.head.appendChild(manifestLink);
     var vh = scannerVideo.videoHeight;
     if (!vw || !vh) { scanBusy = false; return; }
 
-    // Capture full video frame
-    scannerCanvas.width = vw;
-    scannerCanvas.height = vh;
+    // Crop to guide rect region (card area only)
+    var crop = getGuideRectCrop(vw, vh);
+    scannerCanvas.width = crop.w;
+    scannerCanvas.height = crop.h;
     var ctx = scannerCanvas.getContext('2d');
-    ctx.drawImage(scannerVideo, 0, 0, vw, vh);
+    ctx.drawImage(scannerVideo, crop.x, crop.y, crop.w, crop.h, 0, 0, crop.w, crop.h);
 
     var ocrPromise;
     var engine;
     if (scanMode === 'tesseract') {
       engine = 'Tesseract';
-      ocrPromise = scanWorker.recognize(scannerCanvas)
+      // Preprocess: grayscale + contrast + binarize + 2x upscale
+      var processed = preprocessForOCR(scannerCanvas, null, 2);
+      ocrPromise = scanWorker.recognize(processed, { rectangle: null })
         .then(function(result) { return result.data.text; });
     } else {
       engine = 'Cloud';
       var remaining = getOcrUsageRemaining();
       if (remaining <= 0) { scanBusy = false; onScanFail(); return; }
       scannerLastAdd.textContent = 'Cloud OCR: ' + remaining + '/25000 remaining this month';
-      var base64 = scannerCanvas.toDataURL('image/jpeg', 0.8);
+      // For OCR.space, send the cropped (but not binarized) image — their engine handles preprocessing
+      var base64 = scannerCanvas.toDataURL('image/jpeg', 0.85);
       ocrPromise = ocrSpaceRecognize(base64);
     }
 
@@ -7487,34 +7275,6 @@ document.head.appendChild(manifestLink);
     ctx.drawImage(img, 0, 0, iw, ih, 0, 0, sw, sh);
     scannerCountEl.textContent = 'Photo: ' + iw + 'x' + ih + ' \u2192 ' + sw + 'x' + sh;
 
-    // Hash mode: match photo against hash index
-    if (scanMode === 'hash' && hashIndex) {
-      scannerStatus.textContent = 'Matching photo...';
-      var photoHash = dhashCanvas(scannerCanvas);
-      var bestCN = null, bestDist = 64;
-      var cns = Object.keys(hashIndex);
-      for (var hi = 0; hi < cns.length; hi++) {
-        var dist = hammingDistanceHex(photoHash, hashIndex[cns[hi]]);
-        if (dist < bestDist) { bestDist = dist; bestCN = cns[hi]; }
-      }
-      if (bestCN && bestDist <= 22) {
-        var card = getCardByNumber(bestCN);
-        if (card) {
-          var conf = Math.round((1 - bestDist / 64) * 100);
-          scannerCountEl.textContent = 'Hash \u2192 #' + bestCN + ' (' + conf + '%)';
-          scanPaused = false;
-          onScanSuccess({ name: card.name, cards: [card], score: 1 - bestDist / 64 });
-          return;
-        }
-      }
-      scanPaused = false;
-      scannerStatus.textContent = 'Could not match card \u2014 try again or search';
-      scannerStatus.className = 'scanner-status warning';
-      if (bestCN) scannerCountEl.textContent = 'Closest: #' + bestCN + ' (d=' + bestDist + ')';
-      scannerSearchFallback.style.display = '';
-      return;
-    }
-
     // OCR modes
     if (scanMode === 'tesseract' && !scanWorker) {
       scanPaused = false;
@@ -7537,12 +7297,19 @@ document.head.appendChild(manifestLink);
       ocrPromise = ocrSpaceRecognize(base64)
         .then(function(text) { return { text: text, engine: 'Cloud' }; });
     } else {
+      // For photos: preprocess + use PSM.AUTO (more flexible for full card photos)
+      var processed = preprocessForOCR(scannerCanvas, null, 2);
       ocrPromise = scanWorker.setParameters({
         tessedit_pageseg_mode: Tesseract.PSM.AUTO
       }).then(function() {
-        return scanWorker.recognize(scannerCanvas);
+        return scanWorker.recognize(processed);
       }).then(function(result) {
-        return { text: result.data.text, engine: 'Tesseract' };
+        // Restore PSM for auto-scan loop
+        return scanWorker.setParameters({
+          tessedit_pageseg_mode: Tesseract.PSM.SINGLE_BLOCK
+        }).then(function() {
+          return { text: result.data.text, engine: 'Tesseract' };
+        });
       });
     }
 
