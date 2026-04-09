@@ -7049,22 +7049,7 @@ if ('serviceWorker' in navigator) {
       lastScanText = text;
       scannerCountEl.textContent = engine + ': "' + text.substring(0, 50) + '"';
 
-      // Strategy 1: Extract collector number (FIN: 4 zero-padded digits, 0001-0681)
-      var nums = text.match(/\b\d{4}\b/g) || [];
-      for (var ni = 0; ni < nums.length; ni++) {
-        var cn4 = nums[ni];
-        var cn = cn4.substring(1);
-        var cnNum = parseInt(cn4, 10);
-        if (cnNum < 1 || cnNum > 681) continue;
-        var card = getCardByNumber(cn);
-        if (card) {
-          scannerCountEl.textContent = engine + ' \u2192 CN #' + cn4 + ': ' + card.name;
-          onScanSuccess({ name: card.name, cards: [card], score: 1.0 });
-          return;
-        }
-      }
-
-      // Strategy 2: Fuzzy match card name
+      // Fuzzy match card name
       var match = fuzzyMatchCardName(text, scanNameMap);
       if (match) {
         scannerCountEl.textContent = engine + ' \u2192 "' + match.name + '" (' + Math.round(match.score * 100) + '%)';
@@ -7464,23 +7449,91 @@ if ('serviceWorker' in navigator) {
     return name.toLowerCase().replace(/[^a-z0-9 ]/g, '').trim();
   }
 
-  function levenshtein(a, b) {
+  // OCR-aware stopwords: card types, keywords, and junk that OCR picks up
+  var OCR_STOP_WORDS = new Set([
+    'creature','enchantment','sorcery','instant','artifact','legendary','aura',
+    'equipment','land','basic','token','human','soldier','warrior','knight',
+    'flash','flying','trample','haste','vigilance','deathtouch','lifelink',
+    'ward','reach','first','strike','double','defender','hexproof','menace',
+    'indestructible','planeswalker','tribal','saga','adventure','vehicle',
+    'the','of','and','for','with','from','into','that','this','your','each',
+    'all','any','one','two','three','target','card','cards','player','turn',
+    'mana','tap','untap','draw','discard','destroy','exile','return','put',
+    'get','pay','add','its','may','when','whenever','if','then','until',
+    'end','phase','step','combat','attack','block','damage','life','power',
+    'toughness','counter','counters','ability','cost','control','owner',
+    'graveyard','library','battlefield','hand','stack','zone'
+  ]);
+
+  // Common OCR character confusions — weighted as cost 0 instead of 1
+  var OCR_CONFUSIONS = new Map();
+  (function() {
+    var pairs = [
+      ['l','1'],['l','i'],['1','i'],['o','0'],['o','q'],
+      ['s','5'],['z','2'],['b','6'],['g','9'],['g','q'],
+      ['n','h'],['u','v'],['c','e'],['a','o'],['t','f'],
+      ['d','cl'],['m','rn'],['w','vv'],['ii','u']
+    ];
+    pairs.forEach(function(p) {
+      var key = p[0] + '|' + p[1];
+      var rev = p[1] + '|' + p[0];
+      OCR_CONFUSIONS.set(key, true);
+      OCR_CONFUSIONS.set(rev, true);
+    });
+  })();
+
+  // Weighted Levenshtein: OCR-confused character pairs cost 0.2 instead of 1
+  function ocrLevenshtein(a, b) {
     var m = a.length, n = b.length;
     if (m === 0) return n;
     if (n === 0) return m;
-    var prev = [];
-    var curr = [];
+    var prev = new Array(n + 1);
+    var curr = new Array(n + 1);
     for (var j = 0; j <= n; j++) prev[j] = j;
     for (var i = 1; i <= m; i++) {
       curr[0] = i;
       for (var j2 = 1; j2 <= n; j2++) {
-        var cost = a[i - 1] === b[j2 - 1] ? 0 : 1;
-        curr[j2] = Math.min(prev[j2] + 1, curr[j2 - 1] + 1, prev[j2 - 1] + cost);
+        if (a[i - 1] === b[j2 - 1]) {
+          curr[j2] = prev[j2 - 1];
+        } else {
+          var subCost = 1;
+          // Single-char confusion
+          if (OCR_CONFUSIONS.has(a[i - 1] + '|' + b[j2 - 1])) {
+            subCost = 0.2;
+          }
+          // Multi-char confusions (e.g. rn↔m, cl↔d)
+          // Check if 2 chars in a map to 1 char in b
+          if (i >= 2) {
+            var pair = a[i - 2] + a[i - 1];
+            var confKey = pair + '|' + b[j2 - 1];
+            if (OCR_CONFUSIONS.has(confKey) && prev[j2 - 1] !== undefined) {
+              var altCost = (i >= 2 ? prev[j2 - 1] : j2) + 0.2;
+              // This is an approximation — treat as substitution at reduced cost
+              if (altCost < curr[j2] || curr[j2] === undefined) subCost = 0.2;
+            }
+          }
+          // Check if 1 char in a maps to 2 chars in b
+          if (j2 >= 2) {
+            var bPair = b[j2 - 2] + b[j2 - 1];
+            var confKey2 = a[i - 1] + '|' + bPair;
+            if (OCR_CONFUSIONS.has(confKey2)) {
+              subCost = Math.min(subCost, 0.2);
+            }
+          }
+          curr[j2] = Math.min(
+            prev[j2] + 1,         // deletion
+            curr[j2 - 1] + 1,     // insertion
+            prev[j2 - 1] + subCost // substitution
+          );
+        }
       }
       var tmp = prev; prev = curr; curr = tmp;
     }
     return prev[n];
   }
+
+  // First-word index for fast Levenshtein candidate pruning
+  var scanFirstWordIndex = null;
 
   function fuzzyMatchCardName(ocrText, nameMap) {
     var norm = normalizeCardName(ocrText);
@@ -7490,12 +7543,10 @@ if ('serviceWorker' in navigator) {
     if (nameMap.has(norm)) return { name: norm, cards: nameMap.get(norm), score: 1.0 };
 
     // 2. Check if any known card name appears as whole words in the OCR text
-    //    Use word boundary regex to prevent "ultima" matching inside "ultimate"
     var bestSub = null;
     var bestSubLen = 0;
     nameMap.forEach(function(cards, name) {
       if (name.length < 3) return;
-      // Build regex with word boundaries: "hunt the mark" -> /\bhunt the mark\b/
       try {
         var nameRe = new RegExp('\\b' + name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b');
         if (nameRe.test(norm)) {
@@ -7521,10 +7572,11 @@ if ('serviceWorker' in navigator) {
     });
     if (bestSub) return bestSub;
 
-    // 3. Sliding window: try consecutive word groups from OCR text
-    //    OCR may read "TEE hunt the mark Creature Enchantment..."
-    //    We try windows of 1-5 words against the name map
-    var words = norm.split(/\s+/);
+    // 3. Sliding window with stopword filtering
+    var rawWords = norm.split(/\s+/);
+    var words = rawWords.filter(function(w) { return !OCR_STOP_WORDS.has(w); });
+    if (words.length === 0) words = rawWords; // fallback if everything was filtered
+
     var bestWin = null;
     var bestWinScore = 0;
     for (var winSize = Math.min(5, words.length); winSize >= 1; winSize--) {
@@ -7537,7 +7589,7 @@ if ('serviceWorker' in navigator) {
           return { name: phrase, cards: nameMap.get(phrase), score: 1.0 };
         }
 
-        // Window is a substring of a card name (e.g. "hunt the mark" inside "sidequest hunt the mark")
+        // Substring match
         nameMap.forEach(function(cards, name) {
           if (phrase.length >= 4 && name.includes(phrase)) {
             var subScore = phrase.length / name.length;
@@ -7549,18 +7601,39 @@ if ('serviceWorker' in navigator) {
         });
         if (bestWin && bestWin.score >= 0.6) return bestWin;
 
-        // Levenshtein against each card name
-        nameMap.forEach(function(cards, name) {
-          // Only compare windows of similar length (within 60%)
-          if (Math.abs(window.length - name.length) > name.length * 0.6) return;
-          var maxLen = Math.max(window.length, name.length);
-          var dist = levenshtein(window, name);
+        // Levenshtein — only on 2+ word windows or phrases >= 6 chars
+        if (winSize < 2 && phrase.length < 6) continue;
+
+        // Use first-word index to prune candidates
+        var firstWord = words[wi];
+        var candidates = null;
+        if (scanFirstWordIndex && winSize >= 2) {
+          candidates = new Map();
+          // Gather cards whose first word matches any word in this window
+          for (var wk = wi; wk < wi + winSize; wk++) {
+            var entries = scanFirstWordIndex.get(words[wk]);
+            if (entries) {
+              entries.forEach(function(e) { candidates.set(e.name, e.cards); });
+            }
+          }
+          // Also check for OCR-confused first words (edit distance 1)
+          if (candidates.size === 0) candidates = null; // fallback to full scan
+        }
+
+        var searchMap = candidates || nameMap;
+        searchMap.forEach(function(cards, name) {
+          if (Math.abs(phrase.length - name.length) > name.length * 0.6) return;
+          var maxLen = Math.max(phrase.length, name.length);
+          var dist = ocrLevenshtein(phrase, name);
           var score = 1 - (dist / maxLen);
           if (score > bestWinScore) {
             bestWinScore = score;
             bestWin = { name: name, cards: cards, score: score };
           }
         });
+
+        // Early exit on high-confidence Levenshtein match
+        if (bestWin && bestWin.score >= 0.9) return bestWin;
       }
     }
     if (bestWin && bestWin.score >= 0.65) return bestWin;
@@ -7570,12 +7643,20 @@ if ('serviceWorker' in navigator) {
 
   function buildNameMap() {
     var map = new Map();
+    var firstWordIdx = new Map();
     var all = allCards.concat(variantCards);
     all.forEach(function(card) {
       var norm = normalizeCardName(card.name);
       if (!map.has(norm)) map.set(norm, []);
       map.get(norm).push(card);
+      // Build first-word index
+      var fw = norm.split(/\s+/)[0];
+      if (fw) {
+        if (!firstWordIdx.has(fw)) firstWordIdx.set(fw, []);
+        firstWordIdx.get(fw).push({ name: norm, cards: map.get(norm) });
+      }
     });
+    scanFirstWordIndex = firstWordIdx;
     return map;
   }
 
