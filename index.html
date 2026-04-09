@@ -3972,7 +3972,7 @@ document.head.appendChild(manifestLink);
           <canvas id="scanner-canvas" style="display:none"></canvas>
           <div class="scanner-guide">
             <div class="scanner-guide-rect"></div>
-            <div class="scanner-guide-label">Fill the frame with the card</div>
+            <div class="scanner-guide-label">Fill the rectangle with the card</div>
           </div>
           <div class="scanner-variant-picker" id="scanner-variant-picker" style="display:none">
             <div class="scanner-variant-title" id="scanner-variant-title"></div>
@@ -6499,6 +6499,7 @@ document.head.appendChild(manifestLink);
   var scanNameMap = null;
   var scanPaused = false;
   var scanBusy = false;
+  var scanCycle = 0;
 
   function openScannerModal() {
     if (!allCards || allCards.length === 0) {
@@ -6510,6 +6511,7 @@ document.head.appendChild(manifestLink);
     scanCooldown = false;
     scanPaused = false;
     scanBusy = false;
+    scanCycle = 0;
     scannerLastAdd.textContent = '';
     scannerCountEl.textContent = '';
     scannerSearchFallback.style.display = 'none';
@@ -6593,9 +6595,8 @@ document.head.appendChild(manifestLink);
       if (initTimedOut) { worker.terminate(); return; }
       clearTimeout(initTimeout);
       scanWorker = worker;
-      return worker.setParameters({
-        tessedit_pageseg_mode: Tesseract.PSM.AUTO
-      });
+      // Don't set PSM/whitelist here — we switch per scan cycle
+      return Promise.resolve();
     }).then(function() {
       if (initTimedOut) return;
       scannerStatus.textContent = 'Hold card steady in the frame';
@@ -6613,7 +6614,7 @@ document.head.appendChild(manifestLink);
 
   function startScanLoop() {
     if (scanInterval) return;
-    scanInterval = setInterval(scanFrame, 1500);
+    scanInterval = setInterval(scanFrame, 1000);
   }
 
   function stopScanLoop() {
@@ -6627,52 +6628,117 @@ document.head.appendChild(manifestLink);
     if (!scanWorker || !scanStream || scanCooldown || scanPaused || scanBusy) return;
     if (scannerVideo.readyState < 2) return;
     scanBusy = true;
+    scanCycle++;
 
     var vw = scannerVideo.videoWidth;
     var vh = scannerVideo.videoHeight;
     if (!vw || !vh) { scanBusy = false; return; }
 
-    // Capture full frame — no crop, no preprocessing
-    // Let Tesseract read all text, then we search for valid collector numbers
-    scannerCanvas.width = vw;
-    scannerCanvas.height = vh;
-    var ctx = scannerCanvas.getContext('2d');
-    ctx.drawImage(scannerVideo, 0, 0, vw, vh);
+    // Guide rect: centered, 65% width, 5:7 aspect ratio
+    // Card assumed to fill this region
+    var cardW = Math.floor(vw * 0.65);
+    var cardH = Math.floor(cardW * 1.4); // 5:7 ratio
+    var cardX = Math.floor((vw - cardW) / 2);
+    var cardY = Math.floor((vh - cardH) / 2);
 
-    scanWorker.recognize(scannerCanvas).then(function(result) {
+    // Alternate strategies each cycle
+    var useNumberScan = (scanCycle % 2 === 0);
+    var cropX, cropY, cropW, cropH, paramPromise;
+
+    if (useNumberScan) {
+      // COLLECTOR NUMBER: bottom 8% of card, left 25%
+      // FIN format: "M 0122 FFV" in Gotham Medium, white on black
+      cropX = cardX;
+      cropY = cardY + Math.floor(cardH * 0.92);
+      cropW = Math.floor(cardW * 0.30);
+      cropH = Math.floor(cardH * 0.06);
+      paramPromise = scanWorker.setParameters({
+        tessedit_pageseg_mode: Tesseract.PSM.SINGLE_LINE,
+        tessedit_char_whitelist: '0123456789CURM '
+      });
+    } else {
+      // CARD NAME: top 8% of card, centered 80%
+      // In Beleren Bold — less reliable but worth trying
+      cropX = cardX + Math.floor(cardW * 0.10);
+      cropY = cardY + Math.floor(cardH * 0.04);
+      cropW = Math.floor(cardW * 0.80);
+      cropH = Math.floor(cardH * 0.06);
+      paramPromise = scanWorker.setParameters({
+        tessedit_pageseg_mode: Tesseract.PSM.SINGLE_LINE,
+        tessedit_char_whitelist: ''
+      });
+    }
+
+    // Upscale 4x for tiny text
+    var scaleF = 4;
+    var outW = Math.max(cropW * scaleF, 100);
+    var outH = Math.max(cropH * scaleF, 40);
+    scannerCanvas.width = outW;
+    scannerCanvas.height = outH;
+    var ctx = scannerCanvas.getContext('2d');
+    ctx.imageSmoothingEnabled = true;
+    ctx.drawImage(scannerVideo, cropX, cropY, cropW, cropH, 0, 0, outW, outH);
+
+    if (useNumberScan) {
+      // Preprocessing for white text on black: threshold to clean binary
+      var imgData = ctx.getImageData(0, 0, outW, outH);
+      var d = imgData.data;
+      for (var px = 0; px < d.length; px += 4) {
+        var gray = d[px] * 0.299 + d[px+1] * 0.587 + d[px+2] * 0.114;
+        // White text on black bg: threshold at 120, keep as black text on white
+        var val = gray > 120 ? 0 : 255;
+        d[px] = d[px+1] = d[px+2] = val;
+      }
+      ctx.putImageData(imgData, 0, 0);
+    }
+
+    paramPromise.then(function() {
+      return scanWorker.recognize(scannerCanvas);
+    }).then(function(result) {
       scanBusy = false;
       var text = result.data.text.trim().replace(/[\n\r]+/g, ' ');
-      if (!text) {
+      if (!text || text.length < 2) {
         onScanFail();
         return;
       }
-      // Show what OCR reads for debugging
-      scannerCountEl.textContent = 'OCR: "' + text.substring(0, 50) + '"';
 
-      // Try both: collector number patterns AND fuzzy card name matching
+      var mode = useNumberScan ? 'CN' : 'Name';
+      scannerCountEl.textContent = mode + ': "' + text.substring(0, 40) + '"';
 
-      // Strategy 1: Find collector number pattern (e.g. "122/309", "122")
-      var allNums = text.match(/\d{1,3}/g) || [];
-      var foundCard = null;
-      for (var ni = 0; ni < allNums.length; ni++) {
-        var cn = allNums[ni];
-        while (cn.length < 3) cn = '0' + cn;
-        var card = getCardByNumber(cn);
-        if (card) { foundCard = card; break; }
-      }
-
-      // Strategy 2: Fuzzy match card name from OCR text
-      var nameMatch = null;
-      if (!foundCard) {
-        nameMatch = fuzzyMatchCardName(text, scanNameMap);
-      }
-
-      if (foundCard) {
-        onScanSuccess({ name: foundCard.name, cards: [foundCard], score: 1.0 });
-      } else if (nameMatch) {
-        onScanSuccess(nameMatch);
-      } else {
+      if (useNumberScan) {
+        // Extract 4-digit collector number (FIN uses 0001-0681, zero-padded)
+        var nums = text.match(/\d{3,4}/g) || [];
+        for (var ni = 0; ni < nums.length; ni++) {
+          var cn = nums[ni];
+          // If 4 digits, take last 3 (e.g. "0122" -> "122")
+          if (cn.length === 4) cn = cn.substring(1);
+          // Try direct lookup
+          var card = getCardByNumber(cn);
+          if (card) {
+            onScanSuccess({ name: card.name, cards: [card], score: 1.0 });
+            return;
+          }
+        }
+        // Also try any 1-3 digit sequences padded
+        var smallNums = text.match(/\d{1,3}/g) || [];
+        for (var si = 0; si < smallNums.length; si++) {
+          var sn = smallNums[si];
+          while (sn.length < 3) sn = '0' + sn;
+          var scard = getCardByNumber(sn);
+          if (scard) {
+            onScanSuccess({ name: scard.name, cards: [scard], score: 1.0 });
+            return;
+          }
+        }
         onScanFail();
+      } else {
+        // Fuzzy match card name
+        var match = fuzzyMatchCardName(text, scanNameMap);
+        if (match) {
+          onScanSuccess(match);
+        } else {
+          onScanFail();
+        }
       }
     }).catch(function() {
       scanBusy = false;
