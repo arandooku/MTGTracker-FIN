@@ -2,7 +2,7 @@
 <html lang="en" data-theme="dark">
 <head>
 <meta charset="UTF-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net blob:; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src https://cards.scryfall.io https://*.scryfall.io https://gamepedia.cursecdn.com blob: data:; connect-src https://api.scryfall.com https://api.github.com https://open.er-api.com https://cdn.jsdelivr.net https://paddlejs.bj.bcebos.com https://api.ocr.space; worker-src blob:; child-src blob:; manifest-src blob:; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net blob:; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src https://cards.scryfall.io https://*.scryfall.io https://gamepedia.cursecdn.com blob: data:; connect-src https://api.scryfall.com https://api.github.com https://open.er-api.com https://cdn.jsdelivr.net https://tessdata.projectnaptha.com https://api.ocr.space; worker-src blob:; child-src blob:; manifest-src blob:; base-uri 'none'; form-action 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>FIN Binder Tracker</title>
 <!-- iOS PWA -->
@@ -18,6 +18,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -6590,8 +6591,8 @@ document.head.appendChild(manifestLink);
   var scannerFileInput = document.getElementById('scanner-file-input');
 
   var scanStream = null;
+  var scanWorker = null;
   var scanInterval = null;
-  var paddleOcrReady = false;
   function getOcrSpaceKey() { return localStorage.getItem(OCR_KEY) || ''; }
   var scanCooldown = false;
   var scanFailCount = 0;
@@ -6632,6 +6633,10 @@ document.head.appendChild(manifestLink);
     document.body.style.overflow = '';
     stopCamera();
     stopScanLoop();
+    if (scanWorker) {
+      scanWorker.terminate().catch(function() {});
+      scanWorker = null;
+    }
     hideVariantPicker();
     if (count > 0) {
       showToast('Scan complete — ' + count + ' card' + (count !== 1 ? 's' : '') + ' added');
@@ -6646,7 +6651,7 @@ document.head.appendChild(manifestLink);
       scannerVideo.srcObject = stream;
       scannerVideo.onloadedmetadata = function() {
         scannerStatus.textContent = 'Loading OCR engine...';
-        initOCR();
+        initTesseract();
       };
     }).catch(function(err) {
       console.error('Camera error:', err);
@@ -6671,42 +6676,70 @@ document.head.appendChild(manifestLink);
     scannerVideo.srcObject = null;
   }
 
-  // ── OCR Scanner: Tesseract Init & Scan Loop ──
-  // ── OCR Engine: Paddle.js (primary) + OCR.space API (fallback) ──
+  // ── OCR Engine: Tesseract.js (primary) + OCR.space API (fallback) ──
 
-  function initOCR() {
-    scannerStatus.textContent = 'Loading OCR engine...';
-
-    // Try loading Paddle.js OCR via dynamic ESM import
-    import('https://cdn.jsdelivr.net/npm/@paddlejs-models/ocr@1.1.1/+esm')
-      .then(function(ocr) {
-        window.paddleOcr = ocr;
-        scannerStatus.textContent = 'Initializing models...';
-        return ocr.init();
-      })
-      .then(function() {
-        paddleOcrReady = true;
-        scannerStatus.textContent = 'Hold card steady in the frame';
+  function initTesseract() {
+    if (typeof Tesseract === 'undefined') {
+      // Tesseract script failed to load — try OCR.space fallback
+      if (getOcrSpaceKey()) {
+        scannerStatus.textContent = 'Using cloud OCR';
         scannerStatus.className = 'scanner-status';
         startScanLoop();
-      })
-      .catch(function(err) {
-        console.warn('Paddle.js failed, using OCR.space fallback:', err);
-        paddleOcrReady = false;
-        if (getOcrSpaceKey()) {
-          scannerStatus.textContent = 'Using cloud OCR';
-          scannerStatus.className = 'scanner-status';
-          startScanLoop();
-        } else {
-          scannerStatus.textContent = '';
-          document.getElementById('scanner-key-prompt').style.display = '';
-        }
-      });
+      } else {
+        scannerStatus.textContent = '';
+        document.getElementById('scanner-key-prompt').style.display = '';
+      }
+      return;
+    }
+
+    scannerStatus.textContent = 'Loading OCR engine...';
+
+    var initTimedOut = false;
+    var initTimeout = setTimeout(function() {
+      initTimedOut = true;
+      // Tesseract timed out — try OCR.space fallback
+      if (getOcrSpaceKey()) {
+        scannerStatus.textContent = 'Using cloud OCR (local engine timed out)';
+        scannerStatus.className = 'scanner-status';
+        startScanLoop();
+      } else {
+        scannerStatus.textContent = 'OCR engine timed out';
+        scannerStatus.className = 'scanner-status warning';
+        document.getElementById('scanner-key-prompt').style.display = '';
+      }
+    }, 15000);
+
+    Tesseract.createWorker('eng', 1, {
+      langPath: 'https://tessdata.projectnaptha.com/4.0.0'
+    }).then(function(worker) {
+      if (initTimedOut) { worker.terminate(); return; }
+      clearTimeout(initTimeout);
+      scanWorker = worker;
+      return worker.setParameters({ tessedit_pageseg_mode: Tesseract.PSM.AUTO });
+    }).then(function() {
+      if (initTimedOut) return;
+      scannerStatus.textContent = 'Hold card steady in the frame';
+      scannerStatus.className = 'scanner-status';
+      startScanLoop();
+    }).catch(function(err) {
+      if (initTimedOut) return;
+      clearTimeout(initTimeout);
+      console.error('Tesseract init error:', err);
+      // Tesseract failed — try OCR.space fallback
+      if (getOcrSpaceKey()) {
+        scannerStatus.textContent = 'Using cloud OCR';
+        scannerStatus.className = 'scanner-status';
+        startScanLoop();
+      } else {
+        scannerStatus.textContent = '';
+        document.getElementById('scanner-key-prompt').style.display = '';
+      }
+    });
   }
 
   function startScanLoop() {
     if (scanInterval) return;
-    scanInterval = setInterval(scanFrame, 2000);
+    scanInterval = setInterval(scanFrame, 1500);
   }
 
   function stopScanLoop() {
@@ -6762,6 +6795,8 @@ document.head.appendChild(manifestLink);
   function scanFrame() {
     if (!scanStream || scanCooldown || scanPaused || scanBusy) return;
     if (scannerVideo.readyState < 2) return;
+    // Need either Tesseract worker or OCR.space key
+    if (!scanWorker && !getOcrSpaceKey()) return;
     scanBusy = true;
 
     var vw = scannerVideo.videoWidth;
@@ -6775,12 +6810,15 @@ document.head.appendChild(manifestLink);
     ctx.drawImage(scannerVideo, 0, 0, vw, vh);
 
     var ocrPromise;
-    if (paddleOcrReady) {
-      // Paddle.js: pass canvas element directly
-      ocrPromise = window.paddleOcr.recognize(scannerCanvas)
-        .then(function(res) { return (res.text || []).join(' '); });
+    var engine;
+    if (scanWorker) {
+      // Tesseract.js: primary engine
+      engine = 'Tesseract';
+      ocrPromise = scanWorker.recognize(scannerCanvas)
+        .then(function(result) { return result.data.text; });
     } else {
-      // OCR.space fallback: send base64 JPEG
+      // OCR.space: cloud fallback
+      engine = 'Cloud';
       var remaining = getOcrUsageRemaining();
       if (remaining <= 0) { scanBusy = false; onScanFail(); return; }
       scannerLastAdd.textContent = 'Cloud OCR: ' + remaining + '/25000 remaining this month';
@@ -6797,7 +6835,6 @@ document.head.appendChild(manifestLink);
       }
 
       lastScanText = text;
-      var engine = paddleOcrReady ? 'Paddle' : 'Cloud';
       scannerCountEl.textContent = engine + ': "' + text.substring(0, 50) + '"';
 
       // Strategy 1: Extract collector number (FIN: 4 zero-padded digits, 0001-0681)
@@ -6809,7 +6846,7 @@ document.head.appendChild(manifestLink);
         if (cnNum < 1 || cnNum > 681) continue;
         var card = getCardByNumber(cn);
         if (card) {
-          scannerCountEl.textContent = engine + ' → CN #' + cn4 + ': ' + card.name;
+          scannerCountEl.textContent = engine + ' \u2192 CN #' + cn4 + ': ' + card.name;
           onScanSuccess({ name: card.name, cards: [card], score: 1.0 });
           return;
         }
@@ -6818,7 +6855,7 @@ document.head.appendChild(manifestLink);
       // Strategy 2: Fuzzy match card name
       var match = fuzzyMatchCardName(text, scanNameMap);
       if (match) {
-        scannerCountEl.textContent = engine + ' → "' + match.name + '" (' + Math.round(match.score * 100) + '%)';
+        scannerCountEl.textContent = engine + ' \u2192 "' + match.name + '" (' + Math.round(match.score * 100) + '%)';
         onScanSuccess(match);
         return;
       }
@@ -6945,6 +6982,12 @@ document.head.appendChild(manifestLink);
   });
 
   function processPhotoCapture(img) {
+    if (!scanWorker && !getOcrSpaceKey()) {
+      scannerStatus.textContent = 'OCR engine not ready';
+      scannerStatus.className = 'scanner-status warning';
+      return;
+    }
+
     scanPaused = true;
     scannerStatus.textContent = 'Processing photo...';
     scannerStatus.className = 'scanner-status';
@@ -6963,29 +7006,42 @@ document.head.appendChild(manifestLink);
     scannerCanvas.height = sh;
     var ctx = scannerCanvas.getContext('2d');
     ctx.drawImage(img, 0, 0, iw, ih, 0, 0, sw, sh);
-    scannerCountEl.textContent = 'Photo: ' + iw + 'x' + ih + ' → ' + sw + 'x' + sh;
+    scannerCountEl.textContent = 'Photo: ' + iw + 'x' + ih + ' \u2192 ' + sw + 'x' + sh;
 
-    // Use OCR.space for photos (higher quality, full res) — Paddle.js as fallback
+    // Use OCR.space for photos if key available (higher quality), Tesseract as fallback
     var ocrPromise;
     var base64 = scannerCanvas.toDataURL('image/jpeg', 0.85);
     scannerStatus.textContent = 'Reading text...';
 
-    ocrPromise = ocrSpaceRecognize(base64).then(function(text) {
-      if (text && text.trim().length > 2) return { text: text, engine: 'Cloud' };
-      // OCR.space failed — try Paddle.js if available
-      if (paddleOcrReady) {
-        return window.paddleOcr.recognize(scannerCanvas)
-          .then(function(res) { return { text: (res.text || []).join(' '), engine: 'Paddle' }; });
-      }
-      return { text: '', engine: 'none' };
-    }).catch(function() {
-      // API failed — try Paddle.js
-      if (paddleOcrReady) {
-        return window.paddleOcr.recognize(scannerCanvas)
-          .then(function(res) { return { text: (res.text || []).join(' '), engine: 'Paddle' }; });
-      }
-      return { text: '', engine: 'none' };
-    });
+    if (getOcrSpaceKey()) {
+      ocrPromise = ocrSpaceRecognize(base64).then(function(text) {
+        if (text && text.trim().length > 2) return { text: text, engine: 'Cloud' };
+        if (scanWorker) {
+          return scanWorker.recognize(scannerCanvas)
+            .then(function(r) { return { text: r.data.text, engine: 'Tesseract' }; });
+        }
+        return { text: '', engine: 'none' };
+      }).catch(function() {
+        if (scanWorker) {
+          return scanWorker.recognize(scannerCanvas)
+            .then(function(r) { return { text: r.data.text, engine: 'Tesseract' }; });
+        }
+        return { text: '', engine: 'none' };
+      });
+    } else if (scanWorker) {
+      ocrPromise = scanWorker.setParameters({
+        tessedit_pageseg_mode: Tesseract.PSM.AUTO
+      }).then(function() {
+        return scanWorker.recognize(scannerCanvas);
+      }).then(function(result) {
+        return { text: result.data.text, engine: 'Tesseract' };
+      });
+    } else {
+      scanPaused = false;
+      scannerStatus.textContent = 'No OCR engine available';
+      scannerStatus.className = 'scanner-status warning';
+      return;
+    }
 
     ocrPromise.then(function(result) {
       var text = (result.text || '').trim().replace(/[\n\r]+/g, ' ');
@@ -6993,7 +7049,7 @@ document.head.appendChild(manifestLink);
 
       if (!text || text.length < 2) {
         scanPaused = false;
-        scannerStatus.textContent = 'No text found — try a clearer photo';
+        scannerStatus.textContent = 'No text found \u2014 try a clearer photo';
         scannerStatus.className = 'scanner-status warning';
         return;
       }
@@ -7022,7 +7078,7 @@ document.head.appendChild(manifestLink);
       }
 
       scanPaused = false;
-      scannerStatus.textContent = 'Could not identify card — try again or search';
+      scannerStatus.textContent = 'Could not identify card \u2014 try again or search';
       scannerStatus.className = 'scanner-status warning';
       scannerSearchFallback.style.display = '';
     }).catch(function(err) {
