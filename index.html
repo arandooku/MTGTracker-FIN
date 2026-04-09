@@ -6700,9 +6700,67 @@ document.head.appendChild(manifestLink);
     setTimeout(function() { clearInterval(searchCloseCheck); }, 60000);
   });
 
-  // Stubs for functions defined in later tasks
-  function hideVariantPicker() {}
-  function showVariantPicker() {}
+  // ── OCR Scanner: Variant Picker ──
+  var variantPicker = document.getElementById('scanner-variant-picker');
+  var variantTitle = document.getElementById('scanner-variant-title');
+  var variantRow = document.getElementById('scanner-variant-row');
+  var variantSkip = document.getElementById('scanner-variant-skip');
+  var scannerViewfinder = document.querySelector('.scanner-viewfinder');
+
+  function showVariantPicker(matchName, cards) {
+    scanPaused = true;
+    scannerViewfinder.classList.add('dimmed');
+
+    var displayLabel = cards[0] ? cards[0].name : matchName;
+    variantTitle.textContent = 'Match: "' + displayLabel + '" \u2014 Which version?';
+
+    variantRow.textContent = '';
+    cards.forEach(function(card) {
+      var div = document.createElement('div');
+      div.className = 'scanner-variant-card';
+      if (ownedSet.has(card.collector_number)) div.classList.add('owned');
+
+      var isVar = !mainSetCNs.has(card.collector_number);
+      var label = isVar ? getFoilVariantLabel(card) : 'REGULAR';
+
+      var img = document.createElement('img');
+      img.src = card.image_small;
+      img.alt = card.name;
+      img.loading = 'lazy';
+      div.appendChild(img);
+
+      var cnEl = document.createElement('div');
+      cnEl.className = 'variant-cn';
+      cnEl.textContent = '#' + card.collector_number;
+      div.appendChild(cnEl);
+
+      var labelEl = document.createElement('div');
+      labelEl.className = 'variant-label';
+      labelEl.textContent = label;
+      div.appendChild(labelEl);
+
+      div.addEventListener('click', function() {
+        addScannedCard(card);
+        hideVariantPicker();
+      });
+
+      variantRow.appendChild(div);
+    });
+
+    variantPicker.style.display = '';
+  }
+
+  function hideVariantPicker() {
+    variantPicker.style.display = 'none';
+    variantRow.textContent = '';
+    scannerViewfinder.classList.remove('dimmed');
+    scanPaused = false;
+  }
+
+  variantSkip.addEventListener('click', function() {
+    hideVariantPicker();
+    scanFailCount = 0;
+  });
 
   // Close button and Done button
   scannerCloseBtn.addEventListener('click', closeScannerModal);
