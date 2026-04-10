@@ -5646,6 +5646,96 @@ if ('serviceWorker' in navigator) {
     }
   }
 
+  async function gistMerge() {
+    if (!gistConfig.token || !gistConfig.gistId || isSyncing) return false;
+    if (!isValidGistId(gistConfig.gistId)) { updateSyncDot('error'); return false; }
+    isSyncing = true;
+    updateSyncDot('syncing');
+
+    try {
+      const resp = await fetch('https://api.github.com/gists/' + gistConfig.gistId, {
+        headers: { Authorization: 'Bearer ' + gistConfig.token, Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' },
+      });
+      if (!resp.ok) throw new Error('GitHub API: ' + resp.status);
+      const data = await resp.json();
+      const file = data.files && data.files['fin-binder-data.json'];
+      if (!file) throw new Error('No data file in Gist');
+
+      const payload = JSON.parse(file.content);
+
+      // Merge collection: union of local + cloud owned cards
+      if (payload.collection && payload.collection.owned) {
+        const cloudOwned = sanitizeOwned(payload.collection.owned);
+        for (const cn of cloudOwned) ownedSet.add(cn);
+      }
+
+      // Merge foils: union of local + cloud foil entries
+      if (payload.foil) {
+        const cloudFoil = sanitizeFoil(payload.foil);
+        for (const [cn, val] of Object.entries(cloudFoil)) {
+          if (!foilOwned[cn]) foilOwned[cn] = val;
+          else {
+            const merged = new Set([...foilOwned[cn], ...val]);
+            foilOwned[cn] = [...merged];
+          }
+        }
+        localStorage.setItem(FOIL_KEY, JSON.stringify(foilOwned));
+      }
+
+      // Merge timeline: combine and deduplicate by date+cn+type
+      if (payload.timeline && payload.timeline.events) {
+        const cloudEvents = sanitizeTimeline(payload.timeline.events);
+        const seen = new Set(timelineEvents.map(function(e) { return e.date + '|' + e.cn + '|' + e.type; }));
+        for (const e of cloudEvents) {
+          const key = e.date + '|' + e.cn + '|' + e.type;
+          if (!seen.has(key)) { timelineEvents.push(e); seen.add(key); }
+        }
+        timelineEvents.sort(function(a, b) { return b.date.localeCompare(a.date); });
+      }
+
+      // Merge packs: combine and deduplicate by date+cards
+      if (payload.packs && payload.packs.packs) {
+        const cloudPacks = sanitizePacks(payload.packs.packs);
+        const seen = new Set(boosterPacks.map(function(p) { return p.date + '|' + (p.cards || []).map(function(c) { return c.cn; }).join(','); }));
+        for (const p of cloudPacks) {
+          const key = p.date + '|' + (p.cards || []).map(function(c) { return c.cn; }).join(',');
+          if (!seen.has(key)) boosterPacks.push(p);
+        }
+      }
+
+      // Take cloud binder config if local isn't configured
+      if (!binderConfig.configured && payload.binderConfig) {
+        const safeCfg = sanitizeBinderConfig(payload.binderConfig);
+        if (safeCfg) { binderConfig = safeCfg; localStorage.setItem(BINDER_CONFIG_KEY, JSON.stringify(binderConfig)); }
+      }
+
+      // Persist merged data without re-triggering sync push
+      localStorage.setItem(COLLECTION_KEY, JSON.stringify({ owned: [...ownedSet] }));
+      localStorage.setItem(PACKS_KEY, JSON.stringify({ packs: boosterPacks }));
+      localStorage.setItem(TIMELINE_KEY, JSON.stringify({ events: timelineEvents }));
+      applyConfigToTabs();
+      renderAll();
+      applyDiscoverPulses();
+      if (document.getElementById('tab-settings').classList.contains('active')) renderSettings();
+      if (binderConfig.scope && binderConfig.scope.collectorBinder && variantCards.length === 0) fetchVariants();
+
+      // Push merged result to cloud
+      isSyncing = false;
+      await gistPush();
+      updateSyncDot('connected');
+      lastSyncTime = Date.now();
+      showToast('Merged ' + ownedSet.size + ' cards');
+      return true;
+    } catch (err) {
+      console.error('Sync merge failed:', err);
+      updateSyncDot('error');
+      showToast('Merge failed');
+      return false;
+    } finally {
+      isSyncing = false;
+    }
+  }
+
   function scheduleSyncPush() {
     if (!gistConfig.token) return;
     clearTimeout(syncTimer);
@@ -5727,7 +5817,7 @@ if ('serviceWorker' in navigator) {
       });
       document.getElementById('sync-disconnect-btn').addEventListener('click', (e) => {
         e.stopPropagation();
-        gistConfig = { token: '', gistId: '' };
+        gistConfig = { token: '', gistId: gistConfig.gistId };
         saveGistConfig();
         updateSyncDot('');
         document.getElementById('sync-token-input').value = '';
@@ -5738,46 +5828,82 @@ if ('serviceWorker' in navigator) {
     }
   }
 
+  // Show sync choice prompt with Merge / Pull / Push options
+  // All values interpolated via esc() or are numeric — no untrusted HTML
+  function showSyncChoicePrompt(source) {
+    saveGistConfig();
+    const body = document.getElementById('sync-modal-body');
+    const localCount = ownedSet.size;
+    const localFoils = Object.keys(foilOwned).length;
+    body.innerHTML =
+      '<div class="sync-status-msg" style="color:var(--accent)">' +
+        esc(source) + '<br>' +
+        '<span style="font-size:0.72rem;color:var(--text-muted)">Local: ' + localCount + ' cards, ' + localFoils + ' foils</span>' +
+        '<div style="display:flex;flex-direction:column;gap:6px;margin-top:10px">' +
+          '<button class="btn btn-primary" id="sync-merge-found" style="font-size:0.82rem;padding:10px">Merge (keep both)</button>' +
+          '<button class="btn btn-secondary" id="sync-pull-found" style="font-size:0.78rem">Pull Cloud Data</button>' +
+          '<button class="btn btn-secondary" id="sync-push-found" style="font-size:0.78rem">Overwrite Cloud with Local</button>' +
+        '</div>' +
+      '</div>';
+    document.getElementById('sync-merge-found').addEventListener('click', async () => {
+      const btn = document.getElementById('sync-merge-found');
+      btn.textContent = 'Merging\u2026'; btn.disabled = true;
+      await gistMerge();
+      closeSyncModal();
+    });
+    document.getElementById('sync-pull-found').addEventListener('click', async () => {
+      const btn = document.getElementById('sync-pull-found');
+      btn.textContent = 'Pulling\u2026'; btn.disabled = true;
+      await gistPull();
+      closeSyncModal();
+    });
+    document.getElementById('sync-push-found').addEventListener('click', async () => {
+      const btn = document.getElementById('sync-push-found');
+      btn.textContent = 'Pushing\u2026'; btn.disabled = true;
+      await gistPush();
+      closeSyncModal();
+    });
+  }
+
   document.getElementById('sync-save-btn').addEventListener('click', async () => {
     const token = document.getElementById('sync-token-input').value.trim();
     if (!token) return;
 
     gistConfig.token = token;
 
-    // Try to find existing Gist if we don't have an ID
-    if (!gistConfig.gistId) {
-      try {
-        updateSyncDot('syncing');
-        const resp = await fetch('https://api.github.com/gists?per_page=100', {
-          headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' },
-        });
-        if (resp.ok) {
-          const gists = await resp.json();
-          const existing = gists.find(g => g.files?.['fin-binder-data.json']);
-          if (existing) {
-            gistConfig.gistId = existing.id;
-            // Existing Gist found — ask to pull
-            saveGistConfig();
-            const body = document.getElementById('sync-modal-body');
-            body.innerHTML = `<div class="sync-status-msg" style="color:var(--accent)">
-              Found existing collection in cloud!
-              <button class="btn btn-primary" id="sync-pull-found" style="margin-top:6px;font-size:0.78rem">Pull Cloud Data</button>
-              <button class="btn btn-secondary" id="sync-push-found" style="margin-top:6px;margin-left:6px;font-size:0.78rem">Overwrite with Local</button>
-            </div>`;
-            document.getElementById('sync-pull-found').addEventListener('click', async () => {
-              await gistPull();
-              closeSyncModal();
-            });
-            document.getElementById('sync-push-found').addEventListener('click', async () => {
-              await gistPush();
-              closeSyncModal();
-            });
-            return;
-          }
-        }
-      } catch {}
+    // Reconnecting with a known gistId (preserved from prior session)
+    if (gistConfig.gistId) {
+      showSyncChoicePrompt('Reconnected to existing cloud collection!');
+      return;
     }
 
+    // Try to find existing Gist by searching user's gists
+    try {
+      updateSyncDot('syncing');
+      const resp = await fetch('https://api.github.com/gists?per_page=100', {
+        headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' },
+      });
+      if (resp.ok) {
+        const gists = await resp.json();
+        const existing = gists.find(g => g.files?.['fin-binder-data.json']);
+        if (existing) {
+          gistConfig.gistId = existing.id;
+          showSyncChoicePrompt('Found existing collection in cloud!');
+          return;
+        }
+      } else {
+        updateSyncDot('error');
+        document.getElementById('sync-modal-body').textContent = 'Could not verify token \u2014 check permissions and try again.';
+        return;
+      }
+    } catch (err) {
+      console.warn('Gist search failed:', err);
+      updateSyncDot('error');
+      document.getElementById('sync-modal-body').textContent = 'Network error \u2014 check your connection and try again.';
+      return;
+    }
+
+    // No existing gist found — first-time setup, create new
     saveGistConfig();
     const ok = await gistPush();
     renderSyncModalBody();
@@ -5785,7 +5911,7 @@ if ('serviceWorker' in navigator) {
     if (ok) {
       body.insertAdjacentHTML('beforeend', '<div class="sync-status-msg" style="color:var(--owned-border)">Synced successfully!</div>');
     } else {
-      body.insertAdjacentHTML('beforeend', '<div class="sync-status-msg" style="color:var(--accent)">Sync failed — check your token and try again.</div>');
+      body.insertAdjacentHTML('beforeend', '<div class="sync-status-msg" style="color:var(--accent)">Sync failed \u2014 check your token and try again.</div>');
       gistConfig = { token: '', gistId: '' };
       saveGistConfig();
       updateSyncDot('');
