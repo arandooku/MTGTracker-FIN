@@ -4893,7 +4893,7 @@ if ('serviceWorker' in navigator) {
         '<div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:12px">' +
           '<a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener" style="color:var(--accent2);text-decoration:none">Create a fine-grained token</a> &mdash; Gists read &amp; write only, 90-day expiry' +
         '</div>' +
-        '<button class="btn btn-primary" id="sf-sync-connect" style="width:100%">Save &amp; Connect</button>';
+        '<button class="btn btn-primary" id="sf-sync-connect" style="width:100%">Add Token</button>';
     }
 
     // Sync status for profile card
@@ -5135,55 +5135,100 @@ if ('serviceWorker' in navigator) {
         var tokenInput = document.getElementById('sf-sync-token');
         var token = tokenInput ? tokenInput.value.trim() : '';
         if (!token) { showToast('Please enter a token.'); return; }
-        syncConnectBtn.textContent = 'Connecting\u2026';
+        syncConnectBtn.textContent = 'Verifying\u2026';
         syncConnectBtn.disabled = true;
         gistConfig.token = token;
 
         try {
-          // If we have a saved gistId (from prior disconnect), reconnect directly
-          if (gistConfig.gistId) {
-            saveGistConfig();
-            updateSyncDot('connected');
-            showToast('Reconnected to cloud!');
-            renderSettings();
-            return;
-          }
+          var foundGistId = gistConfig.gistId || null;
 
-          // Search for existing gist with collection data
-          var searchResp = await fetch('https://api.github.com/gists?per_page=100', {
-            headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' },
-          });
-          if (searchResp.ok) {
+          // Search for existing gist if we don't have one saved
+          if (!foundGistId) {
+            var searchResp = await fetch('https://api.github.com/gists?per_page=100', {
+              headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' },
+            });
+            if (!searchResp.ok) throw new Error('Token rejected');
             var gists = await searchResp.json();
             var existing = gists.find(function(g) { return g.files && g.files['fin-binder-data.json']; });
-            if (existing) {
-              gistConfig.gistId = existing.id;
-              saveGistConfig();
-              updateSyncDot('connected');
-              showToast('Found existing collection in cloud!');
-              renderSettings();
-              return;
-            }
+            if (existing) foundGistId = existing.id;
           }
 
-          // No existing gist found — create new one and push current data
-          var payload = buildSyncPayload();
-          var resp = await fetch('https://api.github.com/gists', {
-            method: 'POST',
-            headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28', 'Content-Type': 'application/json' },
-            body: JSON.stringify({ description: 'FIN Binder Tracker Data', public: false, files: { 'fin-binder-data.json': { content: JSON.stringify(payload, null, 2) } } })
-          });
-          if (!resp.ok) throw new Error('GitHub API error');
-          var data = await resp.json();
-          gistConfig.gistId = data.id;
+          // Save token (gistId set after user chooses)
+          gistConfig.gistId = foundGistId || '';
           saveGistConfig();
-          updateSyncDot('connected');
-          showToast('Connected to GitHub Gist!');
-          renderSettings();
+
+          // Replace the connect form with Pull / Push choices
+          var syncSection = document.getElementById('settings-sync-section');
+          var contentEl = syncSection ? syncSection.querySelector('.settings-section-content') : null;
+          if (!contentEl) { renderSettings(); return; }
+
+          if (foundGistId) {
+            contentEl.innerHTML =
+              '<div style="text-align:center;margin-bottom:10px">' +
+                '<span style="font-size:0.82rem;font-weight:600;color:var(--accent)">Existing collection found in cloud</span>' +
+              '</div>' +
+              '<div style="display:flex;flex-direction:column;gap:8px">' +
+                '<button class="btn btn-primary" id="sf-choice-pull" style="width:100%;padding:12px;font-size:0.88rem">Pull from Cloud</button>' +
+                '<button class="btn btn-secondary" id="sf-choice-push" style="width:100%;padding:12px;font-size:0.88rem">Push Local to Cloud</button>' +
+              '</div>';
+          } else {
+            contentEl.innerHTML =
+              '<div style="text-align:center;margin-bottom:10px">' +
+                '<span style="font-size:0.82rem;font-weight:600;color:var(--text-muted)">No existing collection in cloud</span>' +
+              '</div>' +
+              '<div style="display:flex;flex-direction:column;gap:8px">' +
+                '<button class="btn btn-primary" id="sf-choice-push" style="width:100%;padding:12px;font-size:0.88rem">Push Local to Cloud</button>' +
+              '</div>';
+          }
+
+          var pullBtn = document.getElementById('sf-choice-pull');
+          if (pullBtn) {
+            pullBtn.addEventListener('click', async function() {
+              pullBtn.textContent = 'Pulling\u2026'; pullBtn.disabled = true;
+              var ok = await gistPull();
+              if (ok) {
+                updateSyncDot('connected');
+                showToast('Collection restored from cloud!');
+              } else {
+                showToast('Pull failed.');
+              }
+              renderSettings();
+            });
+          }
+          var pushBtn = document.getElementById('sf-choice-push');
+          if (pushBtn) {
+            pushBtn.addEventListener('click', async function() {
+              pushBtn.textContent = 'Pushing\u2026'; pushBtn.disabled = true;
+              if (!gistConfig.gistId) {
+                // Create new gist
+                var payload = buildSyncPayload();
+                var createResp = await fetch('https://api.github.com/gists', {
+                  method: 'POST',
+                  headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28', 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ description: 'FIN Binder Tracker Data', public: false, files: { 'fin-binder-data.json': { content: JSON.stringify(payload, null, 2) } } })
+                });
+                if (createResp.ok) {
+                  var createData = await createResp.json();
+                  gistConfig.gistId = createData.id;
+                  saveGistConfig();
+                }
+              }
+              var ok = await gistPush();
+              if (ok) {
+                updateSyncDot('connected');
+                showToast('Pushed to cloud!');
+              } else {
+                showToast('Push failed.');
+              }
+              renderSettings();
+            });
+          }
         } catch (e) {
           showToast('Connection failed. Check your token.');
           gistConfig.token = '';
-          syncConnectBtn.textContent = 'Save & Connect';
+          gistConfig.gistId = '';
+          saveGistConfig();
+          syncConnectBtn.textContent = 'Add Token';
           syncConnectBtn.disabled = false;
         }
       });
