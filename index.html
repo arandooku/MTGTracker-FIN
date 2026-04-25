@@ -7156,23 +7156,34 @@ if ('serviceWorker' in navigator) {
   // ── Tesseract worker singleton (lazy-created, persists across scans) ──
   let _tessWorker = null;
   let _tessLoading = null;
-  async function ensureTesseractLib() {
-    if (typeof window.Tesseract !== 'undefined') return window.Tesseract;
+  function ensureTesseractLib() {
+    if (typeof window.Tesseract !== 'undefined') return Promise.resolve(window.Tesseract);
     if (_tessLoading) return _tessLoading;
-    _tessLoading = (async () => {
-      try {
-        showToast('Loading scanner…');
-        const mod = await import('https://cdn.jsdelivr.net/npm/tesseract.js@7/+esm');
-        if (!window.Tesseract && mod && mod.default) window.Tesseract = mod.default;
-        else if (!window.Tesseract && mod) window.Tesseract = mod;
-        return window.Tesseract;
-      } catch (e) {
-        console.error('Tesseract dynamic import failed:', e);
-        return null;
-      } finally {
+    _tessLoading = new Promise(function(resolve, reject) {
+      try { showToast('Loading scanner…'); } catch {}
+      var s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@7.0.0/dist/tesseract.min.js';
+      s.integrity = 'sha384-2BQ3U3OdKOb0Uczxqr41I9UvZkzr4V9Hv8uSzMMZAlmhsFClvdZX5wi5fDCzG+tM';
+      s.crossOrigin = 'anonymous';
+      s.async = true;
+      s.onload = function() {
+        if (typeof window.Tesseract === 'undefined') {
+          _tessLoading = null;
+          reject(new Error('Tesseract global missing after load'));
+          return;
+        }
+        resolve(window.Tesseract);
+      };
+      s.onerror = function() {
         _tessLoading = null;
-      }
-    })();
+        reject(new Error('Tesseract script load failed'));
+      };
+      document.head.appendChild(s);
+    }).catch(function(e) {
+      console.error('Tesseract load failed:', e);
+      _tessLoading = null;
+      return null;
+    });
     return _tessLoading;
   }
   async function getTessWorker() {
