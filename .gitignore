@@ -35,6 +35,15 @@ package-lock.json
 # FFmpeg CLI scripts (local tooling)
 ffmpeg-cli/
 
+# Graphify knowledge graph output (local dev artifact)
+graphify-out/
+
+# MCP local server config (per-machine)
+.mcp.json
+
+# Reports / audit dumps (local dev artifact)
+.reports/
+
 # OS junk
 Thumbs.db
 Desktop.ini
